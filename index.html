@@ -3,196 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liên Quân Academy & Quán Phở Anh Ba</title>
+    <title>Quán Phở Anh Ba - Game Quản Lý Tiệm Phở</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;700&display=swap');
-        body { background-color: #020617; color: #f1f5f9; font-family: 'Roboto', sans-serif; }
-        .gold { color: #fbbf24; }
-        .bg-card { background: #1e293b; border: 1px solid #334155; }
-        .card-pro { border-radius: 15px; padding: 20px; transition: 0.3s; cursor: pointer; }
-        .card-pro:hover { border-color: #fbbf24; transform: translateY(-3px); }
-        .hidden { display: none; }
-        .btn-nav { background: #1e293b; border: 1px solid #334155; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 11px; transition: 0.2s; white-space: nowrap; }
-        .btn-nav:hover, .btn-nav.active { background: #fbbf24; color: #000; border-color: #fbbf24; }
-        /* Style cho Game Quán Phở */
-        #game-area { background: #fef3c7; color: #92400e; border-radius: 20px; padding: 20px; border: 4px solid #d97706; }
-        .btn-game { background: #d97706; color: white; padding: 10px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.1s; }
-        .btn-game:active { transform: scale(0.95); }
-        .spinning { animation: spin 0.6s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @import url('https://fonts.googleapis.com/css2?family=Itim&family=Sedgwick+Ave+Display&display=swap');
+        
+        :root {
+            --wood: #8b4513;
+            --paper: #fef3c7;
+            --red-brand: #b91c1c;
+        }
+
+        body { 
+            background-color: #1a1a1a; 
+            color: #333; 
+            font-family: 'Itim', cursive;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* KHUNG GAME MOBILE STYLE */
+        #game-container {
+            background: #e5e7eb;
+            background-image: repeating-linear-gradient(45deg, #d1d5db 0, #d1d5db 1px, transparent 0, transparent 50%);
+            background-size: 10px 10px;
+            border: 8px solid var(--wood);
+            border-radius: 40px;
+            position: relative;
+            max-width: 480px;
+            margin: 10px auto;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* BIỂN HIỆU QUÁN */
+        .shop-banner {
+            background: var(--red-brand);
+            color: white;
+            padding: 20px 10px;
+            text-align: center;
+            border-bottom: 5px solid #7f1d1d;
+            border-radius: 30px 30px 0 0;
+        }
+        .brand-title { font-family: 'Sedgwick Ave Display', cursive; font-size: 2.2rem; line-height: 1; }
+
+        /* KHU VỰC THÔNG SỐ */
+        .stats-area {
+            background: rgba(255,255,255,0.8);
+            margin: 10px;
+            padding: 10px;
+            border-radius: 15px;
+            border: 2px solid var(--wood);
+            display: flex;
+            justify-content: space-around;
+            font-weight: bold;
+        }
+
+        /* SÂN CHƠI (PHỤC VỤ KHÁCH) */
+        #play-zone {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .customer {
+            position: absolute;
+            bottom: 20px;
+            transition: all 0.8s ease;
+            text-align: center;
+            width: 120px;
+        }
+
+        .chat-bubble {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-bottom: 5px;
+            position: relative;
+            box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+        }
+
+        /* NÚT MÚC PHỞ */
+        .cook-action {
+            position: absolute;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+
+        .btn-muck {
+            background: radial-gradient(#ef4444, #991b1b);
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 8px solid #fca5a5;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 900;
+            box-shadow: 0 10px 0 #7f1d1d;
+            transition: 0.1s;
+        }
+
+        .btn-muck:active {
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 #7f1d1d;
+        }
+
+        /* MENU NÂNG CẤP (DƯỚI CÙNG) */
+        .upgrade-menu {
+            background: #d97706;
+            padding: 15px;
+            border-top: 5px solid var(--wood);
+            height: 200px;
+            color: white;
+        }
+
+        .upgrade-item {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* HIỆU ỨNG TIỀN */
+        .money-anim {
+            position: absolute;
+            color: #16a34a;
+            font-weight: 900;
+            font-size: 20px;
+            animation: floatUp 1s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            to { transform: translateY(-120px); opacity: 0; }
+        }
+
+        .music-btn {
+            position: absolute;
+            top: 150px;
+            right: 15px;
+            background: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--wood);
+            cursor: pointer;
+        }
     </style>
 </head>
-<body class="p-4 md:p-10">
-    <div class="max-w-4xl mx-auto">
-        
-        <header class="text-center py-4">
-            <h1 class="text-4xl font-black gold italic uppercase italic">ACADEMY & GAME</h1>
-            <p class="text-slate-400 text-[9px] tracking-[0.3em] uppercase mt-2">Giáo án Liên Quân & Quán Phở Anh Ba</p>
+<body>
+
+    <div id="game-container">
+        <audio id="bgMusic" loop>
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg">
+        </audio>
+
+        <header class="shop-banner">
+            <h1 class="brand-title">QUÁN PHỞ ANH BA</h1>
+            <p class="text-[10px] uppercase tracking-widest mt-1">Phở gia truyền - Múc liền tay</p>
         </header>
 
-        <nav class="flex overflow-x-auto gap-2 mb-8 pb-2 no-scrollbar">
-            <button onclick="show('home')" class="btn-nav active">TRANG CHỦ</button>
-            <button onclick="show('game')" class="btn-nav bg-orange-700 border-orange-500">QUÁN PHỞ ANH BA</button>
-            <button onclick="show('heroes')" class="btn-nav">115 TƯỚNG</button>
-            <button onclick="show('quiz')" class="btn-nav">TRẮC NGHIỆM</button>
-            <button onclick="show('zata')" class="btn-nav">MẸO ZATA</button>
-        </nav>
+        <div class="stats-area">
+            <div>💰 <span id="money">0</span>đ</div>
+            <div>⭐ <span id="rep">0</span> Sao</div>
+        </div>
 
-        <div id="screen-home" class="space-y-6">
-            <div class="bg-card card-pro border-none bg-gradient-to-r from-blue-900/40 to-slate-900">
-                <h2 class="text-2xl font-bold gold mb-2">XIN CHÀO ANH BA!</h2>
-                <p class="text-sm text-slate-300">Vừa học leo rank Liên Quân, vừa trải nghiệm quản lý Quán Phở trứ danh. Bạn đã sẵn sàng chưa?</p>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-card card-pro text-center" onclick="show('game')">
-                    <i class="fas fa-bowl-food text-orange-500 text-3xl mb-2"></i><br><b>Chơi Game Phở</b>
-                </div>
-                <div class="bg-card card-pro text-center" onclick="show('meta')">
-                    <i class="fas fa-fire text-red-500 text-3xl mb-2"></i><br><b>Bảng Xếp Hạng</b>
-                </div>
+        <div onclick="toggleMusic()" class="music-btn" id="mBtn">
+            <i class="fas fa-volume-mute text-red-600"></i>
+        </div>
+
+        <div id="play-zone">
+            <div id="customers"></div>
+            
+            <div class="cook-action text-center">
+                <button onclick="muckPho(event)" class="btn-muck italic">MÚC PHỞ!</button>
+                <p class="text-xs font-bold text-orange-900 mt-2 uppercase">Chạm để bán hàng</p>
             </div>
         </div>
 
-        <div id="screen-game" class="hidden">
-            <div id="game-area" class="max-w-md mx-auto shadow-2xl">
-                <div class="text-center border-b-2 border-orange-200 pb-4 mb-4">
-                    <h2 class="text-2xl font-black uppercase">🍲 Quán Phở Anh Ba</h2>
-                    <p class="text-sm italic">"Phở ngon chuẩn vị - Vừa ăn vừa leo Rank"</p>
-                </div>
-                
-                <div class="flex justify-between items-center mb-6 bg-white p-3 rounded-xl shadow-inner">
-                    <div class="text-center">
-                        <p class="text-xs uppercase font-bold text-slate-400">Tiền của bạn</p>
-                        <p class="text-xl font-black text-green-600 font-mono" id="money">0đ</p>
+        <footer class="upgrade-menu">
+            <h3 class="text-xs font-bold uppercase mb-3"><i class="fas fa-store"></i> Đầu tư quán phở</h3>
+            <div class="overflow-y-auto h-32 pr-2">
+                <div class="upgrade-item">
+                    <div>
+                        <p class="text-[12px] font-bold">♨️ Bếp Than Tổ Ong</p>
+                        <p class="text-[9px]">+50k/múc</p>
                     </div>
-                    <div class="text-center">
-                        <p class="text-xs uppercase font-bold text-slate-400">Danh tiếng</p>
-                        <p class="text-xl font-black text-blue-600" id="reputation">0⭐</p>
+                    <button onclick="buy('click')" class="bg-yellow-400 text-black px-4 py-1 rounded-full text-xs font-bold" id="cClick">500k</button>
+                </div>
+                <div class="upgrade-item">
+                    <div>
+                        <p class="text-[12px] font-bold">👨‍🍳 Thuê Phụ Bếp</p>
+                        <p class="text-[9px]">Tự múc 1 tô/giây</p>
                     </div>
-                </div>
-
-                <div class="text-center py-6 bg-white/50 rounded-2xl mb-6">
-                    <div id="pho-icon" class="text-6xl mb-2 transition-all duration-75">🍲</div>
-                    <button onclick="sellPho()" class="bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-700 transition">BÁN 1 TÔ PHỞ</button>
-                    <p class="text-[10px] mt-2 text-orange-800 font-bold uppercase">+10.000đ mỗi tô</p>
-                </div>
-
-                <div class="space-y-2">
-                    <p class="font-bold text-sm uppercase">Nâng cấp quán:</p>
-                    <button onclick="buyUpgrade('cook')" id="btn-cook" class="btn-game">Thuê Đầu Bếp (Giá: 100k) <br><span class="text-[10px] font-normal">Tự động nấu 1 tô/giây</span></button>
-                    <button onclick="buyUpgrade('marketing')" id="btn-mkt" class="btn-game bg-blue-700">Quảng Cáo (Giá: 500k) <br><span class="text-[10px] font-normal">Tăng sao danh tiếng</span></button>
+                    <button onclick="buy('auto')" class="bg-yellow-400 text-black px-4 py-1 rounded-full text-xs font-bold" id="cAuto">2tr</button>
                 </div>
             </div>
-        </div>
-
-        <div id="screen-heroes" class="hidden">
-            <input type="text" id="search-input" onkeyup="filterHeroes()" placeholder="Tìm tên tướng..." class="w-full p-4 rounded-full bg-slate-900 border border-slate-700 mb-6 gold outline-none">
-            <div id="hero-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </div>
-
-        <div id="screen-quiz" class="hidden">
-            <div class="bg-card card-pro max-w-md mx-auto text-center">
-                <p id="quiz-text" class="text-lg font-bold mb-6 italic">Đang tải...</p>
-                <div id="quiz-options" class="space-y-3"></div>
-            </div>
-        </div>
-
-        <div id="screen-zata" class="hidden space-y-4">
-            <h2 class="text-2xl font-bold gold text-center italic uppercase">Combo Zata Bay Cao</h2>
-            <div class="video-container"><iframe src="https://www.youtube.com/embed/KsNLuWezUfw" frameborder="0" allowfullscreen></iframe></div>
-            <p class="bg-slate-800 p-4 rounded-lg text-sm italic">Học cách bay Zata để gánh team, sau đó quay lại bán phở nhé!</p>
-        </div>
-
-        <div id="screen-meta" class="hidden space-y-3">
-            <div class="bg-card card-pro border-l-4 border-red-500 flex justify-between"><b>Florentino</b> <span class="gold font-bold">Tier S+</span></div>
-            <div class="bg-card card-pro border-l-4 border-red-500 flex justify-between"><b>Nakroth</b> <span class="gold font-bold">Tier S+</span></div>
-        </div>
-
+        </footer>
     </div>
 
     <script>
-        // LOGIC GAME QUÁN PHỞ ANH BA
-        let money = 0;
-        let reputation = 0;
-        let autoCooks = 0;
+        let data = {
+            money: 0,
+            rep: 0,
+            power: 50000,
+            auto: 0,
+            costC: 500000,
+            costA: 2000000
+        };
 
-        function sellPho() {
-            money += 10000;
-            updateGame();
-            // Hiệu ứng nảy cái bát
-            const icon = document.getElementById('pho-icon');
-            icon.style.transform = "scale(1.2)";
-            setTimeout(() => icon.style.transform = "scale(1)", 100);
-        }
+        const music = document.getElementById('bgMusic');
+        const mBtn = document.getElementById('mBtn');
 
-        function buyUpgrade(type) {
-            if (type === 'cook' && money >= 100000) {
-                money -= 100000;
-                autoCooks++;
-                alert("Chúc mừng! Bạn đã thuê thêm 1 đầu bếp.");
-            } else if (type === 'marketing' && money >= 500000) {
-                money -= 500000;
-                reputation += 5;
-                alert("Quán phở của bạn bắt đầu nổi tiếng rồi!");
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                mBtn.innerHTML = '<i class="fas fa-volume-up text-green-600"></i>';
             } else {
-                alert("Không đủ tiền rồi Anh Ba ơi! Bán phở tiếp đi.");
+                music.pause();
+                mBtn.innerHTML = '<i class="fas fa-volume-mute text-red-600"></i>';
             }
-            updateGame();
         }
 
-        function updateGame() {
-            document.getElementById('money').innerText = money.toLocaleString() + "đ";
-            document.getElementById('reputation').innerText = reputation + "⭐";
+        function muckPho(e) {
+            data.money += data.power;
+            showMoney(e.pageX, e.pageY, `+${data.power/1000}k`);
+            if (Math.random() > 0.6) spawnCustomer();
+            update();
         }
 
-        // Tự động nấu phở
+        function showMoney(x, y, txt) {
+            const div = document.createElement('div');
+            div.className = 'money-anim';
+            div.style.left = (x - 20) + 'px';
+            div.style.top = (y - 50) + 'px';
+            div.innerText = txt;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 1000);
+        }
+
+        const dialogs = [
+            "Cho con một tô không hành!",
+            "Phở Anh Ba là số 1!",
+            "Nước dùng ngọt quá chú ơi",
+            "Nhiều bánh ít hành nha chú",
+            "Cho con xin thêm quẩy!",
+            "Tô này không hành nha Anh Ba"
+        ];
+        const skins = ['👨‍💼', '👩‍💼', '👧', '👨‍🌾', '👷', '👨‍🍳'];
+
+        function spawnCustomer() {
+            const wrap = document.getElementById('customers');
+            if (wrap.children.length > 3) return;
+
+            const guest = document.createElement('div');
+            guest.className = 'customer';
+            guest.style.left = Math.random() * 60 + 10 + '%';
+            guest.innerHTML = `
+                <div class="chat-bubble">${dialogs[Math.floor(Math.random()*dialogs.length)]}</div>
+                <div class="text-6xl">${skins[Math.floor(Math.random()*skins.length)]}</div>
+            `;
+            wrap.appendChild(guest);
+            setTimeout(() => { 
+                guest.style.opacity = '0'; 
+                setTimeout(() => guest.remove(), 1000);
+            }, 3000);
+        }
+
+        function buy(type) {
+            if (type === 'click' && data.money >= data.costC) {
+                data.money -= data.costC;
+                data.power += 25000;
+                data.costC = Math.floor(data.costC * 1.6);
+                data.rep += 1;
+            } else if (type === 'auto' && data.money >= data.costA) {
+                data.money -= data.costA;
+                data.auto += 20000;
+                data.costA = Math.floor(data.costA * 1.8);
+                data.rep += 2;
+            } else {
+                alert("Anh Ba ơi, thiếu tiền rồi!");
+            }
+            update();
+        }
+
+        function update() {
+            document.getElementById('money').innerText = data.money.toLocaleString();
+            document.getElementById('rep').innerText = data.rep;
+            document.getElementById('cClick').innerText = (data.costC/1000).toFixed(0) + 'k';
+            document.getElementById('cAuto').innerText = (data.costA/1000000).toFixed(1) + 'tr';
+        }
+
         setInterval(() => {
-            if (autoCooks > 0) {
-                money += autoCooks * 10000;
-                updateGame();
+            if (data.auto > 0) {
+                data.money += data.auto;
+                update();
             }
         }, 1000);
 
-        // LOGIC LIÊN QUÂN
-        const heroes = [
-            { name: "Valhein", skin: "Quang Minh Chính Trực", build: "Phép/Tốc đánh" },
-            { name: "Nakroth", skin: "Thứ Nguyên Vệ Thần", build: "Xuyên phá/Chí mạng" },
-            { name: "Zata", skin: "Sứ Giả Tinh Hệ", build: "Xuyên tâm/Rhea" },
-            { name: "Florentino", skin: "Tinh Hệ", build: "Công vật lý/Thủ" }
-        ];
-
-        function show(id) {
-            document.querySelectorAll('[id^="screen-"]').forEach(s => s.classList.add('hidden'));
-            document.getElementById('screen-' + id).classList.remove('hidden');
-            document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
-            if(id === 'heroes') renderHeroes(heroes);
-            if(id === 'quiz') startQuiz();
-        }
-
-        function renderHeroes(data) {
-            document.getElementById('hero-list').innerHTML = data.map(h => `
-                <div class="bg-card card-pro">
-                    <b class="gold">${h.name}</b>
-                    <p class="text-[10px] mt-1">Skin: ${h.skin}</p>
-                    <p class="text-[10px] text-slate-400 italic">Build: ${h.build}</p>
-                </div>
-            `).join('');
-        }
-
-        function filterHeroes() {
-            const val = document.getElementById('search-input').value.toLowerCase();
-            renderHeroes(heroes.filter(h => h.name.toLowerCase().includes(val)));
-        }
-
-        function startQuiz() {
-            document.getElementById('quiz-text').innerText = "Vị tướng nào có Skin Thứ Nguyên Vệ Thần?";
-            const opts = ["Valhein", "Nakroth", "Krixi"];
-            document.getElementById('quiz-options').innerHTML = opts.map((o, i) => `
-                <button onclick="alert('${i===1?'Đúng rồi!':'Sai bét!'}')" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-lg text-sm">${o}</button>
-            `).join('');
-        }
+        update();
     </script>
 </body>
 </html>
