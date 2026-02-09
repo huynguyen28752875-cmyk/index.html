@@ -3,164 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liên Quân Academy Pro - All-In-One</title>
+    <title>Liên Quân Academy & Quán Phở Anh Ba</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;700&display=swap');
-        body { background-color: #020617; color: #f1f5f9; font-family: 'Roboto', sans-serif; overflow-x: hidden; }
-        h1, h2, h3 { font-family: 'Oswald', sans-serif; }
+        body { background-color: #020617; color: #f1f5f9; font-family: 'Roboto', sans-serif; }
         .gold { color: #fbbf24; }
-        .bg-gold-gradient { background: linear-gradient(135deg, #fbbf24, #d97706); }
-        .card-pro { background: #1e293b; border: 1px solid #334155; border-radius: 15px; padding: 20px; cursor: pointer; transition: 0.3s; }
-        .card-pro:hover { border-color: #fbbf24; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .bg-card { background: #1e293b; border: 1px solid #334155; }
+        .card-pro { border-radius: 15px; padding: 20px; transition: 0.3s; cursor: pointer; }
+        .card-pro:hover { border-color: #fbbf24; transform: translateY(-3px); }
         .hidden { display: none; }
-        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .btn-quiz { background: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 10px; width: 100%; text-align: left; transition: 0.2s; margin-bottom: 8px; }
-        .btn-quiz:hover { border-color: #fbbf24; background: #1e293b; }
-        .tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; font-weight: bold; }
-        .tag-ad { background: #ef4444; } .tag-ap { background: #3b82f6; } .tag-sp { background: #10b981; }
-        #search-input { background: #0f172a; border: 1px solid #334155; color: white; border-radius: 20px; padding: 12px 20px; width: 100%; margin-bottom: 20px; outline: none; }
-        #search-input:focus { border-color: #fbbf24; }
+        .btn-nav { background: #1e293b; border: 1px solid #334155; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 11px; transition: 0.2s; white-space: nowrap; }
+        .btn-nav:hover, .btn-nav.active { background: #fbbf24; color: #000; border-color: #fbbf24; }
+        /* Style cho Game Quán Phở */
+        #game-area { background: #fef3c7; color: #92400e; border-radius: 20px; padding: 20px; border: 4px solid #d97706; }
+        .btn-game { background: #d97706; color: white; padding: 10px; border-radius: 10px; font-weight: bold; width: 100%; margin-top: 10px; transition: 0.1s; }
+        .btn-game:active { transform: scale(0.95); }
+        .spinning { animation: spin 0.6s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-3xl mx-auto">
+<body class="p-4 md:p-10">
+    <div class="max-w-4xl mx-auto">
         
-        <header class="text-center py-6">
-            <h1 class="text-4xl font-black gold italic uppercase tracking-tighter">LIÊN QUÂN ACADEMY</h1>
-            <p class="text-slate-400 text-[10px] tracking-[0.2em] uppercase mt-1">Hệ thống giáo án Pro 2026 - Tự tin leo Rank</p>
+        <header class="text-center py-4">
+            <h1 class="text-4xl font-black gold italic uppercase italic">ACADEMY & GAME</h1>
+            <p class="text-slate-400 text-[9px] tracking-[0.3em] uppercase mt-2">Giáo án Liên Quân & Quán Phở Anh Ba</p>
         </header>
 
-        <div class="flex flex-wrap justify-center gap-2 mb-8">
-            <button onclick="toggleView('home')" class="bg-slate-800 px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-700">Trang Chủ</button>
-            <button onclick="toggleView('hero-list')" class="bg-yellow-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-yellow-500">115 Tướng & Skin</button>
-            <button onclick="toggleView('strategy')" class="bg-slate-800 px-4 py-2 rounded-full text-xs font-bold hover:bg-slate-700">Chiến Thuật</button>
-            <button onclick="toggleView('quiz')" class="bg-blue-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-500">Trắc Nghiệm</button>
-        </div>
+        <nav class="flex overflow-x-auto gap-2 mb-8 pb-2 no-scrollbar">
+            <button onclick="show('home')" class="btn-nav active">TRANG CHỦ</button>
+            <button onclick="show('game')" class="btn-nav bg-orange-700 border-orange-500">QUÁN PHỞ ANH BA</button>
+            <button onclick="show('heroes')" class="btn-nav">115 TƯỚNG</button>
+            <button onclick="show('quiz')" class="btn-nav">TRẮC NGHIỆM</button>
+            <button onclick="show('zata')" class="btn-nav">MẸO ZATA</button>
+        </nav>
 
-        <div id="home-screen" class="space-y-6">
-            <div class="card-pro bg-gradient-to-br from-blue-900/30 to-slate-900 border-none">
-                <h2 class="text-xl font-bold gold mb-2 italic">Chào Kiện Tướng!</h2>
-                <p class="text-sm text-slate-300 leading-relaxed">Đây là nơi tổng hợp tất cả bí kíp từ cách lên đồ cho 115 vị tướng, trang phục đẹp nhất, đến mẹo bay Zata và khắc chế cứng. Hãy chọn một mục để bắt đầu.</p>
+        <div id="screen-home" class="space-y-6">
+            <div class="bg-card card-pro border-none bg-gradient-to-r from-blue-900/40 to-slate-900">
+                <h2 class="text-2xl font-bold gold mb-2">XIN CHÀO ANH BA!</h2>
+                <p class="text-sm text-slate-300">Vừa học leo rank Liên Quân, vừa trải nghiệm quản lý Quán Phở trứ danh. Bạn đã sẵn sàng chưa?</p>
             </div>
             <div class="grid grid-cols-2 gap-4">
-                <div class="card-pro text-center" onclick="toggleView('hero-list')"><i class="fas fa-search gold text-2xl mb-2"></i><br><span class="text-sm font-bold">Tra Cứu Tướng</span></div>
-                <div class="card-pro text-center" onclick="toggleView('zata')"><i class="fas fa-wind text-blue-400 text-2xl mb-2"></i><br><span class="text-sm font-bold">Mẹo Bay Zata</span></div>
-                <div class="card-pro text-center" onclick="toggleView('counter')"><i class="fas fa-fist-raised text-pink-500 text-2xl mb-2"></i><br><span class="text-sm font-bold">Đồ Khắc Chế</span></div>
-                <div class="card-pro text-center" onclick="toggleView('quiz')"><i class="fas fa-graduation-cap text-orange-400 text-2xl mb-2"></i><br><span class="text-sm font-bold">Thi Lấy Bằng</span></div>
-            </div>
-        </div>
-
-        <div id="hero-list-screen" class="hidden">
-            <input type="text" id="search-input" placeholder="Tìm tên tướng (Valhein, Florentino, Nakroth...)" onkeyup="filterHeroes()">
-            <div id="hero-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-card card-pro text-center" onclick="show('game')">
+                    <i class="fas fa-bowl-food text-orange-500 text-3xl mb-2"></i><br><b>Chơi Game Phở</b>
                 </div>
-        </div>
-
-        <div id="strategy-screen" class="hidden space-y-6">
-            <button onclick="toggleView('home')" class="text-blue-400 font-bold mb-2">← QUAY LẠI</button>
-            <div class="card-pro">
-                <h3 class="gold font-bold mb-4 uppercase italic">Bản đồ & Di chuyển</h3>
-                <img src="https://cdn.tgdd.vn/Files/2020/09/16/1289945/ban-do-moi-va-nhung-thay-doi-moi-tai-lien-quan-mobile-mua-16-1.jpg" class="w-full rounded-lg border border-slate-700 mb-4">
-                <ul class="text-sm text-slate-300 space-y-2">
-                    <li>• <b>Rừng:</b> Ưu tiên ăn Rồng sớm để lấy vàng và kinh nghiệm cho cả team.</li>
-                    <li>• <b>Đảo đường:</b> Xạ thủ và Pháp sư nên đi chung khi di chuyển qua sông.</li>
-                </ul>
-            </div>
-        </div>
-
-        <div id="counter-screen" class="hidden space-y-4">
-            <button onclick="toggleView('home')" class="text-blue-400 font-bold">← QUAY LẠI</button>
-            <h2 class="text-2xl font-bold gold italic mb-4">CẨM NANG KHẮC CHẾ ĐỒ</h2>
-            <div class="card-pro border-l-4 border-red-500">
-                <h3 class="text-red-500 font-bold uppercase mb-2">Đối phó Hồi Máu (Taara, Helen, Veres)</h3>
-                <p class="text-sm">Lên <b>Sách Truy Hồn</b> (Pháp sư) hoặc <b>Đao Truy Hồn</b> (Vật lý).</p>
-            </div>
-            <div class="card-pro border-l-4 border-blue-500">
-                <h3 class="text-blue-500 font-bold uppercase mb-2">Đối phó Sát thủ dồn dame</h3>
-                <p class="text-sm">Ưu tiên <b>Quả cầu băng sương</b>, <b>Liềm đoạt mệnh</b> hoặc <b>Giáp hộ mệnh</b>.</p>
-            </div>
-        </div>
-
-        <div id="zata-screen" class="hidden space-y-4 text-center">
-            <button onclick="toggleView('home')" class="text-blue-400 font-bold text-left block">← QUAY LẠI</button>
-            <h2 class="text-2xl font-bold gold italic">BÍ KÍP BAY ZATA 5 STACK</h2>
-            <div class="video-container">
-                <iframe src="https://www.youtube.com/embed/KsNLuWezUfw" frameborder="0" allowfullscreen></iframe>
-            </div>
-            <p class="bg-slate-800 p-4 rounded-xl text-sm italic italic">Combo chuẩn: Chiêu 2 -> Chiêu 1 -> Ulti lướt xuyên qua các luồng gió nổ nội tại.</p>
-        </div>
-
-        <div id="quiz-screen" class="hidden">
-            <div class="card-pro">
-                <div class="flex justify-between items-center mb-6">
-                    <span id="q-progress" class="text-xs gold font-bold uppercase">Câu hỏi: 1/10</span>
-                    <span id="q-score" class="text-xs text-green-400 font-bold uppercase">Điểm: 0</span>
+                <div class="bg-card card-pro text-center" onclick="show('meta')">
+                    <i class="fas fa-fire text-red-500 text-3xl mb-2"></i><br><b>Bảng Xếp Hạng</b>
                 </div>
-                <p id="q-text" class="text-lg font-bold mb-6 italic">Đang tải câu hỏi...</p>
-                <div id="q-options"></div>
-                <div id="q-feedback" class="hidden mt-6 p-4 rounded-lg text-center font-bold"></div>
-                <button id="next-btn" class="hidden mt-6 w-full bg-gold-gradient text-black font-bold py-3 rounded-xl uppercase" onclick="nextQuestion()">Tiếp tục</button>
             </div>
+        </div>
+
+        <div id="screen-game" class="hidden">
+            <div id="game-area" class="max-w-md mx-auto shadow-2xl">
+                <div class="text-center border-b-2 border-orange-200 pb-4 mb-4">
+                    <h2 class="text-2xl font-black uppercase">🍲 Quán Phở Anh Ba</h2>
+                    <p class="text-sm italic">"Phở ngon chuẩn vị - Vừa ăn vừa leo Rank"</p>
+                </div>
+                
+                <div class="flex justify-between items-center mb-6 bg-white p-3 rounded-xl shadow-inner">
+                    <div class="text-center">
+                        <p class="text-xs uppercase font-bold text-slate-400">Tiền của bạn</p>
+                        <p class="text-xl font-black text-green-600 font-mono" id="money">0đ</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs uppercase font-bold text-slate-400">Danh tiếng</p>
+                        <p class="text-xl font-black text-blue-600" id="reputation">0⭐</p>
+                    </div>
+                </div>
+
+                <div class="text-center py-6 bg-white/50 rounded-2xl mb-6">
+                    <div id="pho-icon" class="text-6xl mb-2 transition-all duration-75">🍲</div>
+                    <button onclick="sellPho()" class="bg-red-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:bg-red-700 transition">BÁN 1 TÔ PHỞ</button>
+                    <p class="text-[10px] mt-2 text-orange-800 font-bold uppercase">+10.000đ mỗi tô</p>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="font-bold text-sm uppercase">Nâng cấp quán:</p>
+                    <button onclick="buyUpgrade('cook')" id="btn-cook" class="btn-game">Thuê Đầu Bếp (Giá: 100k) <br><span class="text-[10px] font-normal">Tự động nấu 1 tô/giây</span></button>
+                    <button onclick="buyUpgrade('marketing')" id="btn-mkt" class="btn-game bg-blue-700">Quảng Cáo (Giá: 500k) <br><span class="text-[10px] font-normal">Tăng sao danh tiếng</span></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-heroes" class="hidden">
+            <input type="text" id="search-input" onkeyup="filterHeroes()" placeholder="Tìm tên tướng..." class="w-full p-4 rounded-full bg-slate-900 border border-slate-700 mb-6 gold outline-none">
+            <div id="hero-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
+        <div id="screen-quiz" class="hidden">
+            <div class="bg-card card-pro max-w-md mx-auto text-center">
+                <p id="quiz-text" class="text-lg font-bold mb-6 italic">Đang tải...</p>
+                <div id="quiz-options" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <div id="screen-zata" class="hidden space-y-4">
+            <h2 class="text-2xl font-bold gold text-center italic uppercase">Combo Zata Bay Cao</h2>
+            <div class="video-container"><iframe src="https://www.youtube.com/embed/KsNLuWezUfw" frameborder="0" allowfullscreen></iframe></div>
+            <p class="bg-slate-800 p-4 rounded-lg text-sm italic">Học cách bay Zata để gánh team, sau đó quay lại bán phở nhé!</p>
+        </div>
+
+        <div id="screen-meta" class="hidden space-y-3">
+            <div class="bg-card card-pro border-l-4 border-red-500 flex justify-between"><b>Florentino</b> <span class="gold font-bold">Tier S+</span></div>
+            <div class="bg-card card-pro border-l-4 border-red-500 flex justify-between"><b>Nakroth</b> <span class="gold font-bold">Tier S+</span></div>
         </div>
 
     </div>
 
     <script>
-        // DỮ LIỆU 115 TƯỚNG (MẪU CÁC TƯỚNG HOT)
+        // LOGIC GAME QUÁN PHỞ ANH BA
+        let money = 0;
+        let reputation = 0;
+        let autoCooks = 0;
+
+        function sellPho() {
+            money += 10000;
+            updateGame();
+            // Hiệu ứng nảy cái bát
+            const icon = document.getElementById('pho-icon');
+            icon.style.transform = "scale(1.2)";
+            setTimeout(() => icon.style.transform = "scale(1)", 100);
+        }
+
+        function buyUpgrade(type) {
+            if (type === 'cook' && money >= 100000) {
+                money -= 100000;
+                autoCooks++;
+                alert("Chúc mừng! Bạn đã thuê thêm 1 đầu bếp.");
+            } else if (type === 'marketing' && money >= 500000) {
+                money -= 500000;
+                reputation += 5;
+                alert("Quán phở của bạn bắt đầu nổi tiếng rồi!");
+            } else {
+                alert("Không đủ tiền rồi Anh Ba ơi! Bán phở tiếp đi.");
+            }
+            updateGame();
+        }
+
+        function updateGame() {
+            document.getElementById('money').innerText = money.toLocaleString() + "đ";
+            document.getElementById('reputation').innerText = reputation + "⭐";
+        }
+
+        // Tự động nấu phở
+        setInterval(() => {
+            if (autoCooks > 0) {
+                money += autoCooks * 10000;
+                updateGame();
+            }
+        }, 1000);
+
+        // LOGIC LIÊN QUÂN
         const heroes = [
-            { name: "Valhein", role: "AD/AP", skin: "Quang Minh Chính Trực", build: "Thập tự kiếm, Vương miện", tag: "tag-ad" },
-            { name: "Zata", role: "Pháp Sư", skin: "Sứ Giả Tinh Hệ", build: "Xuyên tâm lệnh, Quyền trượng Rhea", tag: "tag-ap" },
-            { name: "Nakroth", role: "Sát Thủ", skin: "Thứ Nguyên Vệ Thần", build: "Kiếm truy hồn, Phức hợp kiếm", tag: "tag-ad" },
-            { name: "Florentino", role: "Đấu Sĩ", skin: "Tinh Hệ", build: "Thương xuyên phá, Phức hợp kiếm", tag: "tag-ad" },
-            { name: "Murad", role: "Sát Thủ", skin: "Byakuya Kuchiki", build: "Kiếm truy hồn, Thương xuyên phá", tag: "tag-ad" },
-            { name: "Violet", role: "Xạ Thủ", skin: "Thứ Nguyên Vệ Thần", build: "Thánh kiếm, Diệt thần cung", tag: "tag-ad" },
-            { name: "Tulun", role: "Pháp Sư", skin: "Chí Tôn Kiếm Tiên", build: "Trượng bùng nổ, Vương miện", tag: "tag-ap" },
-            { name: "Lauriel", role: "Pháp Sư", skin: "Tinh Vân Sứ", build: "Quyền trượng Rhea, Giáp Gaia", tag: "tag-ap" },
-            { name: "Hayate", role: "Xạ Thủ", skin: "Kim Cang Vương", build: "Rìu Hyoga, Diệt thần cung", tag: "tag-ad" },
-            { name: "Raz", role: "Pháp Sư", skin: "Muay Thái", build: "Trượng bùng nổ, Sách thánh", tag: "tag-ap" },
-            { name: "Airi", role: "Đấu Sĩ", skin: "Bích Hải Thánh Nữ", build: "Đao truy hồn, Nanh Fenrir", tag: "tag-ad" },
-            { name: "Arum", role: "Trợ Thủ", skin: "Vũ Khúc Long Hổ", build: "Giáp Gaia, Khiên huyền thoại", tag: "tag-sp" }
-            // Hệ thống hỗ trợ tìm kiếm 115 tướng dễ dàng
+            { name: "Valhein", skin: "Quang Minh Chính Trực", build: "Phép/Tốc đánh" },
+            { name: "Nakroth", skin: "Thứ Nguyên Vệ Thần", build: "Xuyên phá/Chí mạng" },
+            { name: "Zata", skin: "Sứ Giả Tinh Hệ", build: "Xuyên tâm/Rhea" },
+            { name: "Florentino", skin: "Tinh Hệ", build: "Công vật lý/Thủ" }
         ];
 
-        // DỮ LIỆU 10 CÂU HỎI TRẮC NGHIỆM
-        const questions = [
-            { q: "Món đồ nào khắc chế tướng hồi máu (Helen, Taara)?", o: ["Sách Thánh", "Sách Truy Hồn", "Vương Miện"], c: 1 },
-            { q: "Trang phục 'Thứ Nguyên Vệ Thần' đầu tiên thuộc về ai?", o: ["Nakroth", "Violet", "Tel'Annas"], c: 1 },
-            { q: "Nội tại Zata cho phép bay sau khi lướt tối đa mấy lần?", o: ["2 lần", "3 lần", "5 lần"], c: 1 },
-            { q: "Món đồ nào giúp bất tử trong 1.5 giây?", o: ["Liềm Đoạt Mệnh", "Quả Cầu Băng Sương", "Nham Thuẫn"], c: 1 },
-            { q: "Phép bổ trợ 'Trừng Trị' thường dành cho ai?", o: ["Đi Rừng", "Hỗ Trợ", "Top"], c: 0 },
-            { q: "Skin 'Muay Thái' là của vị tướng nào?", o: ["Nakroth", "Raz", "Maloch"], c: 1 },
-            { q: "Xạ thủ cần lên gì khi gặp team quá trâu?", o: ["Thánh Kiếm", "Diệt Thần Cung", "Song Đao"], c: 1 },
-            { q: "Tướng nào được gọi là 'Thần Kiếm'?", o: ["Tulen", "Murad", "Richter"], c: 1 },
-            { q: "Ai bảo vệ rừng Nguyên Sinh?", o: ["Yena", "Tel'Annas", "Veres"], c: 1 },
-            { q: "Florentino cần nhặt gì để hồi nội năng?", o: ["Hoa", "Kiếm", "Lá"], c: 0 }
-        ];
-
-        let curIdx = 0; let score = 0;
-
-        function toggleView(view) {
-            ['home-screen', 'hero-list-screen', 'strategy-screen', 'counter-screen', 'zata-screen', 'quiz-screen'].forEach(s => {
-                document.getElementById(s).classList.add('hidden');
-            });
-            document.getElementById(view + '-screen').classList.remove('hidden');
-            if(view === 'hero-list') renderHeroes(heroes);
-            if(view === 'quiz') resetQuiz();
+        function show(id) {
+            document.querySelectorAll('[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById('screen-' + id).classList.remove('hidden');
+            document.querySelectorAll('.btn-nav').forEach(b => b.classList.remove('active'));
+            if(id === 'heroes') renderHeroes(heroes);
+            if(id === 'quiz') startQuiz();
         }
 
         function renderHeroes(data) {
-            const container = document.getElementById('hero-container');
-            container.innerHTML = data.map(h => `
-                <div class="card-pro">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-bold gold text-lg">${h.name}</h3>
-                        <span class="tag ${h.tag}">${h.role}</span>
-                    </div>
-                    <p class="text-[11px] mb-1">✨ Skin đẹp nhất: <b class="text-white">${h.skin}</b></p>
-                    <p class="text-[11px] text-slate-400 italic">⚔️ Lên đồ: ${h.build}</p>
+            document.getElementById('hero-list').innerHTML = data.map(h => `
+                <div class="bg-card card-pro">
+                    <b class="gold">${h.name}</b>
+                    <p class="text-[10px] mt-1">Skin: ${h.skin}</p>
+                    <p class="text-[10px] text-slate-400 italic">Build: ${h.build}</p>
                 </div>
             `).join('');
         }
@@ -170,47 +186,12 @@
             renderHeroes(heroes.filter(h => h.name.toLowerCase().includes(val)));
         }
 
-        function resetQuiz() {
-            curIdx = 0; score = 0;
-            showQ();
-        }
-
-        function showQ() {
-            const q = questions[curIdx];
-            document.getElementById('q-progress').innerText = `Câu hỏi: ${curIdx + 1}/10`;
-            document.getElementById('q-score').innerText = `Điểm: ${score}`;
-            document.getElementById('q-text').innerText = q.q;
-            const optBox = document.getElementById('q-options');
-            optBox.innerHTML = q.o.map((o, i) => `<button class="btn-quiz" onclick="check(${i})">${o}</button>`).join('');
-            document.getElementById('q-feedback').classList.add('hidden');
-            document.getElementById('next-btn').classList.add('hidden');
-        }
-
-        function check(i) {
-            const feedback = document.getElementById('q-feedback');
-            feedback.classList.remove('hidden');
-            if(i === questions[curIdx].c) {
-                score += 10;
-                feedback.innerText = "CHÍNH XÁC!";
-                feedback.className = "mt-6 p-4 rounded-lg text-center font-bold bg-green-900/30 text-green-400";
-            } else {
-                feedback.innerText = "SAI RỒI!";
-                feedback.className = "mt-6 p-4 rounded-lg text-center font-bold bg-red-900/30 text-red-400";
-            }
-            document.getElementById('next-btn').classList.remove('hidden');
-        }
-
-        function nextQuestion() {
-            curIdx++;
-            if(curIdx < questions.length) showQ();
-            else {
-                document.getElementById('quiz-screen').innerHTML = `
-                    <div class="card-pro text-center py-10">
-                        <h2 class="text-3xl font-bold gold mb-4 italic italic">KẾT QUẢ</h2>
-                        <p class="text-5xl font-black mb-6">${score} / 100</p>
-                        <button onclick="location.reload()" class="bg-gold-gradient text-black px-8 py-3 rounded-full font-bold uppercase">Làm lại từ đầu</button>
-                    </div>`;
-            }
+        function startQuiz() {
+            document.getElementById('quiz-text').innerText = "Vị tướng nào có Skin Thứ Nguyên Vệ Thần?";
+            const opts = ["Valhein", "Nakroth", "Krixi"];
+            document.getElementById('quiz-options').innerHTML = opts.map((o, i) => `
+                <button onclick="alert('${i===1?'Đúng rồi!':'Sai bét!'}')" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-lg text-sm">${o}</button>
+            `).join('');
         }
     </script>
 </body>
