@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên Quân Academy - Full Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #020617; color: #f1f5f9; font-family: 'Inter', sans-serif; }
+        .card-pro { background: rgba(30, 41, 59, 0.6); border: 1px solid #1e293b; backdrop-filter: blur(10px); border-radius: 20px; transition: 0.3s; cursor: pointer; padding: 20px; text-align: center; }
+        .card-pro:hover { border-color: #fbbf24; transform: translateY(-3px); }
+        .hidden { display: none; }
+        .gold-text { color: #fbbf24; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 15px; margin-top: 15px; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .btn-back { color: #60a5fa; font-weight: bold; cursor: pointer; margin-bottom: 20px; display: block; }
+    </style>
+</head>
+<body>
+    <div class="max-w-2xl mx-auto p-4">
+        <div id="home">
+            <header class="text-center py-10">
+                <h1 class="text-4xl font-black gold-text italic uppercase">LQ ACADEMY PRO</h1>
+                <p class="text-slate-400 text-xs mt-2">DỮ LIỆU TƯỚNG - TRANG BỊ - CHIẾN THUẬT 2026</p>
+            </header>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="card-pro" onclick="show('heroes')"><i class="fas fa-user-shield text-red-500 text-2xl mb-2"></i><br>Tướng & Đồ</div>
+                <div class="card-pro" onclick="show('map')"><i class="fas fa-map-marked-alt text-green-400 text-2xl mb-2"></i><br>Bản Đồ</div>
+                <div class="card-pro" onclick="show('counter')"><i class="fas fa-fist-raised text-pink-500 text-2xl mb-2"></i><br>Khắc Chế</div>
+                <div class="card-pro" onclick="show('zata')"><i class="fas fa-wind text-yellow-400 text-2xl mb-2"></i><br>Học Zata</div>
+                <div class="card-pro" onclick="show('quiz')"><i class="fas fa-graduation-cap text-orange-400 text-2xl mb-2"></i><br>Trắc Nghiệm</div>
+            </div>
+        </div>
+
+        <div id="heroes" class="hidden">
+            <span class="btn-back" onclick="show('home')">← Quay lại</span>
+            <h2 class="text-2xl font-bold gold-text mb-4">Trang Bị Meta & Ngọc</h2>
+            <div class="space-y-4">
+                <div class="card-pro text-left border-l-4 border-yellow-500">
+                    <h3 class="font-bold text-yellow-500">Valhein (Full Phép)</h3>
+                    <p class="text-sm text-slate-300">Đồ: Giày thuật sĩ, Thập tự kiếm, Vương miện, Trượng bùng nổ, Quyền trượng Rhea, Sách thánh.</p>
+                </div>
+                <div class="card-pro text-left border-l-4 border-blue-500">
+                    <h3 class="font-bold text-blue-400">Krixi (Pháp sư)</h3>
+                    <p class="text-sm text-slate-300">Đồ: Giày phù thủy, Trượng bùng nổ, Xuyên tâm lệnh, Vương miện, Sách thánh, Quả cầu băng sương.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="map" class="hidden">
+            <span class="btn-back" onclick="show('home')">← Quay lại</span>
+            <h2 class="text-2xl font-bold text-green-400 mb-4">Chiến Thuật Bản Đồ</h2>
+            <img src="https://cdn.tgdd.vn/Files/2020/09/16/1289945/ban-do-moi-va-nhung-thay-doi-moi-tai-lien-quan-mobile-mua-16-1.jpg" class="w-full rounded-xl">
+        </div>
+
+        <div id="counter" class="hidden">
+            <span class="btn-back" onclick="show('home')">← Quay lại</span>
+            <h2 class="text-2xl font-bold text-pink-500 mb-4">Khắc Chế Đối Thủ</h2>
+            <p class="bg-
