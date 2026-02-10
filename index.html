@@ -3,51 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zom-Evo: Mobile Pro Edition</title>
+    <title>Zom-Evo: Grand Master Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: sans-serif; color: white; }
+        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: 'Segoe UI', sans-serif; color: white; }
         canvas { display: block; }
-        .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(10px); }
-        .btn-cyber { background: linear-gradient(45deg, #06b6d4, #8b5cf6); color: white; padding: 15px 40px; border-radius: 8px; font-weight: 900; border: none; text-transform: uppercase; }
+        .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.95); text-align: center; backdrop-filter: blur(15px); }
+        .btn-cyber { background: linear-gradient(45deg, #06b6d4, #8b5cf6); color: white; padding: 15px 50px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%); transition: 0.3s; box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+        .btn-cyber:hover { letter-spacing: 2px; box-shadow: 0 0 40px #06b6d4; transform: scale(1.05); }
         
-        /* Mobile Controls Optimzed */
-        #mobile-ctrl { position: absolute; inset: 0; pointer-events: none; display: none; }
-        .joy-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border: 2px solid rgba(34, 211, 238, 0.5); border-radius: 50%; pointer-events: auto; }
-        .joy-stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 20px #22d3ee; }
+        /* HUD Layout */
+        #hud { position: absolute; top: 15px; left: 20px; z-index: 100; pointer-events: none; }
+        .bar-outer { width: 180px; height: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #f87171); width: 100%; transition: 0.3s; }
+        #ult-fill { height: 100%; background: linear-gradient(90deg, #eab308, #facc15); width: 0%; transition: 0.2s; }
         
-        .btn-group { position: absolute; bottom: 40px; right: 40px; display: grid; grid-template-areas: "ult dash" "fire fire"; gap: 12px; pointer-events: auto; }
-        .btn-circle { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.1); }
-        #btn-fire { grid-area: fire; width: 152px; height: 80px; border-radius: 40px; background: rgba(34, 211, 238, 0.2); font-size: 20px; }
-        #btn-dash { grid-area: dash; border-color: #f472b6; color: #f472b6; }
-        #btn-ult { grid-area: ult; border-color: #fbbf24; color: #fbbf24; display: none; }
+        #stage-progress { width: 40%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; position: absolute; left: 50%; top: 20px; transform: translateX(-50%); overflow: hidden; }
+        #stage-fill { height: 100%; background: #22d3ee; width: 0%; box-shadow: 0 0 15px #22d3ee; }
 
-        #hud { position: absolute; top: 15px; left: 20px; pointer-events: none; }
-        .bar { width: 150px; height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; margin-bottom: 5px; border: 1px solid #334155; }
-        #hp-f { height: 100%; background: #ef4444; width: 100%; transition: 0.2s; }
-        #ult-f { height: 100%; background: #fbbf24; width: 0%; }
+        /* Controls */
+        #mobile-ctrl { position: absolute; inset: 0; pointer-events: none; display: none; }
+        .joy-base { position: absolute; bottom: 40px; left: 60px; width: 110px; height: 110px; background: rgba(34, 211, 238, 0.05); border: 1px solid rgba(34, 211, 238, 0.3); border-radius: 50%; pointer-events: auto; }
+        .joy-stick { position: absolute; top: 30px; left: 30px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 20px #22d3ee; }
+        .btn-group { position: absolute; bottom: 40px; right: 60px; display: flex; flex-direction: column; gap: 20px; pointer-events: auto; }
+        .btn-act { width: 85px; height: 85px; background: rgba(34, 211, 238, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid #22d3ee; box-shadow: 0 0 20px rgba(34, 211, 238, 0.2); }
+        #btn-ult { border-color: #fbbf24; color: #fbbf24; display: none; }
+
+        .shop-item { background: #1e293b; border-bottom: 4px solid #0f172a; padding: 15px; border-radius: 8px; width: 140px; cursor: pointer; transition: 0.2s; }
+        .shop-item:hover { transform: translateY(-5px); border-color: #22d3ee; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="ui-panel">
-        <h1 class="text-6xl font-black text-cyan-400 mb-4 italic">ZOM-EVO</h1>
-        <button onclick="initGame()" class="btn-cyber">CHƠI NGAY</button>
-        <p class="mt-4 text-gray-500 text-xs uppercase italic">Tối ưu cho màn hình ngang</p>
+        <h1 class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-2 italic">ZOM-EVO</h1>
+        <p class="text-gray-400 mb-10 tracking-[0.4em] text-xs uppercase">Grand Master Edition v2.0</p>
+        <button onclick="initGame()" class="btn-cyber">Khởi Chạy Hệ Thống</button>
+    </div>
+
+    <div id="shop-screen" class="ui-panel" style="display: none;">
+        <h2 class="text-4xl font-black text-cyan-400 mb-2 italic">DỮ LIỆU NÂNG CẤP</h2>
+        <p id="shop-gold" class="text-yellow-400 font-bold mb-8">🍭 KẸO: 0</p>
+        <div id="shop-list" class="flex flex-wrap justify-center gap-6"></div>
+        <button onclick="closeShop()" class="mt-10 text-gray-500 hover:text-cyan-400 underline">TIẾP TỤC CHIẾN ĐẤU →</button>
     </div>
 
     <div id="hud">
-        <div class="bar"><div id="hp-f"></div></div>
-        <div class="bar"><div id="ult-f"></div></div>
-        <div class="text-xs font-bold text-cyan-400">CREDITS: <span id="gold-txt" class="text-white">0</span></div>
+        <div class="bar-outer"><div id="hp-fill"></div></div>
+        <div class="bar-outer"><div id="ult-fill"></div></div>
+        <div class="text-cyan-400 font-bold italic text-sm">🍭: <span id="gold-txt">0</span> | SCORE: <span id="score-txt">0</span> | ẢI: <span id="stage-num">1</span></div>
     </div>
+
+    <div id="stage-progress"><div id="stage-fill"></div></div>
 
     <div id="mobile-ctrl">
         <div class="joy-base" id="joystick"><div class="joy-stick" id="stick"></div></div>
         <div class="btn-group">
-            <div class="btn-circle" id="btn-ult">ULT</div>
-            <div class="btn-circle" id="btn-dash">DASH</div>
-            <div class="btn-circle" id="btn-fire">BẮN TỰ ĐỘNG</div>
+            <div class="btn-act" id="btn-ult">ULT</div>
+            <div class="btn-act" id="btn-fire">FIRE</div>
         </div>
     </div>
 
@@ -56,133 +69,288 @@
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        let me = { x: 0, y: 0, hp: 100, gold: 0, score: 0, stage: 1, angle: 0, ult: 0, weapon: 'pistol', vx: 0, vy: 0, dashing: 0 };
-        let entities = { zombies: [], bullets: [], boss: null, particles: [] };
-        let joyX = 0, joyY = 0, autoFire = false, isMobile = false;
+        
+        let me = { x: 0, y: 0, hp: 100, gold: 0, score: 0, stage: 1, angle: 0, ult: 0, weapon: 'pistol', vx: 0, vy: 0 };
+        let drone = { angle: 0, lastShot: 0, target: null };
+        let entities = { zombies: [], bullets: [], boss: null, particles: [], trails: [] };
+        let keys = {}, joyX = 0, joyY = 0, isShopOpen = false, audioCtx;
 
+        const weaponStats = {
+            pistol: { n: "G-Pistol", c: 0, r: 350, cnt: 1, clr: '#22d3ee', sz: 6 },
+            smg: { n: "Hyper SMG", c: 500, r: 100, cnt: 1, clr: '#facc15', sz: 5 },
+            shotgun: { n: "Void Blast", c: 900, r: 850, cnt: 8, clr: '#f472b6', sz: 4 }
+        };
+
+        // --- AUDIO ENGINE ---
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const bgm = () => {
+                let osc = audioCtx.createOscillator();
+                let g = audioCtx.createGain();
+                osc.type = 'sine'; osc.frequency.value = 60;
+                g.gain.setValueAtTime(0.02, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3);
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 3);
+                setTimeout(bgm, 3000);
+            };
+            bgm();
+        }
+
+        function playSfx(f, t='sine', d=0.1) {
+            if(!audioCtx) return;
+            let o=audioCtx.createOscillator(), g=audioCtx.createGain();
+            o.type=t; o.frequency.value = f;
+            g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime+d);
+        }
+
+        // --- CORE ENGINE ---
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            if(!me.x) { me.x = canvas.width/2; me.y = canvas.height/2; }
+            if(me.x === 0) { me.x = canvas.width/2; me.y = canvas.height/2; }
         }
-        window.onresize = resize;
+        window.addEventListener('resize', resize);
         resize();
 
         function initGame() {
+            initAudio();
             document.getElementById('start-screen').style.display = 'none';
-            isMobile = /Android|iPhone/i.test(navigator.userAgent);
-            if(isMobile) document.getElementById('mobile-ctrl').style.display = 'block';
+            if(/Android|iPhone/i.test(navigator.userAgent)) document.getElementById('mobile-ctrl').style.display = 'block';
             loop();
         }
 
-        // --- MOBILE CONTROLS ---
+        // --- CONTROLS ---
+        window.onkeydown = e => keys[e.code] = true;
+        window.onkeyup = e => keys[e.code] = false;
+        window.onmousedown = () => { keys['Fire'] = true; };
+        window.onmouseup = () => { keys['Fire'] = false; };
+        window.onmousemove = e => { if(window.innerWidth > 1000) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
+
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
-        joy.ontouchmove = (e) => {
+        const handleJoy = (e) => {
             e.preventDefault();
             let t = e.touches[0], r = joy.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
+            let dx = t.clientX - (r.left + 55), dy = t.clientY - (r.top + 55);
             let d = Math.min(Math.sqrt(dx*dx+dy*dy), 45);
             let a = Math.atan2(dy, dx);
             joyX = Math.cos(a) * (d/45); joyY = Math.sin(a) * (d/45);
             st.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+            me.angle = a;
         };
+        joy.ontouchmove = handleJoy;
         joy.ontouchend = () => { joyX = joyY = 0; st.style.transform = 'none'; };
 
-        document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); autoFire = !autoFire; e.target.style.background = autoFire ? 'rgba(34, 211, 238, 0.6)' : 'rgba(34, 211, 238, 0.1)'; };
-        document.getElementById('btn-dash').ontouchstart = (e) => { e.preventDefault(); doDash(); };
-        document.getElementById('btn-ult').ontouchstart = (e) => { e.preventDefault(); useUlt(); };
+        document.getElementById('btn-fire').ontouchstart = e => { e.preventDefault(); keys['Fire'] = true; };
+        document.getElementById('btn-fire').ontouchend = () => keys['Fire'] = false;
+        document.getElementById('btn-ult').ontouchstart = e => { e.preventDefault(); useUlt(); };
 
-        function doDash() {
-            if(me.dashing > 0) return;
-            me.dashing = 15; // Thời gian lướt
+        function shoot(from, ang, type = 'player') {
+            const w = weaponStats[me.weapon];
+            if(type === 'player' && Date.now() - me.lastShot < w.r) return;
+            
+            let count = type === 'player' ? w.cnt : 1;
+            for(let i=0; i<count; i++) {
+                let spread = (Math.random()-0.5) * (type === 'player' ? 0.35 : 0);
+                entities.bullets.push({
+                    x: from.x, y: from.y,
+                    vx: Math.cos(ang + spread) * 18,
+                    vy: Math.sin(ang + spread) * 18,
+                    color: type === 'player' ? w.clr : '#fff',
+                    size: type === 'player' ? w.sz : 5
+                });
+            }
+            if(type === 'player') { me.lastShot = Date.now(); playSfx(500 + Math.random()*200, 'square', 0.05); }
         }
 
         function useUlt() {
             if(me.ult < 100) return;
-            me.ult = 0;
-            entities.zombies.forEach(z => z.hp = 0);
+            me.ult = 0; playSfx(150, 'sine', 0.6);
+            entities.zombies.forEach(z => { z.hp = 0; me.score += 20; });
+            if(entities.boss) entities.boss.hp -= 1500;
         }
 
-        // --- CORE LOGIC ---
-        let lastShoot = 0;
+        // --- GAME LOOP ---
         function loop() {
-            // Movement logic
-            let speed = me.dashing > 0 ? 18 : 6;
-            if(me.dashing > 0) me.dashing--;
+            if(isShopOpen) { requestAnimationFrame(loop); return; }
 
-            if(joyX || joyY) {
-                me.x += joyX * speed;
-                me.y += joyY * speed;
+            // Movement with Inertia
+            let tx = (keys['KeyD']?1:0)-(keys['KeyA']?1:0) || joyX;
+            let ty = (keys['KeyS']?1:0)-(keys['KeyW']?1:0) || joyY;
+            if(tx || ty) {
+                let m = Math.sqrt(tx*tx + ty*ty);
+                me.vx += (tx/m * 0.9); me.vy += (ty/m * 0.9);
+                if(Math.random() > 0.6) entities.trails.push({x: me.x, y: me.y, a: 0.6});
+            }
+            me.vx *= 0.86; me.vy *= 0.86;
+            me.x += me.vx; me.y += me.vy;
+            me.x = Math.max(20, Math.min(canvas.width-20, me.x));
+            me.y = Math.max(20, Math.min(canvas.height-20, me.y));
+
+            if(keys['Fire'] || keys['Space']) shoot(me, me.angle);
+
+            // Drone AI
+            drone.angle += 0.15;
+            let dx = me.x + Math.cos(drone.angle)*75, dy = me.y + Math.sin(drone.angle)*75;
+            if(Date.now() - drone.lastShot > 1000) {
+                let target = entities.zombies[0] || entities.boss;
+                if(target) { shoot({x:dx, y:dy}, Math.atan2(target.y-dy, target.x-dx), 'drone'); drone.lastShot = Date.now(); }
             }
 
-            // AUTO-AIM (Ngắm quái gần nhất)
-            let nearest = null, minDist = 500;
-            entities.zombies.concat(entities.boss || []).forEach(z => {
-                let d = Math.sqrt((z.x-me.x)**2 + (z.y-me.y)**2);
-                if(d < minDist) { minDist = d; nearest = z; }
-            });
-            if(nearest) me.angle = Math.atan2(nearest.y-me.y, nearest.x-me.x);
+            // Progression
+            let progress = (me.score % 1000) / 10;
+            document.getElementById('stage-fill').style.width = progress + '%';
+            if(me.score > 0 && me.score >= me.stage * 1000) openShop();
 
-            // Auto-Fire
-            if(autoFire && Date.now() - lastShoot > 250) {
-                entities.bullets.push({ x: me.x, y: me.y, vx: Math.cos(me.angle)*15, vy: Math.sin(me.angle)*15 });
-                lastShoot = Date.now();
-            }
-
-            // Zombie Logic
-            if(entities.zombies.length < 10 && Math.random() < 0.03) {
-                entities.zombies.push({ x: Math.random()*canvas.width, y: -20, hp: 100 });
+            // Entities Logic
+            if(!entities.boss && entities.zombies.length < 10 + me.stage) {
+                if(Math.random() < 0.03 + me.stage*0.005) {
+                    entities.zombies.push({ 
+                        x: Math.random()*canvas.width, y: -50, 
+                        hp: 100 + me.stage*30, 
+                        s: 2.2 + me.stage*0.15, seed: Math.random()*100 
+                    });
+                }
             }
 
             entities.zombies.forEach((z, i) => {
                 let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                z.x += (me.x-z.x)/d * 2; z.y += (me.y-z.y)/d * 2;
-                if(d < 30) me.hp -= 0.5;
-                entities.bullets.forEach((b, bi) => {
-                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 30) {
-                        z.hp -= 50; entities.bullets.splice(bi, 1);
-                        if(z.hp <= 0) { entities.zombies.splice(i,1); me.gold += 20; me.ult = Math.min(100, me.ult+10); }
+                z.x += (me.x-z.x)/d * z.s; z.y += (me.y-z.y)/d * z.s;
+                if(d < 30) { me.hp -= 0.6; if(Math.random() > 0.8) playSfx(100, 'sine', 0.05); }
+
+                entities.bullets.forEach((bul, bi) => {
+                    if(Math.sqrt((bul.x-z.x)**2+(bul.y-z.y)**2) < 35) {
+                        z.hp -= 55; entities.bullets.splice(bi, 1);
+                        if(z.hp <= 0) { 
+                            entities.zombies.splice(i, 1); 
+                            me.gold += 25; me.score += 50; 
+                            me.ult = Math.min(100, me.ult+7);
+                            playSfx(1200, 'sine', 0.05);
+                        }
                     }
                 });
             });
 
+            if(entities.boss) {
+                let b = entities.boss, d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
+                b.x += (me.x-b.x)/d * 1.8; b.y += (me.y-b.y)/d * 1.8;
+                entities.bullets.forEach((bul, bi) => {
+                    if(Math.sqrt((bul.x-b.x)**2+(bul.y-b.y)**2) < 90) { b.hp -= 35; entities.bullets.splice(bi, 1); }
+                });
+                if(b.hp <= 0) { entities.boss = null; me.score += 300; playSfx(200, 'square', 0.4); }
+            }
+
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
-                if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) entities.bullets.splice(i, 1);
+                if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) entities.bullets.splice(i, 1);
             });
 
+            entities.trails.forEach((t, i) => { t.a -= 0.03; if(t.a <= 0) entities.trails.splice(i, 1); });
+
             if(me.hp <= 0) location.reload();
-            draw();
+            draw(dx, dy);
             requestAnimationFrame(loop);
         }
 
-        function draw() {
+        function draw(dx, dy) {
             ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
             
-            // Player
+            // Neon Grid
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.05)';
+            for(let i=0; i<canvas.width; i+=60) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+
+            // Trails & Aura
+            entities.trails.forEach(t => { ctx.fillStyle = `rgba(34, 211, 238, ${t.a})`; ctx.beginPath(); ctx.arc(t.x, t.y, 12, 0, 7); ctx.fill(); });
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.3)'; ctx.setLineDash([5, 15]);
+            ctx.beginPath(); ctx.arc(me.x, me.y, 45, Date.now()/300, Date.now()/300 + Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+
+            // Character Mech-Cat
             ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
-            ctx.fillStyle = me.dashing > 0 ? '#f472b6' : '#22d3ee';
-            ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
-            ctx.fillRect(-20, -20, 40, 40);
-            ctx.fillStyle = '#fff'; ctx.fillRect(10, -5, 15, 10);
+            ctx.shadowBlur = 20; ctx.shadowColor = '#22d3ee';
+            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(-22, -22, 44, 44, 8); ctx.fill();
+            ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2; ctx.stroke();
+            // Ears
+            ctx.fillStyle = '#22d3ee'; ctx.beginPath(); ctx.moveTo(-22,-22); ctx.lineTo(-15,-40); ctx.lineTo(0,-22); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(22,-22); ctx.lineTo(15,-40); ctx.lineTo(0,-22); ctx.fill();
+            // Visor
+            ctx.fillStyle = '#fff'; ctx.fillRect(12, -10, 8, 20);
             ctx.restore();
+
+            // Drone
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(34, 211, 238, 0.2)'; ctx.moveTo(me.x, me.y); ctx.lineTo(dx, dy); ctx.stroke();
+            ctx.shadowBlur = 15; ctx.shadowColor = '#60a5fa'; ctx.fillStyle = '#60a5fa'; ctx.beginPath(); ctx.arc(dx, dy, 12, 0, 7); ctx.fill();
 
             // Zombies
             entities.zombies.forEach(z => {
-                ctx.fillStyle = '#4ade80'; ctx.shadowBlur = 10; ctx.shadowColor = '#4ade80';
-                ctx.beginPath(); ctx.arc(z.x, z.y, 20, 0, 7); ctx.fill();
+                let s = Math.sin(Date.now()/200 + z.seed)*4;
+                ctx.shadowBlur = 15; ctx.shadowColor = '#4ade80'; ctx.fillStyle = '#4ade80';
+                ctx.beginPath(); ctx.ellipse(z.x, z.y, 22+s, 26-s, 0, 0, 7); ctx.fill();
             });
+
+            // Boss
+            if(entities.boss) {
+                ctx.shadowBlur = 30; ctx.shadowColor = '#a855f7'; ctx.fillStyle = '#a855f7';
+                ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 80, 0, 7); ctx.fill();
+            }
 
             // Bullets
             entities.bullets.forEach(b => {
-                ctx.fillStyle = '#facc15'; ctx.shadowBlur = 5; ctx.beginPath();
-                ctx.arc(b.x, b.y, 5, 0, 7); ctx.fill();
+                ctx.shadowBlur = 10; ctx.shadowColor = b.color; ctx.fillStyle = b.color;
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, 7); ctx.fill();
             });
 
-            document.getElementById('hp-f').style.width = me.hp + '%';
-            document.getElementById('ult-f').style.width = me.ult + '%';
+            // UI Update
+            ctx.shadowBlur = 0;
+            document.getElementById('hp-fill').style.width = me.hp + '%';
+            document.getElementById('ult-fill').style.width = me.ult + '%';
             document.getElementById('gold-txt').innerText = me.gold;
+            document.getElementById('score-txt').innerText = me.score;
+            document.getElementById('stage-num').innerText = me.stage;
             document.getElementById('btn-ult').style.display = me.ult >= 100 ? 'flex' : 'none';
+        }
+
+        function openShop() {
+            isShopOpen = true;
+            document.getElementById('shop-screen').style.display = 'flex';
+            document.getElementById('shop-gold').innerText = `🍭 KẸO: ${me.gold}`;
+            const list = document.getElementById('shop-list');
+            list.innerHTML = '';
+            Object.keys(weaponStats).forEach(k => {
+                if(me.weapon === k) return;
+                let w = weaponStats[k];
+                let item = document.createElement('div');
+                item.className = "shop-item";
+                item.innerHTML = `<div class="text-[10px] text-cyan-400 font-bold uppercase">${w.n}</div><div class="text-2xl font-black">${w.c}🍭</div>`;
+                item.onclick = () => { if(me.gold >= w.c) { me.gold -= w.c; me.weapon = k; closeShop(); } };
+                list.appendChild(item);
+            });
+            // Hồi máu
+            let heal = document.createElement('div'); heal.className = "shop-item";
+            heal.innerHTML = `<div class="text-[10px] text-green-400 font-bold uppercase">Hồi Máu</div><div class="text-2xl font-black">300🍭</div>`;
+            heal.onclick = () => { if(me.gold >= 300) { me.gold -= 300; me.hp = 100; closeShop(); } };
+            list.appendChild(heal);
+        }
+
+        function closeShop() {
+            isShopOpen = false;
+            document.getElementById('shop-screen').style.display = 'none';
+            me.stage++;
+            entities.boss = { x: canvas.width/2, y: -200, hp: 2000 + me.stage*700 };
+            playSfx(200, 'sine', 0.3);
+        }
+
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+                this.beginPath(); this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r);
+                this.closePath(); return this;
+            };
         }
     </script>
 </body>
