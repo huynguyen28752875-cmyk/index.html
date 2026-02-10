@@ -3,201 +3,405 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quán Phở Anh Ba - Siêu Kết Nối</title>
+    <title>Zombie Outbreak: Last Stand</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #111; touch-action: none; font-family: sans-serif; }
-        canvas { display: block; background: #2c3e50; }
-        .setup-overlay { position: absolute; inset: 0; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        #joystick { position: absolute; bottom: 40px; left: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; border: 2px solid #555; }
-        #stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: #fff; border-radius: 50%; }
-        .action-btn { position: absolute; border-radius: 50%; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; border: 4px solid rgba(0,0,0,0.2); }
-        #btn-shoot { bottom: 40px; right: 40px; width: 80px; height: 80px; background: #e74c3c; }
-        #btn-dash { bottom: 130px; right: 50px; width: 60px; height: 60px; background: #3498db; }
+        body { margin: 0; overflow: hidden; background: #222; font-family: 'Arial', sans-serif; touch-action: none; }
+        canvas { display: block; background: #333; }
+        .ui-overlay { position: absolute; inset: 0; background: #111; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .game-ui { position: absolute; top: 0; left: 0; width: 100%; padding: 10px; pointer-events: none; z-index: 50; }
+        .health-bar-bg { width: 80px; height: 8px; background: #555; border-radius: 4px; overflow: hidden; }
+        .health-bar-fill { height: 100%; background: #28a745; transition: width 0.2s; }
+        
+        /* Controls */
+        #joystick { position: absolute; bottom: 30px; left: 30px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); z-index: 60; }
+        #stick { position: absolute; top: 20px; left: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; }
+        #fire-btn { position: absolute; bottom: 30px; right: 30px; width: 70px; height: 70px; background: #dc3545; border-radius: 50%; color: white; font-weight: bold; font-size: 14px; border: 3px solid #c82333; z-index: 60; }
+        #fire-btn:active { transform: translateY(2px); box-shadow: none; }
     </style>
 </head>
 <body>
 
-    <div id="setup-screen" class="setup-overlay">
-        <h1 class="text-4xl font-black text-yellow-500 mb-2 italic text-center">ANH BA ONLINE</h1>
-        <p class="text-sm mb-8 text-gray-400">Nhập tên phòng giống nhau để gặp nhau</p>
-        <input type="text" id="room-input" class="p-4 rounded-xl w-72 text-black font-bold mb-4 text-center outline-none border-4 border-yellow-600" placeholder="Ví dụ: anhba1">
-        <button onclick="initGame()" id="start-btn" class="bg-green-600 px-12 py-4 rounded-2xl font-black text-xl hover:bg-green-500 active:scale-95 transition-all shadow-lg shadow-green-900/50">VÀO CHIẾN</button>
-        <p id="status" class="mt-6 text-blue-400 font-medium animate-pulse"></p>
+    <audio id="bgMusic" loop>
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="setup-screen" class="ui-overlay">
+        <h1 class="text-4xl font-black text-red-600 mb-2 italic text-center">ZOMBIE OUTBREAK</h1>
+        <p class="text-xl font-bold text-gray-300 mb-6">Last Stand</p>
+        <input type="text" id="player-name" class="p-3 rounded-lg w-64 text-black font-bold mb-3 text-center outline-none border-2 border-yellow-500" placeholder="Tên của bạn (VD: Chiến Binh)">
+        <input type="text" id="room-name" class="p-3 rounded-lg w-64 text-black font-bold mb-4 text-center outline-none border-2 border-blue-500" placeholder="Tên phòng (VD: survivor1)">
+        <button onclick="startGame()" id="start-btn" class="bg-green-600 px-10 py-3 rounded-xl font-bold text-lg hover:bg-green-700 active:scale-95 transition-all shadow-lg">BẮT ĐẦU SINH TỒN</button>
+        <p id="status" class="mt-4 text-blue-400 font-medium"></p>
     </div>
 
-    <div id="game-ui" class="absolute top-4 left-4 right-4 flex justify-between pointer-events-none hidden">
-        <div class="bg-black/70 p-2 rounded-lg border-l-4 border-blue-500">
-            <p class="text-[10px] text-blue-400 font-bold">ANH BA (BẠN)</p>
-            <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden mt-1">
-                <div id="my-hp" class="h-full bg-green-500 transition-all" style="width: 100%;"></div>
+    <div id="game-ui-elements" class="hidden">
+        <div class="game-ui flex justify-between items-start">
+            <div class="bg-black/70 p-2 rounded-lg border-l-4 border-yellow-500">
+                <p class="text-[10px] text-yellow-400 font-bold" id="my-name-display"></p>
+                <div class="health-bar-bg"><div id="my-hp" class="health-bar-fill" style="width: 100%;"></div></div>
+                <p class="text-white text-[9px] mt-1">SCORE: <span id="my-score">0</span></p>
+                <p class="text-white text-[9px]">KILLS: <span id="my-kills">0</span></p>
             </div>
-            <p class="text-white text-[9px] mt-1">❤️ MẠNG: <span id="my-lives">3</span></p>
-        </div>
-        <div class="bg-black/70 p-2 rounded-lg border-r-4 border-red-500 text-right">
-            <p class="text-[10px] text-red-400 font-bold">ĐỐI THỦ</p>
-            <div class="w-24 h-2 bg-gray-800 rounded-full overflow-hidden mt-1 ml-auto">
-                <div id="peer-hp" class="h-full bg-red-500 transition-all" style="width: 0%;"></div>
+            <button onclick="toggleMusic()" class="pointer bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded-full text-xs">🎵</button>
+            <div class="bg-black/70 p-2 rounded-lg border-r-4 border-red-500 text-right">
+                <p class="text-[10px] text-red-400 font-bold" id="peer-name-display">ĐANG CHỜ...</p>
+                <div class="health-bar-bg ml-auto"><div id="peer-hp" class="health-bar-fill" style="width: 100%;"></div></div>
+                <p class="text-white text-[9px] mt-1">SCORE: <span id="peer-score">0</span></p>
+                <p class="text-white text-[9px]">KILLS: <span id="peer-kills">0</span></p>
             </div>
-            <p class="text-white text-[9px] mt-1">❤️ MẠNG: <span id="peer-lives">3</span></p>
         </div>
+        
+        <div id="joystick">
+            <div id="stick"></div>
+        </div>
+        <button id="fire-btn">BẮN</button>
     </div>
 
-    <div id="controls" class="hidden">
-        <div id="joystick"><div id="stick"></div></div>
-        <button id="btn-shoot" class="action-btn shadow-lg">NÉM 🍜</button>
-        <button id="btn-dash" class="action-btn shadow-lg">LƯỚT</button>
-    </div>
-    
-    <canvas id="game"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('game');
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const statusEl = document.getElementById('status');
+        const bgMusic = document.getElementById('bgMusic');
         let peer, conn, roomName;
 
-        let me = { x: 100, y: 100, hp: 100, lives: 3, bullets: [] };
-        let enemy = { x: -1000, y: -1000, hp: 100, lives: 3, bullets: [] };
-        let moveX = 0, moveY = 0;
+        // Game State (lưu trên trình duyệt)
+        let gameState = JSON.parse(localStorage.getItem('zombieGame')) || {
+            playerName: "Chiến Binh",
+            my: { x: 100, y: 100, hp: 100, score: 0, kills: 0, bullets: [], size: 20, speed: 3 },
+            enemy: { x: -1000, y: -1000, hp: 100, score: 0, kills: 0, bullets: [], size: 20 },
+            zombies: [],
+            isHost: false, // Ai là Host sẽ sinh zombie
+            musicOn: false
+        };
 
-        function initGame() {
-            const input = document.getElementById('room-input').value.trim();
-            if (!input) return alert("Bạn chưa nhập tên phòng!");
-            roomName = 'aba-' + input.toLowerCase();
+        let moveX = 0, moveY = 0;
+        let lastZombieSpawn = 0;
+        const ZOMBIE_SPAWN_INTERVAL = 2000; // 2 giây
+        const ZOMBIE_SPEED = 0.5;
+        const PLAYER_BULLET_SPEED = 10;
+        const ZOMBIE_DAMAGE = 5; // Zombie chạm gây 5 sát thương
+        const PLAYER_ATTACK_COOLDOWN = 300; // 0.3 giây
+        let lastAttackTime = 0;
+
+        // -- Setup Screen Handlers --
+        document.getElementById('player-name').value = gameState.playerName;
+        document.getElementById('my-name-display').innerText = gameState.playerName;
+
+        function startGame() {
+            gameState.playerName = document.getElementById('player-name').value || "Chiến Binh";
+            localStorage.setItem('zombieGame', JSON.stringify(gameState)); // Lưu tên
+            document.getElementById('my-name-display').innerText = gameState.playerName;
+
+            roomName = 'zombie-room-' + document.getElementById('room-name').value.trim().toLowerCase();
+            if (!roomName) return alert("Nhập tên phòng đã!");
+
             statusEl.innerText = "Đang tìm phòng...";
             document.getElementById('start-btn').disabled = true;
 
-            // Bước 1: Thử làm Host
+            // Step 1: Try to be Host
             peer = new Peer(roomName);
 
             peer.on('open', (id) => {
-                statusEl.innerText = "Phòng đã mở! Chờ đối thủ vào...";
-                document.getElementById('game-ui').classList.remove('hidden');
-                document.getElementById('controls').classList.remove('hidden');
+                statusEl.innerText = "Bạn là HOST! Chờ đồng đội vào...";
+                gameState.isHost = true;
+                showGameUI();
             });
 
-            // Bước 2: Nếu phòng đã có Host, tự động chuyển sang làm Guest
+            // Step 2: If ID unavailable, become Guest
             peer.on('error', (err) => {
                 if (err.type === 'unavailable-id') {
-                    statusEl.innerText = "Phòng đã có chủ, đang kết nối thách đấu...";
-                    peer.destroy();
-                    
-                    // Tạo ID ngẫu nhiên cho mình để tránh tranh chấp
-                    peer = new Peer();
+                    statusEl.innerText = "Phòng đã có Host, đang kết nối làm Guest...";
+                    peer.destroy(); // Destroy old peer with unavailable ID
+                    peer = new Peer(); // Create new peer with random ID
                     peer.on('open', () => {
                         conn = peer.connect(roomName);
-                        setupEvents();
+                        setupPeerConnection();
                     });
                 } else {
-                    alert("Lỗi kết nối: " + err.type);
+                    alert("Lỗi kết nối PeerJS: " + err.type + "\nReload lại trang nếu cần.");
+                    console.error(err);
                     location.reload();
                 }
             });
 
-            // Bước 3: Host nhận kết nối từ Guest
+            // Step 3: Host accepts incoming connection
             peer.on('connection', (c) => {
                 conn = c;
-                statusEl.innerText = "Đối thủ đã vào! Trận đấu bắt đầu!";
-                setupEvents();
+                statusEl.innerText = "Đồng đội đã vào! Bắt đầu tiêu diệt Zombie!";
+                setupPeerConnection();
             });
         }
 
-        function setupEvents() {
-            // Xóa màn hình chờ sau 1 giây
-            setTimeout(() => { document.getElementById('setup-screen').style.display = 'none'; }, 1000);
-            document.getElementById('game-ui').classList.remove('hidden');
-            document.getElementById('controls').classList.remove('hidden');
+        function setupPeerConnection() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-ui-elements').classList.remove('hidden');
+            showGameUI();
+            
+            conn.on('open', () => {
+                console.log("Peer connection established!");
+                setInterval(sendData, 30); // Send data frequently
+            });
 
             conn.on('data', data => {
                 if (data.type === 'sync') {
-                    enemy.x = data.x; enemy.y = data.y;
-                    enemy.bullets = data.bullets;
-                    enemy.hp = data.hp; enemy.lives = data.lives;
+                    // Update enemy data
+                    gameState.enemy.x = data.x;
+                    gameState.enemy.y = data.y;
+                    gameState.enemy.hp = data.hp;
+                    gameState.enemy.score = data.score;
+                    gameState.enemy.kills = data.kills;
+                    gameState.enemy.bullets = data.bullets;
+                    document.getElementById('peer-name-display').innerText = data.playerName;
                 }
-                if (data.type === 'hit') {
-                    me.hp -= 10;
-                    if (me.hp <= 0) {
-                        me.lives--; me.hp = 100;
-                        me.x = Math.random() * 200;
-                        if (me.lives <= 0) { alert("BẠN ĐÃ THUA CUỘC!"); location.reload(); }
+                if (data.type === 'hitZombie' && !gameState.isHost) {
+                    // Only Host manages zombies, Guests just receive updates
+                    let zombie = gameState.zombies.find(z => z.id === data.zombieId);
+                    if (zombie) {
+                        zombie.hp -= 20; // Player bullet damage
+                        if (zombie.hp <= 0) {
+                            gameState.zombies = gameState.zombies.filter(z => z.id !== data.zombieId);
+                            gameState.enemy.score += 10;
+                            gameState.enemy.kills++;
+                        }
+                    }
+                }
+                if (data.type === 'zombieUpdate' && !gameState.isHost) {
+                    gameState.zombies = data.zombies;
+                }
+                if (data.type === 'playerHit') { // When other player takes damage
+                    gameState.enemy.hp = data.newHp;
+                    if(gameState.enemy.hp <= 0) {
+                         alert(data.playerName + " đã bị hạ gục!");
+                         // Maybe respawn logic for enemy
                     }
                 }
             });
-            
-            // Bắt đầu vòng lặp game
-            gameLoop();
-        }
 
-        // --- HÀNH ĐỘNG ---
-        const joy = document.getElementById('joystick');
-        const stick = document.getElementById('stick');
-        joy.addEventListener('touchmove', e => {
-            const t = e.touches[0]; const r = joy.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
-            const d = Math.sqrt(dx*dx + dy*dy);
-            if (d > 40) { dx *= 40/d; dy *= 40/d; }
-            stick.style.transform = `translate(${dx}px, ${dy}px)`;
-            moveX = dx/7; moveY = dy/7;
-        });
-        joy.addEventListener('touchend', () => { moveX = 0; moveY = 0; stick.style.transform = 'none'; });
-
-        document.getElementById('btn-dash').addEventListener('touchstart', (e) => {
-            e.preventDefault(); me.x += moveX * 15; me.y += moveY * 15;
-        });
-        document.getElementById('btn-shoot').addEventListener('touchstart', (e) => {
-            e.preventDefault(); me.bullets.push({ x: me.x + 20, y: me.y + 20, vx: 14 });
-        });
-
-        // --- VÒNG LẶP CHÍNH ---
-        function gameLoop() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            me.x = Math.max(0, Math.min(canvas.width - 40, me.x + moveX));
-            me.y = Math.max(0, Math.min(canvas.height - 40, me.y + moveY));
-
-            // Đạn bay & Check va chạm
-            me.bullets.forEach((b, i) => {
-                b.x += b.vx;
-                if (b.x > enemy.x && b.x < enemy.x + 40 && b.y > enemy.y && b.y < enemy.y + 40) {
-                    me.bullets.splice(i, 1);
-                    if (conn) conn.send({ type: 'hit' });
-                }
-                if (b.x < 0 || b.x > canvas.width) me.bullets.splice(i, 1);
+            conn.on('close', () => {
+                alert("Đối thủ đã ngắt kết nối!");
+                location.reload();
             });
 
-            // Gửi dữ liệu đồng bộ
+            conn.on('error', (err) => {
+                console.error("Lỗi kết nối với đối thủ: ", err);
+                alert("Lỗi kết nối với đối thủ! Vui lòng tải lại trang.");
+                location.reload();
+            });
+
+            if (!gameLoopStarted) {
+                gameLoopStarted = true;
+                gameLoop();
+            }
+        }
+
+        let gameLoopStarted = false;
+        function showGameUI() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-ui-elements').classList.remove('hidden');
+            if(!gameLoopStarted) {
+                gameLoopStarted = true;
+                gameLoop();
+            }
+            if(gameState.musicOn) bgMusic.play();
+        }
+
+        // --- Game Logic ---
+        function sendData() {
             if (conn && conn.open) {
                 conn.send({
                     type: 'sync',
-                    x: canvas.width - me.x - 40,
-                    y: me.y,
-                    bullets: me.bullets.map(b => ({ x: canvas.width - b.x, y: b.y, vx: -b.vx })),
-                    hp: me.hp, lives: me.lives
+                    x: canvas.width - gameState.my.x - gameState.my.size, // Mirror position
+                    y: gameState.my.y,
+                    hp: gameState.my.hp,
+                    score: gameState.my.score,
+                    kills: gameState.my.kills,
+                    bullets: gameState.my.bullets.map(b => ({ ...b, x: canvas.width - b.x, vx: -b.vx })),
+                    playerName: gameState.playerName
                 });
+                if (gameState.isHost) {
+                    // Host is responsible for sending zombie updates
+                    conn.send({ type: 'zombieUpdate', zombies: gameState.zombies });
+                }
+            }
+        }
+
+        // --- Controls ---
+        const joystick = document.getElementById('joystick');
+        const stick = document.getElementById('stick');
+        joystick.addEventListener('touchmove', e => {
+            const t = e.touches[0]; const r = joystick.getBoundingClientRect();
+            let dx = t.clientX - (r.left + 40), dy = t.clientY - (r.top + 40);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist > 30) { dx *= 30/dist; dy *= 30/dist; }
+            stick.style.transform = `translate(${dx}px, ${dy}px)`;
+            moveX = dx / 10 * gameState.my.speed; moveY = dy / 10 * gameState.my.speed;
+        });
+        joystick.addEventListener('touchend', () => { moveX = 0; moveY = 0; stick.style.transform = 'none'; });
+
+        document.getElementById('fire-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const currentTime = Date.now();
+            if (currentTime - lastAttackTime > PLAYER_ATTACK_COOLDOWN) {
+                gameState.my.bullets.push({ x: gameState.my.x + gameState.my.size / 2, y: gameState.my.y + gameState.my.size / 2, vx: PLAYER_BULLET_SPEED });
+                lastAttackTime = currentTime;
+            }
+        });
+
+        function toggleMusic() {
+            gameState.musicOn = !gameState.musicOn;
+            if (gameState.musicOn) bgMusic.play();
+            else bgMusic.pause();
+        }
+
+        // --- Main Game Loop ---
+        function gameLoop() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Update Player Position
+            gameState.my.x = Math.max(0, Math.min(canvas.width - gameState.my.size, gameState.my.x + moveX));
+            gameState.my.y = Math.max(0, Math.min(canvas.height - gameState.my.size, gameState.my.y + moveY));
+
+            // Spawn Zombies (Host only)
+            if (gameState.isHost && Date.now() - lastZombieSpawn > ZOMBIE_SPAWN_INTERVAL && gameState.zombies.length < 10) {
+                gameState.zombies.push({
+                    id: Date.now(),
+                    x: Math.random() < 0.5 ? 0 : canvas.width - 20, // Spawn left or right edge
+                    y: Math.random() * canvas.height,
+                    hp: 50,
+                    size: 25,
+                    color: '#28a745' // Zombie color
+                });
+                lastZombieSpawn = Date.now();
             }
 
+            // Update Zombies
+            gameState.zombies.forEach(z => {
+                // Move towards nearest player
+                let targetX = (z.x < gameState.my.x + gameState.my.size/2) ? gameState.my.x + gameState.my.size/2 : gameState.enemy.x + gameState.enemy.size/2;
+                let targetY = (z.y < gameState.my.y + gameState.my.size/2) ? gameState.my.y + gameState.my.size/2 : gameState.enemy.y + gameState.enemy.size/2;
+
+                if (Math.abs(z.x - targetX) > 5) z.x += (z.x < targetX ? 1 : -1) * ZOMBIE_SPEED;
+                if (Math.abs(z.y - targetY) > 5) z.y += (z.y < targetY ? 1 : -1) * ZOMBIE_SPEED;
+
+                // Collision with player
+                if (collides(z, gameState.my)) {
+                    gameState.my.hp -= ZOMBIE_DAMAGE;
+                    if(conn) conn.send({ type: 'playerHit', newHp: gameState.my.hp, playerName: gameState.playerName }); // Tell other player I took damage
+                    if (gameState.my.hp <= 0) {
+                        alert("BẠN ĐÃ BỊ HẠ GỤC!");
+                        location.reload();
+                    }
+                }
+            });
+
+            // Update Player Bullets
+            gameState.my.bullets.forEach((b, i) => {
+                b.x += b.vx;
+                // Bullet collision with zombies (Host manages zombie damage)
+                if (gameState.isHost) {
+                    gameState.zombies.forEach((z, zIndex) => {
+                        if (collides(b, z)) {
+                            b.remove = true;
+                            z.hp -= 20; // Bullet damage
+                            if (z.hp <= 0) {
+                                gameState.my.score += 10;
+                                gameState.my.kills++;
+                                gameState.zombies.splice(zIndex, 1);
+                            }
+                        }
+                    });
+                } else if (conn) {
+                    // Guest tells Host which zombie it hit
+                    gameState.zombies.forEach((z) => {
+                         if (collides(b, z)) {
+                            b.remove = true;
+                            conn.send({ type: 'hitZombie', zombieId: z.id });
+                         }
+                    });
+                }
+                
+                if (b.x > canvas.width || b.x < 0) b.remove = true;
+            });
+            gameState.my.bullets = gameState.my.bullets.filter(b => !b.remove);
+
+            // Save Game State periodically
+            localStorage.setItem('zombieGame', JSON.stringify(gameState));
+            
             draw();
             requestAnimationFrame(gameLoop);
         }
 
+        // --- Drawing ---
         function draw() {
-            ctx.clearRect(0,0, canvas.width, canvas.height);
-            // Sàn
-            ctx.strokeStyle = "rgba(255,255,255,0.05)";
-            for(let i=0; i<canvas.width; i+=50) { ctx.strokeRect(i, 0, 50, canvas.height); }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            ctx.fillStyle = "#3498db"; ctx.fillRect(me.x, me.y, 40, 40); // Me
-            ctx.fillStyle = "#e74c3c"; ctx.fillRect(enemy.x, enemy.y, 40, 40); // Enemy
-            
-            ctx.font = "24px Arial";
-            me.bullets.concat(enemy.bullets).forEach(b => ctx.fillText("🍜", b.x, b.y));
+            // Draw Players
+            ctx.fillStyle = '#1e90ff'; // My player color
+            ctx.beginPath();
+            ctx.arc(gameState.my.x, gameState.my.y, gameState.my.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.fillText(gameState.playerName, gameState.my.x - 20, gameState.my.y - 25);
 
-            // Update UI máu
-            document.getElementById('my-hp').style.width = me.hp + '%';
-            document.getElementById('peer-hp').style.width = enemy.hp + '%';
-            document.getElementById('my-lives').innerText = me.lives;
-            document.getElementById('peer-lives').innerText = enemy.lives;
+            ctx.fillStyle = '#ff6347'; // Enemy player color
+            ctx.beginPath();
+            ctx.arc(gameState.enemy.x, gameState.enemy.y, gameState.enemy.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.fillText(document.getElementById('peer-name-display').innerText, gameState.enemy.x - 20, gameState.enemy.y - 25);
+
+
+            // Draw Player Health Bars
+            ctx.fillStyle = 'red';
+            ctx.fillRect(gameState.my.x - gameState.my.size, gameState.my.y - gameState.my.size - 10, gameState.my.size * 2, 5);
+            ctx.fillStyle = 'green';
+            ctx.fillRect(gameState.my.x - gameState.my.size, gameState.my.y - gameState.my.size - 10, gameState.my.size * 2 * (gameState.my.hp / 100), 5);
+
+            ctx.fillStyle = 'red';
+            ctx.fillRect(gameState.enemy.x - gameState.enemy.size, gameState.enemy.y - gameState.enemy.size - 10, gameState.enemy.size * 2, 5);
+            ctx.fillStyle = 'green';
+            ctx.fillRect(gameState.enemy.x - gameState.enemy.size, gameState.enemy.y - gameState.enemy.size - 10, gameState.enemy.size * 2 * (gameState.enemy.hp / 100), 5);
+
+
+            // Draw Zombies
+            gameState.zombies.forEach(z => {
+                ctx.fillStyle = z.color;
+                ctx.beginPath();
+                ctx.arc(z.x, z.y, z.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Zombie health bar
+                ctx.fillStyle = 'gray';
+                ctx.fillRect(z.x - z.size, z.y - z.size - 10, z.size * 2, 3);
+                ctx.fillStyle = 'red';
+                ctx.fillRect(z.x - z.size, z.y - z.size - 10, z.size * 2 * (z.hp / 50), 3);
+            });
+
+            // Draw Bullets
+            gameState.my.bullets.concat(gameState.enemy.bullets).forEach(b => {
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Update UI Stats
+            document.getElementById('my-hp').style.width = gameState.my.hp + '%';
+            document.getElementById('my-score').innerText = gameState.my.score;
+            document.getElementById('my-kills').innerText = gameState.my.kills;
+            document.getElementById('peer-hp').style.width = gameState.enemy.hp + '%';
+            document.getElementById('peer-score').innerText = gameState.enemy.score;
+            document.getElementById('peer-kills').innerText = gameState.enemy.kills;
+        }
+
+        // Collision detection for circles
+        function collides(obj1, obj2) {
+            if (!obj1 || !obj2 || typeof obj1.x === 'undefined' || typeof obj2.x === 'undefined') return false;
+            const dist = Math.sqrt(Math.pow(obj1.x - obj2.x, 2) + Math.pow(obj1.y - obj2.y, 2));
+            return dist < obj1.size + obj2.size;
         }
     </script>
 </body>
