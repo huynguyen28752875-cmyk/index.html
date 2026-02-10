@@ -3,63 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zom-Evo: Ultimate Strike</title>
+    <title>Zom-Evo: Chill & Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial Black', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #010409; touch-action: none; font-family: 'Segoe UI', sans-serif; }
         canvas { display: block; }
-        .ui-overlay { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); color: white; }
-        .shop-card { background: #1e1b4b; border: 2px solid #4338ca; padding: 15px; border-radius: 12px; width: 180px; cursor: pointer; text-align: center; margin: 10px; transition: 0.2s; }
-        .shop-card:hover { border-color: #fbbf24; transform: scale(1.05); }
+        .ui-overlay { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.85); color: white; backdrop-filter: blur(5px); }
+        .shop-card { background: #161b22; border: 1px solid #30363d; padding: 15px; border-radius: 12px; width: 160px; cursor: pointer; text-align: center; margin: 8px; transition: 0.3s; }
+        .shop-card:hover { border-color: #58a6ff; background: #21262d; }
         #hud { position: absolute; top: 15px; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; color: white; }
-        .bar-container { width: 120px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; border: 1px solid #444; margin-bottom: 4px; }
-        #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.2s; }
-        #ult-fill { height: 100%; background: #fbbf24; width: 0%; transition: 0.1s; box-shadow: 0 0 10px #fbbf24; }
-        #wave-box { width: 150px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; border: 1px solid #333; }
-        #wave-fill { height: 4px; background: #34d399; width: 0%; transition: 0.3s; }
-        #boss-ui { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); width: 60%; display: none; }
-        .boss-bar { width: 100%; height: 12px; background: #111; border: 1px solid #ef4444; border-radius: 6px; overflow: hidden; }
-        #boss-hp-fill { height: 100%; background: #ef4444; width: 100%; }
+        .bar-container { width: 140px; height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
+        #hp-fill { height: 100%; background: #f85149; width: 100%; transition: 0.3s; }
+        #ult-fill { height: 100%; background: #d29922; width: 0%; transition: 0.2s; box-shadow: 0 0 8px #d29922; }
+        #wave-box { width: 140px; height: 4px; background: #30363d; border-radius: 2px; overflow: hidden; }
+        #wave-fill { height: 100%; background: #3fb950; width: 0%; transition: 0.5s; }
+        #boss-ui { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 50%; display: none; }
+        .boss-bar { width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #f85149; }
+        #boss-hp-fill { height: 100%; background: #f85149; width: 100%; }
         #mobile-ctrl { display: none; }
-        .m-btn { position: absolute; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        #joystick { bottom: 30px; left: 30px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.1); position: absolute; }
-        #stick { position: absolute; top: 30px; left: 30px; width: 40px; height: 40px; background: #fff; border-radius: 50%; }
-        #btn-shoot { bottom: 30px; right: 30px; width: 80px; height: 80px; background: #ef4444; position: absolute; border: 4px solid #fff; }
-        #btn-ult { bottom: 120px; right: 40px; width: 60px; height: 60px; background: #fbbf24; color: #000; position: absolute; display: none; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .m-btn { position: absolute; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        #joystick { bottom: 40px; left: 40px; width: 100px; height: 100px; }
+        #stick { position: absolute; top: 30px; left: 30px; width: 40px; height: 40px; background: #fff; border-radius: 50%; opacity: 0.5; }
+        #btn-shoot { bottom: 40px; right: 40px; width: 80px; height: 80px; font-weight: bold; }
+        #btn-ult { bottom: 130px; right: 50px; width: 60px; height: 60px; background: #d29922; display: none; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="ui-overlay">
-        <h1 class="text-6xl font-black text-yellow-500 mb-2 italic">ULTIMATE STRIKE</h1>
-        <p class="mb-6 text-gray-400">PHÍM Q ĐỂ GỌI KHÔNG KÍCH (KHI ĐẦY NỘ)</p>
-        <button onclick="initGame()" class="bg-yellow-600 px-16 py-4 rounded-full font-black text-2xl shadow-lg">KHỞI CHIẾN</button>
+        <h1 class="text-5xl font-light tracking-widest text-blue-400 mb-2">CHILL SURVIVAL</h1>
+        <p class="mb-8 text-gray-400 text-sm italic">Âm nhạc thư giãn - Lối chơi gây nghiện</p>
+        <button onclick="initGame()" class="border border-blue-500 text-blue-400 px-12 py-3 rounded-md hover:bg-blue-500 hover:text-white transition-all duration-500">BẮT ĐẦU</button>
     </div>
 
     <div id="shop-screen" class="ui-overlay hidden">
-        <h2 class="text-4xl font-black text-cyan-400 mb-2 italic">SHOP TIẾP TẾ</h2>
-        <div class="flex flex-wrap justify-center" id="shop-list"></div>
-        <button onclick="closeShop()" class="mt-4 text-gray-400 underline">Đấu Boss</button>
+        <h2 class="text-3xl font-bold text-gray-200 mb-6">TIẾP TẾ CHIẾN TRƯỜNG</h2>
+        <div class="flex flex-wrap justify-center max-w-2xl" id="shop-list"></div>
+        <button onclick="closeShop()" class="mt-8 text-gray-500 hover:text-white transition">Tiếp tục chiến đấu →</button>
     </div>
 
     <div id="hud" class="hidden">
         <div>
-            <div class="flex items-center gap-2"><span class="text-[10px] font-bold">HP</span><div class="bar-container"><div id="hp-fill"></div></div></div>
-            <div class="flex items-center gap-2"><span class="text-[10px] font-bold text-yellow-400">ULT</span><div class="bar-container"><div id="ult-fill"></div></div></div>
+            <div class="bar-container"><div id="hp-fill"></div></div>
+            <div class="bar-container"><div id="ult-fill"></div></div>
             <div id="wave-box"><div id="wave-fill"></div></div>
         </div>
-        <div id="cycle-ui" class="text-center"><div id="cycle-icon" class="text-2xl">🌞</div><div id="cycle-timer" class="text-xs font-bold">60s</div></div>
+        <div id="cycle-ui" class="text-center">
+            <div id="cycle-icon" class="text-xl">☀️</div>
+            <div id="cycle-timer" class="text-[10px] opacity-60">60s</div>
+        </div>
         <div class="text-right">
-            <p id="ui-score" class="text-4xl font-black text-white">0</p>
-            <p class="text-[14px] font-bold text-yellow-400">💰 <span id="ui-gold">0</span></p>
+            <p id="ui-gold" class="text-xl font-mono text-yellow-500">0000$</p>
+            <p id="ui-score" class="text-sm opacity-50">Score: 0</p>
         </div>
     </div>
 
     <div id="boss-ui"><div class="boss-bar"><div id="boss-hp-fill"></div></div></div>
     
     <div id="mobile-ctrl">
-        <div id="joystick"><div id="stick"></div></div>
+        <div id="joystick" class="m-btn"><div id="stick"></div></div>
         <button id="btn-shoot" class="m-btn">FIRE</button>
         <button id="btn-ult" class="m-btn">ULT</button>
     </div>
@@ -70,55 +72,66 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
-        let me = { x: 500, y: 300, hp: 100, maxHp: 100, gold: 0, score: 0, stage: 1, speed: 4, weapon: 'pistol', lastShot: 0, ult: 0 };
-        let drone = { angle: 0, lastShot: 0, rate: 1500 };
+        let me = { x: 0, y: 0, hp: 100, maxHp: 100, gold: 0, score: 0, stage: 1, speed: 4, weapon: 'pistol', lastShot: 0, ult: 0, angle: 0 };
+        let drone = { angle: 0, lastShot: 0, rate: 1200 };
         let entities = { zombies: [], bullets: [], particles: [], boss: null, mercs: [], airStrikes: [] };
         let screenShake = 0, isNight = false, cycleTime = 60, keys = {}, joyX = 0, joyY = 0, killsInWave = 0, killsRequired = 10;
-        let audioCtx, osc, lfo;
+        let audioCtx, mainGain;
 
         const Weapons = {
-            pistol: { rate: 400, spread: 0, count: 1, speed: 16, color: '#fff' },
-            rifle: { rate: 150, spread: 0.05, count: 1, speed: 18, color: '#fbbf24' },
-            shotgun: { rate: 800, spread: 0.3, count: 5, speed: 14, color: '#f87171' },
-            plasma: { rate: 600, spread: 0, count: 1, speed: 12, size: 8, color: '#22d3ee' }
+            pistol: { rate: 350, spread: 0, count: 1, speed: 15, color: '#fff' },
+            rifle: { rate: 120, spread: 0.04, count: 1, speed: 18, color: '#ffea00' },
+            shotgun: { rate: 700, spread: 0.35, count: 6, speed: 14, color: '#ff4d4d' },
+            plasma: { rate: 500, spread: 0, count: 1, speed: 11, size: 10, color: '#00f2ff' }
         };
 
-        function setupAudio() {
+        // --- NHẠC NỀN CHILL (LO-FI AMBIENT) ---
+        function playChillMusic() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            osc = audioCtx.createOscillator();
-            lfo = audioCtx.createOscillator();
-            let lfoGain = audioCtx.createGain(), masterGain = audioCtx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(40, audioCtx.currentTime); 
-            lfo.type = 'sine'; lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime);
-            lfoGain.gain.setValueAtTime(10, audioCtx.currentTime);
-            lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
-            osc.connect(masterGain); masterGain.connect(audioCtx.destination);
-            masterGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            osc.start(); lfo.start();
+            mainGain = audioCtx.createGain();
+            mainGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            mainGain.connect(audioCtx.destination);
+
+            function createPad(freq, time) {
+                let osc = audioCtx.createOscillator();
+                let g = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, time);
+                g.gain.setValueAtTime(0, time);
+                g.gain.linearRampToValueAtTime(0.05, time + 2);
+                g.gain.linearRampToValueAtTime(0, time + 4);
+                osc.connect(g); g.connect(mainGain);
+                osc.start(time); osc.stop(time + 4);
+            }
+
+            setInterval(() => {
+                let now = audioCtx.currentTime;
+                let notes = [130.81, 146.83, 164.81, 196.00]; // Đô, Rê, Mi, Sol trầm
+                createPad(notes[Math.floor(Math.random()*notes.length)], now);
+            }, 3000);
         }
 
         function initGame() {
+            me.x = window.innerWidth/2; me.y = window.innerHeight/2;
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('hud').classList.remove('hidden');
             if(/Android|iPhone/i.test(navigator.userAgent)) document.getElementById('mobile-ctrl').style.display = 'block';
-            setupAudio();
+            playChillMusic();
             setInterval(() => { 
                 if(document.getElementById('shop-screen').classList.contains('hidden')) cycleTime--;
-                if(cycleTime<=0){ isNight=!isNight; cycleTime=60; document.getElementById('cycle-icon').innerText=isNight?"🌙":"🌞"; }
+                if(cycleTime<=0){ isNight=!isNight; cycleTime=60; document.getElementById('cycle-icon').innerText=isNight?"🌙":"☀️"; }
+                document.getElementById('cycle-timer').innerText = cycleTime + "s";
             }, 1000);
             loop();
         }
 
         function triggerAirStrike() {
             if(me.ult < 100) return;
-            me.ult = 0;
-            screenShake = 30;
-            for(let i=0; i<20; i++) {
+            me.ult = 0; screenShake = 20;
+            for(let i=0; i<15; i++) {
                 setTimeout(() => {
-                    let rx = Math.random() * canvas.width;
-                    let ry = Math.random() * canvas.height;
-                    entities.airStrikes.push({ x: rx, y: ry, timer: 30 });
-                }, i * 100);
+                    entities.airStrikes.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, timer: 40 });
+                }, i * 150);
             }
         }
 
@@ -126,10 +139,15 @@
             let now = Date.now();
             let w = Weapons[obj.weapon || 'pistol'];
             if(now - (obj.lastShot || 0) < w.rate) return;
-            let angle = targetAngle !== null ? targetAngle : me.angle;
+            let ang = targetAngle !== null ? targetAngle : me.angle;
             for(let i=0; i < w.count; i++) {
                 let off = (Math.random() - 0.5) * w.spread;
-                entities.bullets.push({ x: obj.x+20, y: obj.y+20, vx: Math.cos(angle + off) * w.speed, vy: Math.sin(angle + off) * w.speed, color: w.color, size: w.size || 4 });
+                entities.bullets.push({ 
+                    x: obj.x, y: obj.y, 
+                    vx: Math.cos(ang + off) * w.speed, 
+                    vy: Math.sin(ang + off) * w.speed, 
+                    color: w.color, size: w.size || 3 
+                });
             }
             obj.lastShot = now;
         }
@@ -138,63 +156,85 @@
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             if(!document.getElementById('shop-screen').classList.contains('hidden')) { requestAnimationFrame(loop); return; }
 
-            // Movement
-            let s = me.speed;
-            if(joyX !== 0 || joyY !== 0) { me.x += joyX*s; me.y += joyY*s; me.angle = Math.atan2(joyY, joyX); }
-            else { 
-                if(keys['KeyW']) me.y -= s; if(keys['KeyS']) me.y += s; 
-                if(keys['KeyA']) me.x -= s; if(keys['KeyD']) me.x += s; 
-                if(keys['mousedown']) shoot(me);
+            // Fixed Movement
+            let moveX = 0, moveY = 0;
+            if(joyX !== 0 || joyY !== 0) { moveX = joyX; moveY = joyY; me.angle = Math.atan2(joyY, joyX); }
+            else {
+                if(keys['KeyW']) moveY = -1; if(keys['KeyS']) moveY = 1;
+                if(keys['KeyA']) moveX = -1; if(keys['KeyD']) moveX = 1;
             }
-
-            // Ult Logic
+            let mag = Math.sqrt(moveX*moveX + moveY*moveY);
+            if(mag > 0) { me.x += (moveX/mag)*me.speed; me.y += (moveY/mag)*me.speed; }
+            if(!/Android|iPhone/i.test(navigator.userAgent)) {
+                // Mouse follow fixed
+                canvas.onmousemove = e => { me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
+            }
+            if(keys['Space'] || keys['mousedown']) shoot(me);
             if(keys['KeyQ']) triggerAirStrike();
-            document.getElementById('btn-ult').style.display = me.ult >= 100 ? 'block' : 'none';
 
-            // AirStrike Damage
-            entities.airStrikes.forEach((a, idx) => {
-                a.timer--;
-                if(a.timer === 0) {
-                    for(let i=0; i<15; i++) entities.particles.push({x:a.x, y:a.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, life:1, color:'#f59e0b', size:8});
-                    entities.zombies.forEach(z => { if(Math.sqrt((a.x-z.x)**2+(a.y-z.y)**2) < 150) z.hp -= 500; });
-                    if(entities.boss && Math.sqrt((a.x-entities.boss.x)**2+(a.y-entities.boss.y)**2) < 200) entities.boss.hp -= 1000;
-                    entities.airStrikes.splice(idx, 1);
+            // Entities Logic
+            entities.mercs.forEach((m, i) => {
+                let dist = Math.sqrt((me.x-m.x)**2 + (me.y-m.y)**2);
+                if(dist > 80) { m.x += (me.x - m.x) * 0.03; m.y += (me.y - m.y) * 0.03; }
+                if(entities.zombies.length > 0) {
+                    let z = entities.zombies[0];
+                    let a = Math.atan2(z.y-m.y, z.x-m.x);
+                    m.angle = a; shoot(m, a);
                 }
             });
 
-            // Entities Update (Mercs, Drone, Zombies)
-            entities.mercs.forEach((m, i) => {
-                let tx = me.x - Math.cos(me.angle)*60*(i+1), ty = me.y - Math.sin(me.angle)*60*(i+1);
-                m.x += (tx-m.x)*0.05; m.y += (ty-m.y)*0.05;
-                if(entities.zombies.length > 0) { let ang = Math.atan2(entities.zombies[0].y-m.y, entities.zombies[0].x-m.x); m.angle=ang; shoot(m, ang); }
-            });
-
-            drone.angle += 0.05;
-            let dX = me.x + 20 + Math.cos(drone.angle)*50, dY = me.y + 20 + Math.sin(drone.angle)*50;
+            // Drone
+            drone.angle += 0.03;
+            let dX = me.x + Math.cos(drone.angle)*60, dY = me.y + Math.sin(drone.angle)*60;
             if(Date.now() - drone.lastShot > drone.rate && entities.zombies.length > 0) {
                 let t = entities.zombies[0];
-                entities.bullets.push({x:dX, y:dY, vx:Math.cos(Math.atan2(t.y-dY, t.x-dX))*12, vy:Math.sin(Math.atan2(t.y-dY, t.x-dX))*12, color:'#22d3ee'});
+                shoot({x:dX, y:dY, weapon:'pistol', lastShot:drone.lastShot}, Math.atan2(t.y-dY, t.x-dX));
                 drone.lastShot = Date.now();
             }
 
-            if(!entities.boss && entities.zombies.length < 15) {
-                if(Math.random() < (isNight ? 0.08 : 0.04)) entities.zombies.push({ x: Math.random()*canvas.width, y: -50, hp: isNight?250:100 });
+            // Spawning
+            if(!entities.boss && entities.zombies.length < (10 + me.stage*2)) {
+                if(Math.random() < 0.05) {
+                    let side = Math.random() * 4;
+                    let rx, ry;
+                    if(side < 1) { rx = Math.random()*canvas.width; ry = -50; }
+                    else if(side < 2) { rx = Math.random()*canvas.width; ry = canvas.height+50; }
+                    else if(side < 3) { rx = -50; ry = Math.random()*canvas.height; }
+                    else { rx = canvas.width+50; ry = Math.random()*canvas.height; }
+                    entities.zombies.push({ x: rx, y: ry, hp: isNight?200:100, maxHp: isNight?200:100 });
+                }
             }
 
-            // Bullet Collision
+            // Bullet Collision & Cleanup
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
+                if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) entities.bullets.splice(i,1);
+                
                 entities.zombies.forEach((z, zi) => {
-                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 25) {
-                        z.hp -= 50; entities.bullets.splice(i, 1);
-                        if(z.hp <= 0) { 
-                            entities.zombies.splice(zi, 1); me.gold += 15; me.ult = Math.min(100, me.ult + 5);
-                            if(!entities.boss) { killsInWave++; if(killsInWave >= killsRequired) openShop(); }
+                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 22) {
+                        z.hp -= 40; entities.bullets.splice(i, 1);
+                        if(z.hp <= 0) {
+                            entities.zombies.splice(zi, 1);
+                            me.gold += 12; me.score += 50; me.ult = Math.min(100, me.ult + 4);
+                            if(!entities.boss) {
+                                killsInWave++;
+                                if(killsInWave >= killsRequired) openShop();
+                            }
                         }
                     }
                 });
-                if(entities.boss && Math.sqrt((b.x-entities.boss.x)**2+(b.y-entities.boss.y)**2) < 80) {
-                    entities.boss.hp -= 40; entities.bullets.splice(i, 1);
+                if(entities.boss && Math.sqrt((b.x-entities.boss.x)**2+(b.y-entities.boss.y)**2) < 60) {
+                    entities.boss.hp -= 30; entities.bullets.splice(i, 1);
+                }
+            });
+
+            // Ultimate Damage
+            entities.airStrikes.forEach((a, idx) => {
+                a.timer--;
+                if(a.timer <= 0) {
+                    entities.zombies.forEach(z => { if(Math.sqrt((a.x-z.x)**2+(a.y-z.y)**2) < 120) z.hp -= 400; });
+                    if(entities.boss && Math.sqrt((a.x-entities.boss.x)**2+(a.y-entities.boss.y)**2) < 150) entities.boss.hp -= 800;
+                    entities.airStrikes.splice(idx, 1);
                 }
             });
 
@@ -204,12 +244,18 @@
         }
 
         function openShop() {
-            killsInWave = 0; document.getElementById('shop-gold').innerText = me.gold;
+            killsInWave = 0; document.getElementById('ui-gold').innerText = me.gold + "$";
             const list = document.getElementById('shop-list'); list.innerHTML = '';
-            const items = [{n:"Assault Rifle", c:250, w:'rifle'}, {n:"Shotgun", c:400, w:'shotgun'}, {n:"Lính Đánh Thuê", c:800, f:()=>entities.mercs.push({x:me.x, y:me.y, weapon:'rifle'})}, {n:"Hồi Máu", c:150, f:()=>me.hp=me.maxHp}];
+            const items = [
+                {n:"Assault Rifle", c:300, w:'rifle'}, 
+                {n:"Shotgun", c:500, w:'shotgun'}, 
+                {n:"Plasma Gun", c:800, w:'plasma'},
+                {n:"Hire Mercenary", c:1000, f:() => { if(entities.mercs.length<3) entities.mercs.push({x:me.x, y:me.y, weapon:'rifle'}); }},
+                {n:"Repair HP", c:200, f:()=>me.hp=me.maxHp}
+            ];
             items.forEach(item => {
                 let d = document.createElement('div'); d.className = 'shop-card';
-                d.innerHTML = `<h3 class="font-bold">${item.n}</h3><p class="text-yellow-400 font-bold">${item.c}$</p>`;
+                d.innerHTML = `<h3 class="text-sm font-bold">${item.n}</h3><p class="text-blue-400 text-xs mt-2">${item.c}$</p>`;
                 d.onclick = () => { if(me.gold >= item.c) { me.gold -= item.c; if(item.w) me.weapon = item.w; if(item.f) item.f(); closeShop(); }};
                 list.appendChild(d);
             });
@@ -217,51 +263,67 @@
         }
 
         function closeShop() { document.getElementById('shop-screen').classList.add('hidden'); spawnBoss(); }
-        function spawnBoss() { entities.boss = { x: canvas.width/2, y: -100, hp: 3000*me.stage, maxHp: 3000*me.stage }; document.getElementById('boss-ui').style.display = 'block'; }
+        function spawnBoss() { 
+            entities.boss = { x: canvas.width/2, y: -100, hp: 2500*me.stage, maxHp: 2500*me.stage }; 
+            document.getElementById('boss-ui').style.display = 'block'; 
+        }
 
         function draw(dX, dY) {
             ctx.save();
-            if(screenShake > 0) { ctx.translate(Math.random()*screenShake-screenShake/2, Math.random()*screenShake-screenShake/2); screenShake *= 0.9; }
-            ctx.fillStyle = isNight ? '#050510' : '#111827'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            if(screenShake > 0) { ctx.translate(Math.random()*screenShake-screenShake/2, Math.random()*screenShake-screenShake/2); screenShake *= 0.8; }
+            ctx.fillStyle = isNight ? '#0a0c10' : '#0d1117'; ctx.fillRect(0,0,canvas.width, canvas.height);
 
-            // Ult Targeting Visuals
+            // Ultimate Area
             entities.airStrikes.forEach(a => {
-                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x, a.y, 40 - a.timer, 0, 7); ctx.stroke();
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.3)'; ctx.fill();
+                ctx.beginPath(); ctx.strokeStyle = '#d29922'; ctx.arc(a.x, a.y, 100 - a.timer*2, 0, 7); ctx.stroke();
             });
 
-            ctx.fillStyle = isNight ? '#b91c1c' : '#15803d'; 
+            // Zombies
             entities.zombies.forEach(z => {
                 let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                z.x += (me.x-z.x)/d * 2; z.y += (me.y-z.y)/d * 2;
-                ctx.beginPath(); ctx.arc(z.x, z.y, 20, 0, 7); ctx.fill();
-                if(d < 30) me.hp -= 0.5;
+                z.x += (me.x-z.x)/d * (isNight?2.2:1.5); z.y += (me.y-z.y)/d * (isNight?2.2:1.5);
+                ctx.fillStyle = isNight ? '#ff7b72' : '#3fb950';
+                ctx.beginPath(); ctx.arc(z.x, z.y, 18, 0, 7); ctx.fill();
+                // HP bar mini
+                ctx.fillStyle = '#30363d'; ctx.fillRect(z.x-15, z.y-25, 30, 3);
+                ctx.fillStyle = '#f85149'; ctx.fillRect(z.x-15, z.y-25, (z.hp/z.maxHp)*30, 3);
+                if(d < 25) me.hp -= 0.4;
             });
 
             if(entities.boss) {
-                let b = entities.boss; ctx.fillStyle = '#6b21a8'; ctx.beginPath(); ctx.arc(b.x, b.y, 80, 0, 7); ctx.fill();
+                let b = entities.boss; ctx.fillStyle = '#bc8cff'; ctx.beginPath(); ctx.arc(b.x, b.y, 60, 0, 7); ctx.fill();
                 document.getElementById('boss-hp-fill').style.width = (b.hp/b.maxHp)*100 + '%';
                 let d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
-                b.x += (me.x-b.x)/d * 1.5; b.y += (me.y-b.y)/d * 1.5;
+                b.x += (me.x-b.x)/d * 1.2; b.y += (me.y-b.y)/d * 1.2;
                 if(b.hp <= 0) { entities.boss = null; me.stage++; document.getElementById('boss-ui').style.display='none'; killsRequired+=5; }
             }
 
-            entities.mercs.forEach(m => { ctx.save(); ctx.translate(m.x+20, m.y+20); ctx.rotate(m.angle); ctx.fillStyle = '#10b981'; ctx.fillRect(-15,-15,30,30); ctx.restore(); });
-            ctx.fillStyle = '#22d3ee'; ctx.fillRect(dX-8, dY-8, 16, 16);
-            ctx.fillStyle = '#4f46e5'; ctx.save(); ctx.translate(me.x+20, me.y+20); ctx.rotate(me.angle); ctx.fillRect(-20,-20,40,40); ctx.restore();
-            entities.bullets.forEach(b => { ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x, b.y, b.size||4, 0, 7); ctx.fill(); });
-            entities.particles.forEach(p => { ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,p.size,p.size); p.life-=0.05; });
+            // Mercs
+            entities.mercs.forEach(m => {
+                ctx.save(); ctx.translate(m.x, m.y); ctx.rotate(m.angle);
+                ctx.fillStyle = '#58a6ff'; ctx.fillRect(-12,-12,24,24); ctx.restore();
+            });
+
+            // Player & Drone
+            ctx.fillStyle = '#00f2ff'; ctx.fillRect(dX-6, dY-6, 12, 12);
+            ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(-15,-15,30,30); 
+            ctx.fillStyle = '#58a6ff'; ctx.fillRect(10,-5,15,10); // Gun barrel
+            ctx.restore();
+
+            entities.bullets.forEach(b => { ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, 7); ctx.fill(); });
             
             ctx.restore();
             document.getElementById('hp-fill').style.width = (me.hp/me.maxHp)*100 + '%';
             document.getElementById('ult-fill').style.width = me.ult + '%';
             document.getElementById('wave-fill').style.width = (killsInWave/killsRequired)*100 + '%';
-            document.getElementById('ui-gold').innerText = me.gold;
+            document.getElementById('ui-gold').innerText = me.gold.toString().padStart(4, '0') + "$";
+            document.getElementById('ui-score').innerText = "Score: " + me.score;
+            document.getElementById('btn-ult').style.display = me.ult >= 100 ? 'block' : 'none';
         }
 
         window.onkeydown = e => keys[e.code] = true;
         window.onkeyup = e => keys[e.code] = false;
-        window.onmousemove = e => { me.angle = Math.atan2(e.clientY-(me.y+20), e.clientX-(me.x+20)); };
         window.onmousedown = () => keys['mousedown'] = true;
         window.onmouseup = () => keys['mousedown'] = false;
 
