@@ -3,57 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Chibi Survivor: Pet & Boss</title>
+    <title>Zom-Evo: Reborn Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: 'Segoe UI', sans-serif; color: white; }
         canvas { display: block; }
         .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(15px); text-align: center; }
-        .btn-cyber { background: linear-gradient(45deg, #22d3ee, #8b5cf6); color: white; padding: 15px 40px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; transition: 0.3s; }
+        .btn-cyber { background: linear-gradient(45deg, #22d3ee, #8b5cf6); color: white; padding: 12px 35px; border-radius: 8px; font-weight: 900; border: none; cursor: pointer; transition: 0.3s; }
+        .input-cyber { background: rgba(255,255,255,0.1); border: 2px solid #22d3ee; padding: 10px; border-radius: 8px; color: white; margin-bottom: 20px; text-align: center; outline: none; }
         
-        /* HUD & UI */
         #hud { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
-        .bar-container { width: 150px; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.2); }
-        #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.3s; box-shadow: 0 0 10px #ef4444; }
-        #exp-fill { height: 100%; background: #22d3ee; width: 0%; transition: 0.1s; box-shadow: 0 0 10px #22d3ee; }
-
-        /* Mobile Controls */
+        .bar-container { width: 160px; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.2); }
+        #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.3s; }
+        #revive-msg { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); color: #fbbf24; font-weight: 900; font-size: 24px; display: none; text-shadow: 0 0 10px #fbbf24; }
+        
         #mobile-ctrl { position: absolute; inset: 0; pointer-events: none; display: none; }
         .joy-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 50%; pointer-events: auto; }
-        .joy-stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 20px #22d3ee; }
-        .btn-group { position: absolute; bottom: 50px; right: 50px; display: flex; flex-direction: column; gap: 15px; pointer-events: auto; }
-        .btn-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(34, 211, 238, 0.1); border: 2px solid #22d3ee; display: flex; align-items: center; justify-content: center; font-weight: 900; }
-
-        #timer-ui { position: absolute; top: 20px; right: 20px; font-size: 24px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 10px #fbbf24; display: none; }
+        .joy-stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; }
+        .btn-fire { position: absolute; bottom: 60px; right: 60px; width: 90px; height: 90px; border-radius: 50%; background: rgba(34, 211, 238, 0.1); border: 3px solid #22d3ee; pointer-events: auto; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="ui-panel">
-        <h1 class="text-6xl font-black text-cyan-400 italic mb-2">NEON CHIBI</h1>
-        <p class="text-purple-400 mb-10 tracking-[0.3em] uppercase text-xs">Pet & 10 Stages Edition</p>
-        <button onclick="initGame()" class="btn-cyber">BẮT ĐẦU TRẬN ĐẤU</button>
+        <h1 class="text-6xl font-black text-cyan-400 italic mb-4">ZOM-REBORN</h1>
+        <input type="text" id="username" class="input-cyber" placeholder="Nhập tên chiến binh..." maxlength="12">
+        <button onclick="initGame()" class="btn-cyber">VÀO TRẬN</button>
     </div>
 
-    <div id="shop-screen" class="ui-panel" style="display: none;">
-        <h2 class="text-3xl font-black text-yellow-400 mb-2 uppercase">Tiếp Tế Khẩn Cấp</h2>
-        <p class="text-white mb-6">Trận Boss sẽ bắt đầu sau: <span id="shop-timer" class="text-cyan-400">10</span>s</p>
-        <div id="shop-items" class="flex gap-4"></div>
-    </div>
+    <div id="revive-msg">ĐANG HỒI SINH...</div>
 
     <div id="hud">
+        <div class="text-xs text-gray-400 uppercase mb-1">Hệ thống sinh mệnh</div>
         <div class="bar-container"><div id="hp-fill"></div></div>
-        <div class="bar-container"><div id="exp-fill"></div></div>
         <div class="text-cyan-400 font-bold text-sm">ẢI: <span id="stage-txt">1</span> | ĐIỂM: <span id="score-txt">0</span></div>
+        <div class="text-yellow-400 text-[10px] mt-1 font-bold">VŨ KHÍ: <span id="weapon-txt">PISTOL</span></div>
     </div>
-
-    <div id="timer-ui">BOSS COMING!</div>
 
     <div id="mobile-ctrl">
         <div class="joy-base" id="joystick"><div class="joy-stick" id="stick"></div></div>
-        <div class="btn-group">
-            <div class="btn-circle" id="btn-fire">FIRE</div>
-        </div>
+        <div class="btn-fire" id="btn-fire">FIRE</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -62,57 +51,36 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
-        let me = { x: 0, y: 0, hp: 100, gold: 200, score: 0, stage: 1, angle: 0, weapon: 1, vx: 0, vy: 0 };
+        let me = { name: "Player", x: 0, y: 0, hp: 100, score: 0, stage: 1, angle: 0, vx: 0, vy: 0, weapon: 'pistol', isReviving: false };
         let pet = { x: 0, y: 0, angle: 0, lastShot: 0 };
-        let entities = { zombies: [], bullets: [], boss: null, particles: [] };
-        let keys = {}, joyX = 0, joyY = 0, isShopOpen = false, audioCtx;
-        let dayTime = 0; // 0 to 1 cycle
+        let entities = { zombies: [], bullets: [], boss: null, drops: [] };
+        let keys = {}, joyX = 0, joyY = 0;
 
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const playCuteBGM = () => {
-                let osc = audioCtx.createOscillator();
-                let g = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(440, audioCtx.currentTime); // Note A4
-                osc.frequency.exponentialRampToValueAtTime(330, audioCtx.currentTime + 0.5);
-                g.gain.setValueAtTime(0.02, audioCtx.currentTime);
-                osc.connect(g); g.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-                setTimeout(playCuteBGM, 600);
-            };
-            playCuteBGM();
-        }
-
-        function playSfx(f, d=0.1) {
-            if(!audioCtx) return;
-            let o=audioCtx.createOscillator(), g=audioCtx.createGain();
-            o.frequency.value = f; g.gain.value = 0.05;
-            o.connect(g); g.connect(audioCtx.destination);
-            o.start(); o.stop(audioCtx.currentTime+d);
-        }
+        const weaponTypes = {
+            pistol: { name: "Pistol", rate: 350, color: "#22d3ee", spread: 0, count: 1 },
+            smg: { name: "Hyper SMG", rate: 100, color: "#facc15", spread: 0.2, count: 1 },
+            shotgun: { name: "Void Blast", rate: 800, color: "#f472b6", spread: 0.5, count: 6 }
+        };
 
         function resize() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            me.x = canvas.width/2; me.y = canvas.height/2;
+            if(!me.x) { me.x = canvas.width/2; me.y = canvas.height/2; }
         }
         window.onresize = resize; resize();
 
         function initGame() {
-            initAudio();
+            const nameInput = document.getElementById('username').value;
+            if(nameInput) me.name = nameInput;
             document.getElementById('start-screen').style.display = 'none';
             if(/Android|iPhone/i.test(navigator.userAgent)) document.getElementById('mobile-ctrl').style.display = 'block';
             loop();
         }
 
-        // --- Controls ---
+        // Controls
         window.onkeydown = e => keys[e.code] = true;
         window.onkeyup = e => keys[e.code] = false;
         window.onmousemove = e => { if(!joyX) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
-        window.onmousedown = () => keys['Fire'] = true;
-        window.onmouseup = () => keys['Fire'] = false;
-
+        
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.ontouchmove = (e) => {
             let t = e.touches[0], r = joy.getBoundingClientRect();
@@ -124,175 +92,150 @@
             me.angle = a;
         };
         joy.ontouchend = () => { joyX = joyY = 0; st.style.transform = 'none'; };
-        document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); keys['Fire'] = true; };
-        document.getElementById('btn-fire').ontouchend = () => keys['Fire'] = false;
+        document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); keys['Space'] = true; };
+        document.getElementById('btn-fire').ontouchend = () => keys['Space'] = false;
 
-        // --- Gameplay Logic ---
-        let lastShoot = 0;
+        function shoot(x, y, ang, type) {
+            const w = weaponTypes[type];
+            for(let i=0; i<w.count; i++) {
+                let finalAng = ang + (Math.random() - 0.5) * w.spread;
+                entities.bullets.push({ x, y, vx: Math.cos(finalAng)*15, vy: Math.sin(finalAng)*15, color: w.color });
+            }
+        }
+
+        function revivePlayer() {
+            me.isReviving = true;
+            document.getElementById('revive-msg').style.display = 'block';
+            setTimeout(() => {
+                me.hp = 100;
+                me.isReviving = false;
+                document.getElementById('revive-msg').style.display = 'none';
+                me.x = canvas.width/2; me.y = canvas.height/2;
+            }, 2000);
+        }
+
+        let lastShot = 0;
         function loop() {
-            if(isShopOpen) { requestAnimationFrame(loop); return; }
+            if(!me.isReviving) {
+                // Di chuyển
+                let mx = (keys['KeyD']?1:0)-(keys['KeyA']?1:0) || joyX;
+                let my = (keys['KeyS']?1:0)-(keys['KeyW']?1:0) || joyY;
+                me.x += mx * 6; me.y += my * 6;
 
-            // Di chuyển (Cả PC & Mobile)
-            let mx = (keys['KeyD']?1:0)-(keys['KeyA']?1:0) || joyX;
-            let my = (keys['KeyS']?1:0)-(keys['KeyW']?1:0) || joyY;
-            me.vx = mx * 6; me.vy = my * 6;
-            me.x += me.vx; me.y += me.vy;
-
-            // Bắn súng
-            if(keys['Fire'] && Date.now() - lastShoot > 200) {
-                shoot(me.x, me.y, me.angle, '#22d3ee');
-                lastShoot = Date.now();
-                playSfx(800);
-            }
-
-            // Pet AI Logic
-            pet.x = me.x + Math.cos(pet.angle) * 60;
-            pet.y = me.y + Math.sin(pet.angle) * 60;
-            pet.angle += 0.05;
-            let target = entities.zombies[0] || entities.boss;
-            if(target && Date.now() - pet.lastShot > 800) {
-                let pAng = Math.atan2(target.y - pet.y, target.x - pet.x);
-                shoot(pet.x, pet.y, pAng, '#fbbf24');
-                pet.lastShot = Date.now();
-                playSfx(1200, 0.05);
-            }
-
-            // Ngày đêm cycle
-            dayTime += 0.001;
-            let skyAlpha = (Math.sin(dayTime) + 1) / 2; // 0 to 1
-
-            // Spawn & Cập nhật Quái
-            if(!entities.boss && entities.zombies.length < 5 + me.stage*2) {
-                if(Math.random() < 0.02) {
-                    entities.zombies.push({
-                        x: Math.random() > 0.5 ? -20 : canvas.width + 20,
-                        y: Math.random() * canvas.height,
-                        hp: 80 + me.stage * 40,
-                        s: 2 + me.stage * 0.3
-                    });
+                // Bắn súng
+                const currentW = weaponTypes[me.weapon];
+                if((keys['Space'] || keys['Fire']) && Date.now() - lastShot > currentW.rate) {
+                    shoot(me.x, me.y, me.angle, me.weapon);
+                    lastShot = Date.now();
                 }
+
+                // Nhặt vũ khí
+                entities.drops.forEach((d, i) => {
+                    if(Math.sqrt((me.x-d.x)**2+(me.y-d.y)**2) < 40) {
+                        me.weapon = d.type;
+                        entities.drops.splice(i, 1);
+                    }
+                });
+            }
+
+            // Pet AI
+            pet.angle += 0.05;
+            pet.x = me.x + Math.cos(pet.angle)*70;
+            pet.y = me.y + Math.sin(pet.angle)*70;
+            let target = entities.zombies[0] || entities.boss;
+            if(target && Date.now() - pet.lastShot > 1000) {
+                shoot(pet.x, pet.y, Math.atan2(target.y-pet.y, target.x-pet.x), 'pistol');
+                pet.lastShot = Date.now();
+            }
+
+            // Zombie Logic
+            if(!entities.boss && entities.zombies.length < 5 + me.stage*2) {
+                if(Math.random() < 0.03) entities.zombies.push({ x: Math.random()*canvas.width, y: -20, hp: 100 + me.stage*20 });
             }
 
             entities.zombies.forEach((z, i) => {
                 let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                z.x += (me.x-z.x)/d * z.s; z.y += (me.y-z.y)/d * z.s;
-                if(d < 30) me.hp -= 0.5;
+                z.x += (me.x-z.x)/d * 2.5; z.y += (me.y-z.y)/d * 2.5;
+                if(d < 30 && !me.isReviving) me.hp -= 0.8;
 
                 entities.bullets.forEach((b, bi) => {
                     if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 30) {
                         z.hp -= 50; entities.bullets.splice(bi, 1);
-                        if(z.hp <= 0) { 
-                            entities.zombies.splice(i, 1); 
-                            me.score += 50; me.gold += 10;
-                            checkStage();
+                        if(z.hp <= 0) {
+                            // Tỷ lệ rơi súng 20%
+                            if(Math.random() < 0.2) {
+                                const types = ['smg', 'shotgun'];
+                                entities.drops.push({ x: z.x, y: z.y, type: types[Math.floor(Math.random()*types.length)] });
+                            }
+                            entities.zombies.splice(i, 1); me.score += 50;
                         }
                     }
                 });
             });
-
-            // Boss Logic
-            if(entities.boss) {
-                let b = entities.boss, d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
-                b.x += (me.x-b.x)/d * 1.5; b.y += (me.y-b.y)/d * 1.5;
-                entities.bullets.forEach((bul, bi) => {
-                    if(Math.sqrt((bul.x-b.x)**2+(bul.y-b.y)**2) < 80) {
-                        b.hp -= 20; entities.bullets.splice(bi, 1);
-                    }
-                });
-                if(b.hp <= 0) { entities.boss = null; me.score += 500; me.stage++; }
-            }
 
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
                 if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) entities.bullets.splice(i, 1);
             });
 
-            if(me.hp <= 0) location.reload();
+            if(me.hp <= 0 && !me.isReviving) revivePlayer();
+            if(me.score > 0 && me.score % 1000 === 0 && !entities.boss) {
+                entities.boss = { x: canvas.width/2, y: -100, hp: 2000 * me.stage };
+            }
 
-            draw(skyAlpha);
+            draw();
             requestAnimationFrame(loop);
         }
 
-        function shoot(x, y, ang, color) {
-            entities.bullets.push({ x, y, vx: Math.cos(ang)*12, vy: Math.sin(ang)*12, color });
-        }
-
-        function checkStage() {
-            if(me.score > 0 && me.score % 1000 === 0 && !entities.boss) {
-                openShop();
-            }
-        }
-
-        function openShop() {
-            isShopOpen = true;
-            const shop = document.getElementById('shop-screen');
-            shop.style.display = 'flex';
-            let timeLeft = 10;
-            const timerTxt = document.getElementById('shop-timer');
-            const itv = setInterval(() => {
-                timeLeft--;
-                timerTxt.innerText = timeLeft;
-                if(timeLeft <= 0) {
-                    clearInterval(itv);
-                    isShopOpen = false;
-                    shop.style.display = 'none';
-                    spawnBoss();
-                }
-            }, 1000);
-        }
-
-        function spawnBoss() {
-            entities.boss = { x: canvas.width/2, y: -100, hp: 1000 + me.stage * 500 };
-            document.getElementById('timer-ui').style.display = 'block';
-            setTimeout(() => document.getElementById('timer-ui').style.display = 'none', 3000);
-        }
-
-        // --- Giao diện vẽ ---
-        function draw(skyAlpha) {
-            // Background Sáng/Tối
-            ctx.fillStyle = `rgb(${2+skyAlpha*10}, ${6+skyAlpha*20}, ${23+skyAlpha*40})`;
-            ctx.fillRect(0,0,canvas.width, canvas.height);
-
-            // Vẽ nhân vật (Chibi Mech)
-            ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
-            ctx.fillStyle = '#22d3ee'; ctx.shadowBlur = 15; ctx.shadowColor = '#22d3ee';
-            ctx.beginPath(); ctx.roundRect(-20, -20, 40, 40, 10); ctx.fill();
-            ctx.fillStyle = '#fff'; ctx.fillRect(10, -12, 10, 24); // Mắt
-            ctx.restore();
-
-            // Vẽ Pet
-            ctx.fillStyle = '#fbbf24'; ctx.shadowBlur = 10; ctx.shadowColor = '#fbbf24';
-            ctx.beginPath(); ctx.arc(pet.x, pet.y, 10, 0, 7); ctx.fill();
-
-            // Vẽ Quái (Slime Neon)
-            entities.zombies.forEach(z => {
-                ctx.fillStyle = '#4ade80'; ctx.shadowBlur = 10; ctx.shadowColor = '#4ade80';
-                ctx.beginPath(); ctx.ellipse(z.x, z.y, 20, 15, 0, 0, 7); ctx.fill();
+        function draw() {
+            ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            
+            // Vẽ Drops (Vũ khí rơi)
+            entities.drops.forEach(d => {
+                ctx.fillStyle = weaponTypes[d.type].color;
+                ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
+                ctx.beginPath(); ctx.arc(d.x, d.y, 10, 0, 7); ctx.fill();
+                ctx.fillStyle = "#fff"; ctx.font = "10px Arial";
+                ctx.fillText(d.type.toUpperCase(), d.x - 20, d.y + 25);
             });
 
-            // Vẽ Boss
-            if(entities.boss) {
-                ctx.fillStyle = '#f472b6'; ctx.shadowBlur = 30; ctx.shadowColor = '#f472b6';
-                ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 70, 0, 7); ctx.fill();
-                // Thanh máu Boss
-                ctx.fillStyle = '#fff'; ctx.fillRect(entities.boss.x-50, entities.boss.y-90, 100, 5);
-                ctx.fillStyle = '#ef4444'; ctx.fillRect(entities.boss.x-50, entities.boss.y-90, (entities.boss.hp/(1000+me.stage*500))*100, 5);
+            // Vẽ Player
+            if(!me.isReviving) {
+                ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
+                ctx.fillStyle = '#22d3ee'; ctx.shadowBlur = 20;
+                ctx.beginPath(); ctx.roundRect(-22, -22, 44, 44, 10); ctx.fill();
+                ctx.fillStyle = '#fff'; ctx.fillRect(12, -10, 8, 20); // Visor
+                ctx.restore();
+                
+                // Vẽ Tên Nhân Vật
+                ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center";
+                ctx.fillText(me.name, me.x, me.y - 35);
             }
 
-            // Vẽ Đạn
+            // Vẽ Pet & Quái & Đạn (Tương tự bản trước nhưng thêm hiệu ứng phát sáng)
+            ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(pet.x, pet.y, 8, 0, 7); ctx.fill();
+
+            entities.zombies.forEach(z => {
+                ctx.fillStyle = '#4ade80'; ctx.shadowBlur = 10;
+                ctx.beginPath(); ctx.ellipse(z.x, z.y, 20, 25, 0, 0, 7); ctx.fill();
+            });
+
+            if(entities.boss) {
+                ctx.fillStyle = '#f472b6'; ctx.shadowBlur = 30;
+                ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 80, 0, 7); ctx.fill();
+            }
+
             entities.bullets.forEach(b => {
                 ctx.fillStyle = b.color; ctx.shadowBlur = 5;
-                ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill();
+                ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, 7); ctx.fill();
             });
 
-            // Cập nhật HUD
             document.getElementById('hp-fill').style.width = me.hp + '%';
-            document.getElementById('exp-fill').style.width = (me.score % 1000) / 10 + '%';
             document.getElementById('score-txt').innerText = me.score;
             document.getElementById('stage-txt').innerText = me.stage;
+            document.getElementById('weapon-txt').innerText = weaponTypes[me.weapon].name.toUpperCase();
         }
 
-        // Polyfill cho roundRect
         if (!CanvasRenderingContext2D.prototype.roundRect) {
             CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
                 this.beginPath(); this.moveTo(x + r, y);
