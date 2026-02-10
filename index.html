@@ -3,61 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zom-Evo: Final Titan</title>
+    <title>Zom-Evo: Ultimate Strike</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial Black', sans-serif; }
         canvas { display: block; }
         .ui-overlay { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); color: white; }
-        .upgrade-card { background: #1e1b4b; border: 2px solid #4338ca; padding: 20px; border-radius: 15px; width: 200px; cursor: pointer; text-align: center; margin: 10px; }
+        .shop-card { background: #1e1b4b; border: 2px solid #4338ca; padding: 15px; border-radius: 12px; width: 180px; cursor: pointer; text-align: center; margin: 10px; transition: 0.2s; }
+        .shop-card:hover { border-color: #fbbf24; transform: scale(1.05); }
         #hud { position: absolute; top: 15px; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; z-index: 100; pointer-events: none; color: white; }
-        .bar-container { width: 120px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; border: 1px solid #444; }
+        .bar-container { width: 120px; height: 10px; background: #222; border-radius: 5px; overflow: hidden; border: 1px solid #444; margin-bottom: 4px; }
         #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.2s; }
-        #boss-ui { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 60%; display: none; }
-        .boss-bar { width: 100%; height: 20px; background: #111; border: 2px solid #ef4444; border-radius: 10px; overflow: hidden; box-shadow: 0 0 15px #ef4444; }
+        #ult-fill { height: 100%; background: #fbbf24; width: 0%; transition: 0.1s; box-shadow: 0 0 10px #fbbf24; }
+        #wave-box { width: 150px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; border: 1px solid #333; }
+        #wave-fill { height: 4px; background: #34d399; width: 0%; transition: 0.3s; }
+        #boss-ui { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); width: 60%; display: none; }
+        .boss-bar { width: 100%; height: 12px; background: #111; border: 1px solid #ef4444; border-radius: 6px; overflow: hidden; }
         #boss-hp-fill { height: 100%; background: #ef4444; width: 100%; }
         #mobile-ctrl { display: none; }
-        .m-btn { position: absolute; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .m-btn { position: absolute; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
         #joystick { bottom: 30px; left: 30px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,0.1); position: absolute; }
         #stick { position: absolute; top: 30px; left: 30px; width: 40px; height: 40px; background: #fff; border-radius: 50%; }
         #btn-shoot { bottom: 30px; right: 30px; width: 80px; height: 80px; background: #ef4444; position: absolute; border: 4px solid #fff; }
+        #btn-ult { bottom: 120px; right: 40px; width: 60px; height: 60px; background: #fbbf24; color: #000; position: absolute; display: none; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="ui-overlay">
-        <h1 class="text-6xl font-black text-red-600 mb-2 italic drop-shadow-2xl">FINAL TITAN</h1>
-        <button onclick="initGame()" class="bg-red-700 px-16 py-4 rounded-full font-black text-2xl shadow-lg hover:bg-red-600 transition">TIÊU DIỆT TITAN</button>
-        <div class="mt-8 text-xs text-gray-400">STAGE 5: TITAN SẼ XUẤT HIỆN</div>
+        <h1 class="text-6xl font-black text-yellow-500 mb-2 italic">ULTIMATE STRIKE</h1>
+        <p class="mb-6 text-gray-400">PHÍM Q ĐỂ GỌI KHÔNG KÍCH (KHI ĐẦY NỘ)</p>
+        <button onclick="initGame()" class="bg-yellow-600 px-16 py-4 rounded-full font-black text-2xl shadow-lg">KHỞI CHIẾN</button>
     </div>
 
-    <div id="win-screen" class="ui-overlay hidden">
-        <h1 class="text-6xl font-black text-yellow-500 mb-4 italic">CHIẾN THẮNG!</h1>
-        <p class="text-2xl mb-8">Bạn đã giải cứu nhân loại.</p>
-        <button onclick="location.reload()" class="bg-yellow-600 px-12 py-3 rounded-full font-bold">CHƠI LẠI</button>
-    </div>
-
-    <div id="upgrade-screen" class="ui-overlay hidden">
-        <h2 class="text-4xl font-black text-yellow-400 mb-8 italic">EVOLUTION</h2>
-        <div class="flex flex-wrap justify-center" id="upgrade-list"></div>
+    <div id="shop-screen" class="ui-overlay hidden">
+        <h2 class="text-4xl font-black text-cyan-400 mb-2 italic">SHOP TIẾP TẾ</h2>
+        <div class="flex flex-wrap justify-center" id="shop-list"></div>
+        <button onclick="closeShop()" class="mt-4 text-gray-400 underline">Đấu Boss</button>
     </div>
 
     <div id="hud" class="hidden">
         <div>
-            <div class="flex items-center gap-2 mb-1"><span class="text-[10px] font-bold">HP</span><div class="bar-container"><div id="hp-fill"></div></div></div>
-            <p class="text-[12px] font-bold">💣 <span id="ui-gre">3</span> | 🧱 <span id="ui-wall">2</span></p>
+            <div class="flex items-center gap-2"><span class="text-[10px] font-bold">HP</span><div class="bar-container"><div id="hp-fill"></div></div></div>
+            <div class="flex items-center gap-2"><span class="text-[10px] font-bold text-yellow-400">ULT</span><div class="bar-container"><div id="ult-fill"></div></div></div>
+            <div id="wave-box"><div id="wave-fill"></div></div>
         </div>
         <div id="cycle-ui" class="text-center"><div id="cycle-icon" class="text-2xl">🌞</div><div id="cycle-timer" class="text-xs font-bold">60s</div></div>
-        <div class="text-right"><p id="ui-score" class="text-4xl font-black">0</p><p class="text-xs">STAGE <span id="ui-stage">1</span></p></div>
+        <div class="text-right">
+            <p id="ui-score" class="text-4xl font-black text-white">0</p>
+            <p class="text-[14px] font-bold text-yellow-400">💰 <span id="ui-gold">0</span></p>
+        </div>
     </div>
 
-    <div id="boss-ui"><p id="boss-name" class="text-center text-red-500 font-bold mb-1 text-xs uppercase tracking-widest">Mega Boss</p><div class="boss-bar"><div id="boss-hp-fill"></div></div></div>
+    <div id="boss-ui"><div class="boss-bar"><div id="boss-hp-fill"></div></div></div>
     
     <div id="mobile-ctrl">
         <div id="joystick"><div id="stick"></div></div>
         <button id="btn-shoot" class="m-btn">FIRE</button>
-        <button id="btn-grenade" style="bottom:120px; right:30px; width:50px; height:50px; background:#f59e0b" class="m-btn">B</button>
-        <button id="btn-wall" style="bottom:120px; right:90px; width:50px; height:50px; background:#10b981" class="m-btn">W</button>
+        <button id="btn-ult" class="m-btn">ULT</button>
     </div>
 
     <canvas id="game"></canvas>
@@ -66,147 +70,201 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
-        let me = { x: 500, y: 300, hp: 100, maxHp: 100, stm: 100, score: 0, stage: 1, speed: 4, grenades: 3, walls: 2, angle: 0 };
+        let me = { x: 500, y: 300, hp: 100, maxHp: 100, gold: 0, score: 0, stage: 1, speed: 4, weapon: 'pistol', lastShot: 0, ult: 0 };
         let drone = { angle: 0, lastShot: 0, rate: 1500 };
-        let entities = { zombies: [], bullets: [], particles: [], walls: [], boss: null, airdrops: [] };
-        let screenShake = 0, isNight = false, cycleTime = 60, keys = {}, joyX = 0, joyY = 0, isGameOver = false;
+        let entities = { zombies: [], bullets: [], particles: [], boss: null, mercs: [], airStrikes: [] };
+        let screenShake = 0, isNight = false, cycleTime = 60, keys = {}, joyX = 0, joyY = 0, killsInWave = 0, killsRequired = 10;
+        let audioCtx, osc, lfo;
+
+        const Weapons = {
+            pistol: { rate: 400, spread: 0, count: 1, speed: 16, color: '#fff' },
+            rifle: { rate: 150, spread: 0.05, count: 1, speed: 18, color: '#fbbf24' },
+            shotgun: { rate: 800, spread: 0.3, count: 5, speed: 14, color: '#f87171' },
+            plasma: { rate: 600, spread: 0, count: 1, speed: 12, size: 8, color: '#22d3ee' }
+        };
+
+        function setupAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            osc = audioCtx.createOscillator();
+            lfo = audioCtx.createOscillator();
+            let lfoGain = audioCtx.createGain(), masterGain = audioCtx.createGain();
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(40, audioCtx.currentTime); 
+            lfo.type = 'sine'; lfo.frequency.setValueAtTime(0.5, audioCtx.currentTime);
+            lfoGain.gain.setValueAtTime(10, audioCtx.currentTime);
+            lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+            osc.connect(masterGain); masterGain.connect(audioCtx.destination);
+            masterGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            osc.start(); lfo.start();
+        }
 
         function initGame() {
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('hud').classList.remove('hidden');
-            setInterval(() => { if(isGameOver) return; cycleTime--; if(cycleTime<=0){ isNight=!isNight; cycleTime=60; document.getElementById('cycle-icon').innerText=isNight?"🌙":"🌞"; } document.getElementById('cycle-timer').innerText=cycleTime+"s"; }, 1000);
-            setInterval(() => { if(!isNight && !isGameOver) entities.airdrops.push({x:Math.random()*(canvas.width-100)+50, y:Math.random()*(canvas.height-100)+50}); }, 25000);
+            if(/Android|iPhone/i.test(navigator.userAgent)) document.getElementById('mobile-ctrl').style.display = 'block';
+            setupAudio();
+            setInterval(() => { 
+                if(document.getElementById('shop-screen').classList.contains('hidden')) cycleTime--;
+                if(cycleTime<=0){ isNight=!isNight; cycleTime=60; document.getElementById('cycle-icon').innerText=isNight?"🌙":"🌞"; }
+            }, 1000);
             loop();
         }
 
-        function spawnBoss() {
-            let isTitan = me.stage >= 5;
-            entities.boss = { 
-                x: canvas.width/2, y: -200, 
-                hp: isTitan ? 10000 : 2000 * me.stage, 
-                maxHp: isTitan ? 10000 : 2000 * me.stage, 
-                size: isTitan ? 120 : 80,
-                isTitan: isTitan,
-                laserActive: false,
-                lastSkill: Date.now()
-            };
-            document.getElementById('boss-ui').style.display = 'block';
-            document.getElementById('boss-name').innerText = isTitan ? "⚠️ FINAL TITAN ⚠️" : "MEGA BOSS";
+        function triggerAirStrike() {
+            if(me.ult < 100) return;
+            me.ult = 0;
+            screenShake = 30;
+            for(let i=0; i<20; i++) {
+                setTimeout(() => {
+                    let rx = Math.random() * canvas.width;
+                    let ry = Math.random() * canvas.height;
+                    entities.airStrikes.push({ x: rx, y: ry, timer: 30 });
+                }, i * 100);
+            }
+        }
+
+        function shoot(obj, targetAngle = null) {
+            let now = Date.now();
+            let w = Weapons[obj.weapon || 'pistol'];
+            if(now - (obj.lastShot || 0) < w.rate) return;
+            let angle = targetAngle !== null ? targetAngle : me.angle;
+            for(let i=0; i < w.count; i++) {
+                let off = (Math.random() - 0.5) * w.spread;
+                entities.bullets.push({ x: obj.x+20, y: obj.y+20, vx: Math.cos(angle + off) * w.speed, vy: Math.sin(angle + off) * w.speed, color: w.color, size: w.size || 4 });
+            }
+            obj.lastShot = now;
         }
 
         function loop() {
-            if(isGameOver) return;
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            if(!document.getElementById('upgrade-screen').classList.contains('hidden')) { requestAnimationFrame(loop); return; }
+            if(!document.getElementById('shop-screen').classList.contains('hidden')) { requestAnimationFrame(loop); return; }
 
-            // Movement Logic
-            let s = (keys['ShiftLeft'] && me.stm > 0) ? me.speed*1.8 : me.speed;
-            if(keys['ShiftLeft'] && me.stm > 0) me.stm -= 1; else if(me.stm < 100) me.stm += 0.4;
-            if(/Android|iPhone/i.test(navigator.userAgent)) { me.x += joyX*s; me.y += joyY*s; if(Math.abs(joyX)>0.1) me.angle = Math.atan2(joyY, joyX); }
-            else { if(keys['KeyW']) me.y -= s; if(keys['KeyS']) me.y += s; if(keys['KeyA']) me.x -= s; if(keys['KeyD']) me.x += s; }
+            // Movement
+            let s = me.speed;
+            if(joyX !== 0 || joyY !== 0) { me.x += joyX*s; me.y += joyY*s; me.angle = Math.atan2(joyY, joyX); }
+            else { 
+                if(keys['KeyW']) me.y -= s; if(keys['KeyS']) me.y += s; 
+                if(keys['KeyA']) me.x -= s; if(keys['KeyD']) me.x += s; 
+                if(keys['mousedown']) shoot(me);
+            }
 
-            // Drone
+            // Ult Logic
+            if(keys['KeyQ']) triggerAirStrike();
+            document.getElementById('btn-ult').style.display = me.ult >= 100 ? 'block' : 'none';
+
+            // AirStrike Damage
+            entities.airStrikes.forEach((a, idx) => {
+                a.timer--;
+                if(a.timer === 0) {
+                    for(let i=0; i<15; i++) entities.particles.push({x:a.x, y:a.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, life:1, color:'#f59e0b', size:8});
+                    entities.zombies.forEach(z => { if(Math.sqrt((a.x-z.x)**2+(a.y-z.y)**2) < 150) z.hp -= 500; });
+                    if(entities.boss && Math.sqrt((a.x-entities.boss.x)**2+(a.y-entities.boss.y)**2) < 200) entities.boss.hp -= 1000;
+                    entities.airStrikes.splice(idx, 1);
+                }
+            });
+
+            // Entities Update (Mercs, Drone, Zombies)
+            entities.mercs.forEach((m, i) => {
+                let tx = me.x - Math.cos(me.angle)*60*(i+1), ty = me.y - Math.sin(me.angle)*60*(i+1);
+                m.x += (tx-m.x)*0.05; m.y += (ty-m.y)*0.05;
+                if(entities.zombies.length > 0) { let ang = Math.atan2(entities.zombies[0].y-m.y, entities.zombies[0].x-m.x); m.angle=ang; shoot(m, ang); }
+            });
+
             drone.angle += 0.05;
             let dX = me.x + 20 + Math.cos(drone.angle)*50, dY = me.y + 20 + Math.sin(drone.angle)*50;
             if(Date.now() - drone.lastShot > drone.rate && entities.zombies.length > 0) {
                 let t = entities.zombies[0];
-                let a = Math.atan2(t.y-dY, t.x-dX);
-                entities.bullets.push({x:dX, y:dY, vx:Math.cos(a)*12, vy:Math.sin(a)*12, color:'#22d3ee'});
+                entities.bullets.push({x:dX, y:dY, vx:Math.cos(Math.atan2(t.y-dY, t.x-dX))*12, vy:Math.sin(Math.atan2(t.y-dY, t.x-dX))*12, color:'#22d3ee'});
                 drone.lastShot = Date.now();
             }
 
-            // Boss & Titan Logic
-            if(entities.boss) {
-                let b = entities.boss;
-                let d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
-                b.x += (me.x-b.x)/d * (b.isTitan ? 1 : 1.5);
-                b.y += (me.y-b.y)/d * (b.isTitan ? 1 : 1.5);
-                if(d < b.size) me.hp -= 1;
-
-                if(b.isTitan && Date.now() - b.lastSkill > 4000) {
-                    if(Math.random() > 0.5) { // Skill: Summon
-                        for(let i=0; i<5; i++) entities.zombies.push({x:b.x+(Math.random()-0.5)*200, y:b.y+(Math.random()-0.5)*200, hp:200});
-                    } else { // Skill: Laser
-                        b.laserActive = true; setTimeout(() => b.laserActive = false, 1500);
-                        screenShake = 10;
-                    }
-                    b.lastSkill = Date.now();
-                }
-                if(b.laserActive) {
-                    let laserAng = Math.atan2(me.y-b.y, me.x-b.x);
-                    if(Math.abs(laserAng - Math.atan2(me.y-b.y, me.x-b.x)) < 0.2) me.hp -= 2;
-                }
-            } else if(Math.random() < (isNight ? 0.08 : 0.04)) {
-                entities.zombies.push({ x: Math.random()*canvas.width, y: -50, hp: isNight?200:80 });
+            if(!entities.boss && entities.zombies.length < 15) {
+                if(Math.random() < (isNight ? 0.08 : 0.04)) entities.zombies.push({ x: Math.random()*canvas.width, y: -50, hp: isNight?250:100 });
             }
 
-            // Collisions
+            // Bullet Collision
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
                 entities.zombies.forEach((z, zi) => {
-                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 25) { z.hp -= 50; entities.bullets.splice(i, 1); if(z.hp<=0){entities.zombies.splice(zi, 1); me.score += 100;} }
-                });
-                if(entities.boss && Math.sqrt((b.x-entities.boss.x)**2+(b.y-entities.boss.y)**2) < entities.boss.size) {
-                    entities.boss.hp -= 40; entities.bullets.splice(i, 1);
-                    if(entities.boss.hp <= 0) { 
-                        if(entities.boss.isTitan) { isGameOver = true; document.getElementById('win-screen').classList.remove('hidden'); }
-                        entities.boss = null; me.stage++; document.getElementById('boss-ui').style.display='none';
+                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 25) {
+                        z.hp -= 50; entities.bullets.splice(i, 1);
+                        if(z.hp <= 0) { 
+                            entities.zombies.splice(zi, 1); me.gold += 15; me.ult = Math.min(100, me.ult + 5);
+                            if(!entities.boss) { killsInWave++; if(killsInWave >= killsRequired) openShop(); }
+                        }
                     }
+                });
+                if(entities.boss && Math.sqrt((b.x-entities.boss.x)**2+(b.y-entities.boss.y)**2) < 80) {
+                    entities.boss.hp -= 40; entities.bullets.splice(i, 1);
                 }
             });
 
-            if(me.score > 0 && me.score % 1000 === 0) { me.score+=10; showUpgrades(); }
             if(me.hp <= 0) location.reload();
-
             draw(dX, dY);
             requestAnimationFrame(loop);
         }
 
+        function openShop() {
+            killsInWave = 0; document.getElementById('shop-gold').innerText = me.gold;
+            const list = document.getElementById('shop-list'); list.innerHTML = '';
+            const items = [{n:"Assault Rifle", c:250, w:'rifle'}, {n:"Shotgun", c:400, w:'shotgun'}, {n:"Lính Đánh Thuê", c:800, f:()=>entities.mercs.push({x:me.x, y:me.y, weapon:'rifle'})}, {n:"Hồi Máu", c:150, f:()=>me.hp=me.maxHp}];
+            items.forEach(item => {
+                let d = document.createElement('div'); d.className = 'shop-card';
+                d.innerHTML = `<h3 class="font-bold">${item.n}</h3><p class="text-yellow-400 font-bold">${item.c}$</p>`;
+                d.onclick = () => { if(me.gold >= item.c) { me.gold -= item.c; if(item.w) me.weapon = item.w; if(item.f) item.f(); closeShop(); }};
+                list.appendChild(d);
+            });
+            document.getElementById('shop-screen').classList.remove('hidden');
+        }
+
+        function closeShop() { document.getElementById('shop-screen').classList.add('hidden'); spawnBoss(); }
+        function spawnBoss() { entities.boss = { x: canvas.width/2, y: -100, hp: 3000*me.stage, maxHp: 3000*me.stage }; document.getElementById('boss-ui').style.display = 'block'; }
+
         function draw(dX, dY) {
             ctx.save();
             if(screenShake > 0) { ctx.translate(Math.random()*screenShake-screenShake/2, Math.random()*screenShake-screenShake/2); screenShake *= 0.9; }
-            ctx.fillStyle = isNight ? '#020205' : '#0f172a'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = isNight ? '#050510' : '#111827'; ctx.fillRect(0,0,canvas.width, canvas.height);
+
+            // Ult Targeting Visuals
+            entities.airStrikes.forEach(a => {
+                ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a.x, a.y, 40 - a.timer, 0, 7); ctx.stroke();
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.3)'; ctx.fill();
+            });
+
+            ctx.fillStyle = isNight ? '#b91c1c' : '#15803d'; 
+            entities.zombies.forEach(z => {
+                let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
+                z.x += (me.x-z.x)/d * 2; z.y += (me.y-z.y)/d * 2;
+                ctx.beginPath(); ctx.arc(z.x, z.y, 20, 0, 7); ctx.fill();
+                if(d < 30) me.hp -= 0.5;
+            });
 
             if(entities.boss) {
-                let b = entities.boss;
-                ctx.fillStyle = b.isTitan ? '#7f1d1d' : '#7e22ce';
-                ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, 7); ctx.fill();
-                if(b.laserActive) { ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 20; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(me.x, me.y); ctx.stroke(); }
+                let b = entities.boss; ctx.fillStyle = '#6b21a8'; ctx.beginPath(); ctx.arc(b.x, b.y, 80, 0, 7); ctx.fill();
                 document.getElementById('boss-hp-fill').style.width = (b.hp/b.maxHp)*100 + '%';
+                let d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
+                b.x += (me.x-b.x)/d * 1.5; b.y += (me.y-b.y)/d * 1.5;
+                if(b.hp <= 0) { entities.boss = null; me.stage++; document.getElementById('boss-ui').style.display='none'; killsRequired+=5; }
             }
 
-            ctx.fillStyle = isNight ? '#ef4444' : '#16a34a'; 
-            entities.zombies.forEach(z => { ctx.beginPath(); ctx.arc(z.x, z.y, 20, 0, 7); ctx.fill(); });
-            
+            entities.mercs.forEach(m => { ctx.save(); ctx.translate(m.x+20, m.y+20); ctx.rotate(m.angle); ctx.fillStyle = '#10b981'; ctx.fillRect(-15,-15,30,30); ctx.restore(); });
             ctx.fillStyle = '#22d3ee'; ctx.fillRect(dX-8, dY-8, 16, 16);
             ctx.fillStyle = '#4f46e5'; ctx.save(); ctx.translate(me.x+20, me.y+20); ctx.rotate(me.angle); ctx.fillRect(-20,-20,40,40); ctx.restore();
-
-            entities.bullets.forEach(b => { ctx.fillStyle=b.color||'#fbbf24'; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill(); });
-            entities.particles.forEach((p, i) => { ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,p.size,p.size); p.life-=0.02; });
+            entities.bullets.forEach(b => { ctx.fillStyle=b.color; ctx.beginPath(); ctx.arc(b.x, b.y, b.size||4, 0, 7); ctx.fill(); });
+            entities.particles.forEach(p => { ctx.globalAlpha=p.life; ctx.fillStyle=p.color; ctx.fillRect(p.x,p.y,p.size,p.size); p.life-=0.05; });
             
             ctx.restore();
             document.getElementById('hp-fill').style.width = (me.hp/me.maxHp)*100 + '%';
-            document.getElementById('ui-score').innerText = me.score;
-            document.getElementById('ui-stage').innerText = me.stage;
+            document.getElementById('ult-fill').style.width = me.ult + '%';
+            document.getElementById('wave-fill').style.width = (killsInWave/killsRequired)*100 + '%';
+            document.getElementById('ui-gold').innerText = me.gold;
         }
 
-        function showUpgrades() {
-            const list = document.getElementById('upgrade-list'); list.innerHTML = '';
-            const opts = [{t:"❤️ HP", f:()=>me.maxHp+=100}, {t:"🤖 DRONE SPEED", f:()=>drone.rate-=300}, {t:"⚡ SPEED", f:()=>me.speed+=1}];
-            opts.forEach(o => {
-                let d = document.createElement('div'); d.className='upgrade-card'; d.innerHTML=`<b>${o.t}</b>`;
-                d.onclick=()=>{ o.f(); me.hp=me.maxHp; document.getElementById('upgrade-screen').classList.add('hidden'); spawnBoss(); };
-                list.appendChild(d);
-            });
-            document.getElementById('upgrade-screen').classList.remove('hidden');
-        }
-
-        window.onkeydown = e => { keys[e.code] = true; };
+        window.onkeydown = e => keys[e.code] = true;
         window.onkeyup = e => keys[e.code] = false;
         window.onmousemove = e => { me.angle = Math.atan2(e.clientY-(me.y+20), e.clientX-(me.x+20)); };
-        window.onmousedown = () => { entities.bullets.push({x:me.x+20, y:me.y+20, vx:Math.cos(me.angle)*16, vy:Math.sin(me.angle)*16}); };
+        window.onmousedown = () => keys['mousedown'] = true;
+        window.onmouseup = () => keys['mousedown'] = false;
 
-        // Mobile Handlers
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.ontouchmove = e => {
             let t = e.touches[0], r = joy.getBoundingClientRect();
@@ -215,7 +273,9 @@
             st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/40; joyY = dy/40;
         };
         joy.ontouchend = () => { joyX=0; joyY=0; st.style.transform='none'; };
-        document.getElementById('btn-shoot').ontouchstart = e => { e.preventDefault(); entities.bullets.push({x:me.x+20, y:me.y+20, vx:Math.cos(me.angle)*16, vy:Math.sin(me.angle)*16}); };
+        document.getElementById('btn-shoot').ontouchstart = e => { e.preventDefault(); keys['mousedown'] = true; };
+        document.getElementById('btn-shoot').ontouchend = e => { e.preventDefault(); keys['mousedown'] = false; };
+        document.getElementById('btn-ult').ontouchstart = e => { e.preventDefault(); triggerAirStrike(); };
     </script>
 </body>
 </html>
