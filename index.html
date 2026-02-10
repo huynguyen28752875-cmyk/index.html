@@ -3,212 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zombie Mobile Ultimate</title>
+    <title>Zombie Evolution: Infinite Stages</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: sans-serif; }
-        canvas { display: block; background: #0f172a; }
-        .ui-setup { position: absolute; inset: 0; background: radial-gradient(circle, #1e293b, #000); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .btn-ctrl { position: absolute; border-radius: 50%; color: white; font-weight: bold; display: none; z-index: 60; border: 5px solid rgba(255,255,255,0.2); text-align: center; user-select: none; }
-        #btn-shoot { bottom: 40px; right: 40px; width: 90px; height: 90px; background: #ef4444; box-shadow: 0 0 20px #ef4444; }
-        #btn-dash { bottom: 140px; right: 50px; width: 70px; height: 70px; background: #3b82f6; font-size: 12px; }
-        #joystick { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; display: none; border: 2px solid #64748b; }
-        #stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #fff; border-radius: 50%; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; background: radial-gradient(circle, #1e1b4b, #020617); }
+        .ui-setup { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; border: 4px solid #4f46e5; }
+        .btn-ctrl { position: absolute; border-radius: 50%; color: white; font-weight: bold; display: none; z-index: 60; border: 4px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        #btn-shoot { bottom: 40px; right: 40px; width: 85px; height: 85px; background: linear-gradient(135deg, #ef4444, #991b1b); }
+        #btn-dash { bottom: 135px; right: 45px; width: 65px; height: 65px; background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 12px; }
+        #joystick { position: absolute; bottom: 50px; left: 50px; width: 110px; height: 110px; background: rgba(255,255,255,0.05); border-radius: 50%; display: none; border: 2px solid #312e81; }
+        #stick { position: absolute; top: 30px; left: 30px; width: 50px; height: 50px; background: #fff; border-radius: 50%; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        .stage-banner { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; transition: all 1s; z-index: 40; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="ui-setup">
-        <h1 class="text-5xl font-black text-yellow-500 mb-2 italic">ZOMBIE BOSS</h1>
-        <p class="text-blue-400 mb-8 font-bold animate-pulse">Sẵn sàng tai nghe để trải nghiệm!</p>
-        <input type="text" id="name-in" class="p-4 rounded-2xl w-72 text-black font-bold mb-4 outline-none" placeholder="Tên bạn">
-        <input type="text" id="room-in" class="p-4 rounded-2xl w-72 text-black font-bold mb-6 outline-none" placeholder="Mã phòng chung">
-        <button onclick="initApp()" class="bg-yellow-500 text-black px-16 py-4 rounded-full font-black text-2xl hover:scale-105 active:scale-95 transition-all">CHƠI CHUNG!</button>
-        <p id="status" class="mt-4 text-gray-400 text-xs italic text-center px-10"></p>
+        <h1 class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-purple-800 mb-2 italic">ZOMBIE STAGES</h1>
+        <p class="text-blue-400 mb-8 font-bold tracking-[0.3em] text-xs">TIÊU DIỆT - TIẾN HÓA - SINH TỒN</p>
+        <input type="text" id="name-in" class="p-4 rounded-xl w-72 text-black font-bold mb-4 outline-none border-4 border-indigo-500" placeholder="Tên chiến binh">
+        <input type="text" id="room-in" class="p-4 rounded-xl w-72 text-black font-bold mb-6 outline-none border-4 border-indigo-500" placeholder="Mã phòng">
+        <button onclick="initGame()" class="bg-indigo-600 text-white px-16 py-4 rounded-full font-black text-2xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/50">BẮT ĐẦU</button>
+        <p id="status" class="mt-4 text-gray-500 text-sm"></p>
     </div>
 
-    <div id="game-ui" class="hidden absolute top-0 w-full p-4 flex justify-between pointer-events-none text-white z-50">
-        <div class="bg-black/60 p-3 rounded-2xl border-b-4 border-blue-500">
-            <p id="my-name-ui" class="font-bold text-xs"></p>
-            <div class="w-24 h-2 bg-gray-700 mt-1"><div id="my-hp" class="h-full bg-green-500"></div></div>
-            <div class="w-24 h-1.5 bg-gray-700 mt-1"><div id="my-stamina" class="h-full bg-yellow-500"></div></div>
+    <div id="stage-announcer" class="stage-banner">
+        <h2 id="stage-text" class="text-7xl font-black text-yellow-500 italic drop-shadow-[0_0_30px_rgba(234,179,8,0.8)]">STAGE 1</h2>
+    </div>
+
+    <div id="game-ui" class="hidden absolute top-0 w-full p-6 flex justify-between pointer-events-none text-white z-50">
+        <div class="space-y-2">
+            <div class="bg-black/80 p-3 rounded-lg border-l-4 border-indigo-500 min-w-[150px]">
+                <p id="my-name-ui" class="font-black text-indigo-400 text-xs"></p>
+                <div class="w-full h-2 bg-gray-800 mt-2 rounded-full overflow-hidden"><div id="my-hp" class="h-full bg-gradient-to-r from-red-500 to-pink-500 transition-all"></div></div>
+                <div class="w-full h-1.5 bg-gray-800 mt-1 rounded-full overflow-hidden"><div id="my-stamina" class="h-full bg-yellow-400"></div></div>
+            </div>
+            <p class="text-[10px] font-bold text-white uppercase bg-indigo-900/50 px-2 py-1 rounded inline-block">Cửa ải: <span id="current-stage" class="text-yellow-400">1</span></p>
         </div>
-        <div class="bg-black/60 p-3 rounded-2xl border-b-4 border-red-500 text-right">
-            <p class="text-[10px] text-gray-400">TOTAL SCORE</p>
-            <p id="total-score" class="text-xl font-black text-yellow-500">0</p>
+        <div class="bg-black/80 p-4 rounded-lg border-r-4 border-red-600 text-right">
+            <p class="text-[10px] text-gray-400 font-bold uppercase">Tổng điểm đội</p>
+            <p id="total-score" class="text-3xl font-black text-white tabular-nums drop-shadow-md">0</p>
+            <p class="text-[9px] text-indigo-300 font-bold">Mục tiêu: <span id="next-goal">1000</span></p>
         </div>
     </div>
 
     <div id="joystick"><div id="stick"></div></div>
-    <button id="btn-shoot" class="btn-ctrl">BẮN</button>
-    <button id="btn-dash" class="btn-ctrl">DASH</button>
+    <button id="btn-shoot" class="btn-ctrl shadow-red-500/50">BẮN</button>
+    <button id="btn-dash" class="btn-ctrl shadow-blue-500/50">LƯỚT</button>
 
     <canvas id="game"></canvas>
 
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        let peer, conn, isHost = false, audio;
-
-        // --- HỆ THỐNG ÂM THANH MOBILE ---
-        const Sound = {
+        let peer, conn, isHost = false;
+        
+        // --- Âm thanh (Sound System) ---
+        const AudioSys = {
             ctx: new (window.AudioContext || window.webkitAudioContext)(),
-            play(freq, type, dur, vol = 0.1) {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + dur);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + dur);
+            play(f, t, d, v=0.1) {
+                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+                o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
+                g.gain.setValueAtTime(v, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d);
+                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + d);
             },
-            bgm() {
-                setInterval(() => {
-                    if (document.hidden) return;
-                    const notes = [261, 329, 392, 440];
-                    this.play(notes[Math.floor(Math.random()*notes.length)], 'triangle', 0.6, 0.05);
-                }, 1000);
-            }
+            bgm() { setInterval(() => { if(!document.hidden) this.play(150 + (me.stage*20), 'triangle', 0.8, 0.03); }, 1200); }
         };
 
-        // --- GAME LOGIC ---
-        let me = { x: 200, y: 300, hp: 100, stamina: 100, score: 0, gun: 'normal', bullets: [], isDead: false, dash: 0 };
+        // --- Biến Game ---
+        let me = { x: 300, y: 300, hp: 100, stamina: 100, score: 0, stage: 1, gun: 'pistol', bullets: [], isDead: false, dash: 0 };
         let enemy = { x: -1000, y: -1000, hp: 100, score: 0, isDead: false, bullets: [] };
-        let zombies = [], items = [], boss = null, particles = [];
+        let zombies = [], items = [], particles = [], boss = null;
         let keys = {}, joyX = 0, joyY = 0;
 
-        if ('ontouchstart' in window) {
-            document.querySelectorAll('.btn-ctrl, #joystick').forEach(el => el.style.display = 'block');
-        }
+        if ('ontouchstart' in window) { document.querySelectorAll('.btn-ctrl, #joystick').forEach(el => el.style.display = 'block'); }
 
-        function initApp() {
-            Sound.ctx.resume();
-            Sound.bgm();
-            const name = document.getElementById('name-in').value;
-            const room = document.getElementById('room-in').value;
-            if(!name || !room) return alert("Nhập đủ tên và mã phòng!");
-
-            const roomID = 'zom-boss-final-' + room.toLowerCase();
+        function initGame() {
+            AudioSys.ctx.resume(); AudioSys.bgm();
+            const name = document.getElementById('name-in').value || "Chưa đặt tên";
+            const room = document.getElementById('room-in').value || "123";
+            const roomID = 'zom-stage-sys-' + room.toLowerCase();
             document.getElementById('my-name-ui').innerText = name.toUpperCase();
-            document.getElementById('status').innerText = "Đang kết nối...";
-
+            
             peer = new Peer(roomID);
-            peer.on('open', () => { isHost = true; document.getElementById('status').innerText = "CHỦ PHÒNG. Chờ bạn mình nhập: " + room; });
-            peer.on('connection', c => { conn = c; startGame(); });
+            peer.on('open', () => { isHost = true; document.getElementById('status').innerText = "Đã tạo phòng: " + room; });
+            peer.on('connection', c => { conn = c; start(); });
             peer.on('error', () => {
                 peer = new Peer();
-                setTimeout(() => { conn = peer.connect(roomID); startGame(); }, 600);
+                setTimeout(() => { conn = peer.connect(roomID); start(); }, 500);
             });
         }
 
-        function startGame() {
+        function start() {
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('game-ui').classList.remove('hidden');
+            announceStage(1);
             conn.on('data', data => {
                 if(data.type === 'sync') {
                     enemy = data.player;
-                    if(!isHost) { zombies = data.zombies; items = data.items; boss = data.boss; }
+                    if(!isHost) { zombies = data.zombies; items = data.items; boss = data.boss; me.stage = data.stage; }
                 }
                 if(data.type === 'hit' && isHost) {
                     let target = (data.id === 'boss') ? boss : zombies.find(z => z.id === data.id);
                     if(target) {
-                        target.hp -= (data.gun === 'cannon' ? 50 : 20);
-                        createExplosion(target.x, target.y, '#4ade80');
+                        target.hp -= (data.gun === 'cannon' ? 60 : 25);
+                        fx(target.x, target.y, '#4ade80', 10);
                         if(target.hp <= 0) {
                             if(data.id === 'boss') boss = null;
                             else { zombies = zombies.filter(z => z.id !== data.id); dropItem(target.x, target.y); }
+                            me.score += 100; checkStage();
                         }
                     }
                 }
-                if(data.type === 'take' && isHost) items = items.filter(i => i.id !== data.id);
             });
             loop();
         }
 
-        function createExplosion(x, y, color) {
-            for(let i=0; i<10; i++) particles.push({ x, y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, life: 20, color });
-            Sound.play(200, 'square', 0.2, 0.1);
+        function checkStage() {
+            let total = me.score + enemy.score;
+            let nextStage = Math.floor(total / 1000) + 1;
+            if(nextStage > me.stage) {
+                me.stage = nextStage;
+                announceStage(me.stage);
+                AudioSys.play(500, 'square', 0.5, 0.2);
+            }
+        }
+
+        function announceStage(s) {
+            const el = document.getElementById('stage-announcer');
+            document.getElementById('stage-text').innerText = "STAGE " + s;
+            el.style.opacity = "1";
+            setTimeout(() => el.style.opacity = "0", 2000);
+        }
+
+        function fx(x, y, color, count) {
+            for(let i=0; i<count; i++) particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 25, color });
+            AudioSys.play(200, 'sine', 0.1);
         }
 
         function dropItem(x, y) {
-            if(Math.random() < 0.3) items.push({ id: Date.now(), x, y, type: Math.random() < 0.5 ? 'triple' : 'cannon' });
+            if(Math.random() < 0.35) items.push({ id: Date.now(), x, y, type: Math.random() < 0.5 ? 'triple' : 'cannon' });
         }
 
         function shoot() {
             if(me.isDead) return;
-            Sound.play(800, 'sine', 0.05, 0.05);
-            const b = { x: me.x + 20, y: me.y + 20, vx: 15, size: me.gun === 'cannon' ? 12 : 5 };
+            AudioSys.play(700, 'sine', 0.05, 0.04);
+            const b = { x: me.x + 20, y: me.y + 20, vx: 16, size: me.gun === 'cannon' ? 14 : 5 };
             if(me.gun === 'triple') me.bullets.push({...b, vy: -3}, {...b, vy: 0}, {...b, vy: 3});
             else me.bullets.push({...b, vy: 0});
         }
 
         function loop() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-
-            let speed = me.dash > 0 ? 15 : 5;
-            if(me.dash > 0) me.dash--;
+            let speed = (me.dash > 0 ? 18 : 6); if(me.dash > 0) me.dash--;
+            
             if(!me.isDead) {
                 if(keys['KeyW']) me.y -= speed; if(keys['KeyS']) me.y += speed;
                 if(keys['KeyA']) me.x -= speed; if(keys['KeyD']) me.x += speed;
-                me.x += joyX * speed; me.y += joyY * speed;
+                me.x += joyX*speed; me.y += joyY*speed;
             }
-            if(me.stamina < 100) me.stamina += 0.4;
+            if(me.stamina < 100) me.stamina += 0.5;
 
             if(isHost) {
-                if(!boss && (me.score + enemy.score) >= 1000) {
-                    boss = { id: 'boss', x: canvas.width/2, y: -100, hp: 3000, max: 3000, size: 100 };
-                    Sound.play(100, 'sawtooth', 1, 0.2);
+                // Boss Logic
+                let total = me.score + enemy.score;
+                if(!boss && total % 1000 >= 900 && total > 0) {
+                    boss = { id: 'boss', x: canvas.width+100, y: canvas.height/2, hp: 1000 + (me.stage*1000), max: 1000 + (me.stage*1000), size: 110 };
                 }
                 if(boss) {
                     let t = me.isDead ? enemy : me;
                     let d = Math.sqrt((t.x-boss.x)**2+(t.y-boss.y)**2);
-                    boss.x += (t.x-boss.x)/d * 2.5; boss.y += (t.y-boss.y)/d * 2.5;
+                    boss.x += (t.x-boss.x)/d * (2 + me.stage*0.3); boss.y += (t.y-boss.y)/d * (2 + me.stage*0.3);
                 }
-                if(zombies.length < 6 && Math.random() < 0.02) zombies.push({ id: Date.now(), x: Math.random()*canvas.width, y: -50, hp: 60 });
+                // Zombie Logic
+                if(zombies.length < 5 + me.stage && Math.random() < 0.02) {
+                    zombies.push({ id: Date.now(), x: Math.random()*canvas.width, y: -50, hp: 50 + me.stage*20 });
+                }
                 zombies.forEach(z => {
                     let t = me.isDead ? enemy : me;
                     let d = Math.sqrt((t.x-z.x)**2+(t.y-z.y)**2);
-                    z.x += (t.x-z.x)/d * 1.8; z.y += (t.y-z.y)/d * 1.8;
+                    z.x += (t.x-z.x)/d * (1.5 + me.stage*0.2); z.y += (t.y-z.y)/d * (1.5 + me.stage*0.2);
                 });
             }
 
-            // Xử lý va chạm
+            // Collisions
             [...zombies, boss].filter(Boolean).forEach(z => {
                 let dist = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                if(dist < (z.size || 30) && !me.isDead) {
-                    me.hp -= 1;
-                    if(me.hp <= 0) { me.isDead = true; Sound.play(50, 'sawtooth', 0.5); setTimeout(() => { me.hp=100; me.isDead=false; me.x=200; me.y=200; }, 3000); }
+                if(dist < (z.size || 35) && !me.isDead) {
+                    me.hp -= 1.5;
+                    if(me.hp <= 0) { me.isDead = true; fx(me.x, me.y, 'red', 20); setTimeout(() => { me.hp=100; me.isDead=false; me.x=100; me.y=100; }, 3000); }
                 }
             });
 
             me.bullets.forEach((b, bi) => {
                 b.x += b.vx; b.y += b.vy;
+                if(b.x > canvas.width || b.x < 0) me.bullets.splice(bi, 1);
                 [...zombies, boss].filter(Boolean).forEach(z => {
-                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < (z.size || 30)) {
+                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < (z.size || 35)) {
                         me.bullets.splice(bi, 1);
                         if(isHost) {
-                            z.hp -= (me.gun==='cannon'?50:20);
-                            if(z.hp <= 0) { if(z.id==='boss') boss=null; else { zombies=zombies.filter(i=>i.id!==z.id); dropItem(z.x,z.y); } me.score+=100; }
+                            z.hp -= (me.gun==='cannon'?60:25);
+                            fx(z.x, z.y, '#4ade80', 5);
+                            if(z.hp <= 0) { if(z.id==='boss') boss=null; else zombies=zombies.filter(i=>i.id!==z.id); me.score += 100; checkStage(); }
                         } else conn.send({ type: 'hit', id: z.id, gun: me.gun });
                     }
                 });
             });
 
             items.forEach((it, idx) => {
-                if(Math.sqrt((me.x-it.x)**2+(me.y-it.y)**2) < 40) {
-                    me.gun = it.type; Sound.play(1000, 'sine', 0.2, 0.1);
+                if(Math.sqrt((me.x-it.x)**2+(me.y-it.y)**2) < 45) {
+                    me.gun = it.type; AudioSys.play(1000, 'sine', 0.2);
                     if(isHost) items.splice(idx, 1); else conn.send({ type: 'take', id: it.id });
                 }
             });
 
             particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i,1); });
 
-            if(conn && conn.open) conn.send({ type: 'sync', name: document.getElementById('name-in').value, player: { ...me, bullets: me.bullets }, zombies, items, boss });
+            if(conn && conn.open) conn.send({ type: 'sync', name: document.getElementById('name-in').value, player: { ...me, bullets: me.bullets }, zombies, items, boss, stage: me.stage });
 
-            updateUI();
-            draw();
+            updateUI(); draw();
             requestAnimationFrame(loop);
         }
 
@@ -216,48 +232,84 @@
             document.getElementById('my-hp').style.width = me.hp + '%';
             document.getElementById('my-stamina').style.width = me.stamina + '%';
             document.getElementById('total-score').innerText = (me.score + enemy.score);
+            document.getElementById('current-stage').innerText = me.stage;
+            document.getElementById('next-goal').innerText = me.stage * 1000;
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Items
+            
+            // Draw Items
             items.forEach(it => {
-                ctx.fillStyle = it.type === 'triple' ? '#0ff' : '#f0f';
-                ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
-                ctx.beginPath(); ctx.arc(it.x, it.y, 15, 0, 7); ctx.fill();
-                ctx.shadowBlur = 0;
+                ctx.save();
+                ctx.shadowBlur = 15; ctx.shadowColor = it.type==='triple'?'#0ff':'#f0f';
+                ctx.fillStyle = it.type==='triple'?'#0ff':'#f0f';
+                ctx.beginPath(); ctx.arc(it.x, it.y, 15 + Math.sin(Date.now()/200)*5, 0, 7); ctx.fill();
+                ctx.restore();
             });
-            // Particles
-            particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3, 3); });
-            // Boss
+
+            // Draw Particles
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life/25; ctx.fillRect(p.x, p.y, 4, 4); ctx.globalAlpha = 1; });
+
+            // Draw Boss (Hung dữ hơn)
             if(boss) {
-                ctx.fillStyle = "#ef4444"; ctx.shadowBlur = 30; ctx.shadowColor = "red";
-                ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, 7); ctx.fill();
-                ctx.shadowBlur = 0;
+                ctx.save();
+                let shake = Math.sin(Date.now()/50)*5;
+                ctx.translate(boss.x + shake, boss.y + shake);
+                // Aura
+                let grad = ctx.createRadialGradient(0,0,0,0,0,boss.size);
+                grad.addColorStop(0, 'rgba(239, 68, 68, 0.8)'); grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, 0, boss.size + 20, 0, 7); ctx.fill();
+                // Thân boss
+                ctx.fillStyle = "#450a0a"; ctx.beginPath(); ctx.arc(0, 0, boss.size, 0, 7); ctx.fill();
+                // Gai nhọn
+                ctx.strokeStyle = "red"; ctx.lineWidth = 5;
+                for(let i=0; i<8; i++) {
+                    ctx.rotate(Math.PI/4); ctx.beginPath(); ctx.moveTo(boss.size-10, 0); ctx.lineTo(boss.size+30, 0); ctx.stroke();
+                }
+                // Mắt rực lửa
+                ctx.fillStyle = "yellow"; ctx.beginPath(); ctx.arc(-20, -20, 15, 0, 7); ctx.arc(20, -20, 15, 0, 7); ctx.fill();
+                ctx.restore();
             }
-            // Players
-            if(!me.isDead) { ctx.fillStyle = "#3b82f6"; ctx.fillRect(me.x, me.y, 40, 40); }
-            if(!enemy.isDead) { ctx.fillStyle = "#ef4444"; ctx.fillRect(enemy.x, enemy.y, 40, 40); }
-            // Zombies
-            ctx.fillStyle = "#22c55e"; zombies.forEach(z => { ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 18, 0, 7); ctx.fill(); });
-            // Đạn
-            ctx.fillStyle = "#fbbf24"; me.bullets.concat(enemy.bullets || []).forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, b.size||4, 0, 7); ctx.fill(); });
+
+            // Draw Zombies (Có hiệu ứng đẹp hơn)
+            zombies.forEach(z => {
+                ctx.save();
+                ctx.shadowBlur = 10; ctx.shadowColor = "#4ade80";
+                ctx.fillStyle = "#064e3b"; ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 20, 0, 7); ctx.fill();
+                // Mắt phát sáng
+                ctx.fillStyle = "#4ade80"; ctx.beginPath(); ctx.arc(z.x+12, z.y+15, 4, 0, 7); ctx.arc(z.x+28, z.y+15, 4, 0, 7); ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw Players
+            if(!me.isDead) {
+                ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = "#6366f1";
+                ctx.fillStyle = "#6366f1"; ctx.fillRect(me.x, me.y, 40, 40);
+                ctx.strokeStyle = "white"; ctx.strokeRect(me.x, me.y, 40, 40); ctx.restore();
+            }
+            if(!enemy.isDead) { ctx.fillStyle = "#ec4899"; ctx.fillRect(enemy.x, enemy.y, 40, 40); }
+
+            // Draw Bullets
+            ctx.fillStyle = "#fbbf24"; me.bullets.concat(enemy.bullets || []).forEach(b => {
+                ctx.save(); ctx.shadowBlur = 10; ctx.shadowColor = "yellow";
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.size||5, 0, 7); ctx.fill(); ctx.restore();
+            });
         }
 
-        // Control Events
+        // --- Controls ---
         window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code==='Space') shoot(); if(e.shiftKey) me.dash=10; });
         window.addEventListener('keyup', e => keys[e.code] = false);
-
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.addEventListener('touchmove', e => {
             const t = e.touches[0]; const r = joy.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
+            let dx = t.clientX - (r.left + 55), dy = t.clientY - (r.top + 55);
             let d = Math.sqrt(dx*dx + dy*dy); if(d > 40) { dx *= 40/d; dy *= 40/d; }
-            st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/30; joyY = dy/30;
+            st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/35; joyY = dy/35;
         });
         joy.addEventListener('touchend', () => { joyX = 0; joyY = 0; st.style.transform = 'none'; });
-        document.getElementById('btn-shoot').addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
-        document.getElementById('btn-dash').addEventListener('touchstart', (e) => { e.preventDefault(); if(me.stamina>=40){me.stamina-=40; me.dash=10;} });
+        document.getElementById('btn-shoot').onclick = shoot;
+        document.getElementById('btn-dash').onclick = () => { if(me.stamina>=40){me.stamina-=40; me.dash=10;} };
     </script>
 </body>
 </html>
