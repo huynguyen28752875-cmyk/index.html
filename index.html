@@ -3,48 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zom-Evo: Fixed & Chill</title>
+    <title>Zom-Evo: Cute & Tutorial</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: sans-serif; }
-        canvas { display: block; }
-        .ui-overlay { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); color: white; }
-        #hud { position: absolute; top: 10px; left: 10px; z-index: 100; pointer-events: none; color: white; width: 100%; padding-right: 20px; }
-        .bar { width: 120px; height: 8px; background: #333; border-radius: 4px; margin-bottom: 5px; overflow: hidden; }
-        #hp-f { height: 100%; background: #ff4d4d; width: 100%; }
-        #ult-f { height: 100%; background: #ffcc00; width: 0%; }
+        body { margin: 0; overflow: hidden; background: #fff5f5; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        canvas { display: block; background: #f0fdf4; }
+        .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.95); text-align: center; padding: 20px; }
+        .btn-cute { background: #ff85a2; color: white; padding: 12px 30px; border-radius: 25px; font-weight: bold; border: 4px solid #ffb3c6; transition: 0.2s; cursor: pointer; }
+        .btn-cute:hover { transform: scale(1.1); background: #ff4d6d; }
+        #hud { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
+        .bar-bg { width: 150px; height: 12px; background: #ffe5ec; border-radius: 10px; border: 2px solid #ffb3c6; overflow: hidden; margin-bottom: 5px; }
+        #hp-fill { height: 100%; background: #ff4d6d; width: 100%; transition: 0.3s; }
+        #ult-fill { height: 100%; background: #ffc300; width: 0%; transition: 0.2s; }
+        .shop-card { background: white; border: 3px solid #ff85a2; padding: 15px; margin: 10px; border-radius: 20px; width: 150px; cursor: pointer; }
         #mobile-ctrl { position: absolute; inset: 0; pointer-events: none; display: none; }
-        .joy-area { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; pointer-events: auto; }
-        .stick { position: absolute; top: 40px; left: 40px; width: 40px; height: 40px; background: #fff; border-radius: 50%; opacity: 0.5; }
-        .btn-act { position: absolute; bottom: 50px; right: 40px; width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid #fff; }
-        #shop-screen { background: rgba(10, 10, 20, 0.95); display: none; }
-        .shop-item { background: #1a1a2e; border: 1px solid #333; padding: 10px; margin: 5px; width: 140px; text-align: center; cursor: pointer; border-radius: 8px; }
+        .joy-base { position: absolute; bottom: 50px; left: 50px; width: 100px; height: 100px; background: rgba(255,133,162,0.2); border-radius: 50%; pointer-events: auto; }
+        .joy-stick { position: absolute; top: 30px; left: 30px; width: 40px; height: 40px; background: #ff85a2; border-radius: 50%; }
+        .btn-act { position: absolute; bottom: 50px; right: 40px; width: 80px; height: 80px; background: #ff85a2; border-radius: 50%; pointer-events: auto; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 4px solid #fff; }
     </style>
 </head>
 <body>
 
-    <div id="start-screen" class="ui-overlay">
-        <h1 class="text-4xl font-bold text-blue-400 mb-4 italic">ZOM-EVO CHILL</h1>
-        <button onclick="initGame()" class="bg-blue-600 px-12 py-3 rounded-full font-bold shadow-xl">BẮT ĐẦU</button>
+    <div id="start-screen" class="ui-panel">
+        <h1 class="text-5xl font-black text-[#ff4d6d] mb-4">ZOM-EVO 🎀</h1>
+        <p class="text-gray-500 mb-8 italic">Sống sót qua những đợt Zombie dễ thương!</p>
+        <button onclick="showTutorial()" class="btn-cute">CHƠI NGAY</button>
     </div>
 
-    <div id="shop-screen" class="ui-overlay">
-        <h2 class="text-2xl font-bold mb-4">CỬA HÀNG</h2>
-        <div id="shop-gold" class="text-yellow-400 mb-4">Vàng: 0$</div>
-        <div class="flex flex-wrap justify-center" id="shop-list"></div>
-        <button onclick="closeShop()" class="mt-6 text-gray-400">Tiếp tục Đấu Boss →</button>
+    <div id="tutorial-screen" class="ui-panel" style="display: none;">
+        <h2 class="text-3xl font-bold text-[#ff85a2] mb-6">CÁCH CHƠI 📖</h2>
+        <div class="grid grid-cols-2 gap-8 text-left max-w-md mb-8">
+            <div>
+                <p class="font-bold">💻 MÁY TÍNH:</p>
+                <ul class="text-sm">
+                    <li>- <b>W-A-S-D</b>: Di chuyển</li>
+                    <li>- <b>Chuột</b>: Ngắm & Bắn</li>
+                    <li>- <b>Phím Q</b>: Tuyệt chiêu</li>
+                </ul>
+            </div>
+            <div>
+                <p class="font-bold">📱 ĐIỆN THOẠI:</p>
+                <ul class="text-sm">
+                    <li>- <b>Nút Trái</b>: Di chuyển</li>
+                    <li>- <b>Nút Phải</b>: Bắn</li>
+                    <li>- <b>Nút Vàng</b>: Tuyệt chiêu</li>
+                </ul>
+            </div>
+        </div>
+        <p class="text-xs text-blue-400 mb-4 italic">* Tiêu diệt Zombie để đầy thanh Vàng rồi nhấn Q!</p>
+        <button onclick="initGame()" class="btn-cute">ĐÃ HIỂU!</button>
+    </div>
+
+    <div id="shop-screen" class="ui-panel" style="display: none;">
+        <h2 class="text-3xl font-bold text-[#ff4d6d] mb-4">CỬA HÀNG 🍬</h2>
+        <p id="shop-gold" class="text-yellow-500 font-bold mb-4">Kẹo: 0</p>
+        <div id="shop-list" class="flex flex-wrap justify-center"></div>
+        <button onclick="closeShop()" class="mt-6 text-gray-400 underline">Bỏ qua để đấu Boss</button>
     </div>
 
     <div id="hud">
-        <div class="bar"><div id="hp-f"></div></div>
-        <div class="bar"><div id="ult-f"></div></div>
-        <div id="ui-info" class="text-xs">💰 <span id="gold-txt">0</span> | Stage: <span id="stage-txt">1</span></div>
+        <div class="bar-bg"><div id="hp-fill"></div></div>
+        <div class="bar-bg"><div id="ult-fill"></div></div>
+        <div class="text-pink-500 font-bold">🍭 Kẹo: <span id="gold-txt">0</span></div>
     </div>
 
     <div id="mobile-ctrl">
-        <div class="joy-area" id="joystick"><div class="stick" id="stick"></div></div>
-        <div class="btn-act" id="btn-fire" style="right: 40px; bottom: 40px;">BẮN</div>
-        <div class="btn-act" id="btn-ult" style="right: 40px; bottom: 140px; background: #ffcc00; color: #000; display: none;">ULT</div>
+        <div class="joy-base" id="joystick"><div class="joy-stick" id="stick"></div></div>
+        <div class="btn-act" id="btn-fire">BẮN</div>
+        <div class="btn-act" id="btn-ult" style="bottom: 140px; background: #ffc300; display: none;">ULT</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -53,72 +79,77 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
-        let me = { x: 0, y: 0, hp: 100, gold: 0, stage: 1, weapon: 'pistol', angle: 0, ult: 0 };
+        let me = { x: 0, y: 0, hp: 100, gold: 0, stage: 1, angle: 0, ult: 0 };
         let drone = { angle: 0, lastShot: 0 };
-        let entities = { zombies: [], bullets: [], mercs: [], boss: null };
-        let keys = {}, joyX = 0, joyY = 0, isMobile = false, kills = 0, killsReq = 10;
+        let entities = { zombies: [], bullets: [], boss: null };
+        let keys = {}, joyX = 0, joyY = 0, isMobile = false;
         let audioCtx;
 
-        function playChill() {
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(110, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start();
-            } catch(e) {}
+        // Âm thanh Cute
+        function playSound(freq, type = 'sine', duration = 0.1) {
+            if(!audioCtx) return;
+            let osc = audioCtx.createOscillator();
+            let g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function showTutorial() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('tutorial-screen').style.display = 'flex';
         }
 
         function initGame() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             me.x = window.innerWidth / 2;
             me.y = window.innerHeight / 2;
             isMobile = /Android|iPhone/i.test(navigator.userAgent);
             if(isMobile) document.getElementById('mobile-ctrl').style.display = 'block';
-            document.getElementById('start-screen').style.display = 'none';
-            playChill();
+            document.getElementById('tutorial-screen').style.display = 'none';
             loop();
         }
 
         window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
         window.addEventListener('mousemove', e => { if(!isMobile) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); });
-        window.addEventListener('mousedown', () => keys['Click'] = true);
-        window.addEventListener('mouseup', () => keys['Click'] = false);
+        window.addEventListener('mousedown', () => { keys['Fire'] = true; });
+        window.addEventListener('mouseup', () => { keys['Fire'] = false; });
 
-        // Joystick Logic
+        // Joystick
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
-        joy.addEventListener('touchstart', e => handleJoy(e));
-        joy.addEventListener('touchmove', e => handleJoy(e));
-        joy.addEventListener('touchend', () => { joyX = 0; joyY = 0; st.style.transform = 'none'; });
-
-        function handleJoy(e) {
+        const handleTouch = (e) => {
             e.preventDefault();
             let t = e.touches[0], r = joy.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
+            let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
             let d = Math.min(Math.sqrt(dx*dx+dy*dy), 40);
-            let ang = Math.atan2(dy, dx);
-            joyX = Math.cos(ang) * (d/40);
-            joyY = Math.sin(ang) * (d/40);
-            st.style.transform = `translate(${Math.cos(ang)*d}px, ${Math.sin(ang)*d}px)`;
-            me.angle = ang;
-        }
+            let a = Math.atan2(dy, dx);
+            joyX = Math.cos(a) * (d/40); joyY = Math.sin(a) * (d/40);
+            st.style.transform = `translate(${Math.cos(a)*d}px, ${Math.sin(a)*d}px)`;
+            me.angle = a;
+        };
+        joy.addEventListener('touchstart', handleTouch);
+        joy.addEventListener('touchmove', handleTouch);
+        joy.addEventListener('touchend', () => { joyX = 0; joyY = 0; st.style.transform = 'none'; });
 
-        document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); keys['Click'] = true; };
-        document.getElementById('btn-fire').ontouchend = () => { keys['Click'] = false; };
+        document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); keys['Fire'] = true; };
+        document.getElementById('btn-fire').ontouchend = () => keys['Fire'] = false;
         document.getElementById('btn-ult').ontouchstart = (e) => { e.preventDefault(); useUlt(); };
 
-        function shoot(from, ang) {
-            entities.bullets.push({ x: from.x, y: from.y, vx: Math.cos(ang)*12, vy: Math.sin(ang)*12, color: '#fff' });
+        function shoot(from, ang, color = '#ff85a2') {
+            entities.bullets.push({ x: from.x, y: from.y, vx: Math.cos(ang)*10, vy: Math.sin(ang)*10, color });
+            playSound(800, 'square', 0.05);
         }
 
         function useUlt() {
             if(me.ult < 100) return;
             me.ult = 0;
-            entities.zombies.forEach(z => z.hp = 0); // Clear màn hình
-            if(entities.boss) entities.boss.hp -= 1000;
+            playSound(1200, 'sine', 0.5);
+            entities.zombies.forEach(z => z.hp = 0);
+            if(entities.boss) entities.boss.hp -= 800;
         }
 
         function loop() {
@@ -131,42 +162,43 @@
             else {
                 if(keys['KeyW']) my = -1; if(keys['KeyS']) my = 1;
                 if(keys['KeyA']) mx = -1; if(keys['KeyD']) mx = 1;
+                if(keys['KeyQ']) useUlt();
             }
-            let speed = 4;
             if(mx !== 0 || my !== 0) {
-                let mag = Math.sqrt(mx*mx + my*my);
-                me.x += (mx/mag) * speed; me.y += (my/mag) * speed;
+                let m = Math.sqrt(mx*mx+my*my);
+                me.x += (mx/m)*4; me.y += (my/m)*4;
             }
 
-            if(keys['Click'] || keys['Space']) shoot(me, me.angle);
+            if(keys['Fire'] || keys['Space']) shoot(me, me.angle);
 
-            // Drone AI (Fixed)
+            // Drone (Fixed)
             drone.angle += 0.05;
-            let dx = me.x + Math.cos(drone.angle)*50, dy = me.y + Math.sin(drone.angle)*50;
-            if(Date.now() - drone.lastShot > 1000 && entities.zombies.length > 0) {
+            let dx = me.x + Math.cos(drone.angle)*60, dy = me.y + Math.sin(drone.angle)*60;
+            if(Date.now() - drone.lastShot > 1200 && entities.zombies.length > 0) {
                 let z = entities.zombies[0];
-                shoot({x: dx, y: dy}, Math.atan2(z.y - dy, z.x - dx));
+                shoot({x: dx, y: dy}, Math.atan2(z.y-dy, z.x-dx), '#8ecae6');
                 drone.lastShot = Date.now();
             }
 
-            // Spawn Zombies
-            if(!entities.boss && entities.zombies.length < 10) {
-                if(Math.random() < 0.03) entities.zombies.push({ x: Math.random()*canvas.width, y: -20, hp: 100 });
+            // Spawning
+            if(!entities.boss && entities.zombies.length < 8) {
+                if(Math.random() < 0.02) entities.zombies.push({ x: Math.random()*canvas.width, y: -50, hp: 100, max: 100 });
             }
 
             // Update Zombies
             entities.zombies.forEach((z, i) => {
-                let d = Math.sqrt((me.x-z.x)**2 + (me.y-z.y)**2);
-                z.x += (me.x-z.x)/d * 1.5; z.y += (me.y-z.y)/d * 1.5;
-                if(d < 25) me.hp -= 0.2;
-                
+                let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
+                z.x += (me.x-z.x)/d * 1.2; z.y += (me.y-z.y)/d * 1.2;
+                if(d < 30) me.hp -= 0.3;
+
                 entities.bullets.forEach((b, bi) => {
-                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 20) {
-                        z.hp -= 50; entities.bullets.splice(bi, 1);
+                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 25) {
+                        z.hp -= 40; entities.bullets.splice(bi, 1);
                         if(z.hp <= 0) {
                             entities.zombies.splice(i, 1);
-                            me.gold += 10; me.ult = Math.min(100, me.ult + 5);
-                            kills++; if(kills >= killsReq) openShop();
+                            me.gold += 10; me.ult = Math.min(100, me.ult + 10);
+                            playSound(400, 'sine', 0.1);
+                            if(me.gold % 100 === 0) openShop();
                         }
                     }
                 });
@@ -175,15 +207,15 @@
             // Update Bullets
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
-                if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) entities.bullets.splice(i, 1);
+                if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) entities.bullets.splice(i, 1);
             });
 
-            // Boss
+            // Boss logic
             if(entities.boss) {
                 let b = entities.boss;
-                let d = Math.sqrt((me.x-b.x)**2 + (me.y-b.y)**2);
-                b.x += (me.x-b.x)/d * 1; b.y += (me.y-b.y)/d * 1;
-                if(b.hp <= 0) { entities.boss = null; me.stage++; kills = 0; }
+                let d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
+                b.x += (me.x-b.x)/d * 0.8; b.y += (me.y-b.y)/d * 0.8;
+                if(b.hp <= 0) { entities.boss = null; me.stage++; playSound(200, 'square', 0.5); }
             }
 
             if(me.hp <= 0) location.reload();
@@ -192,53 +224,56 @@
         }
 
         function draw(dx, dy) {
-            ctx.fillStyle = '#0a0a0f'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.clearRect(0,0,canvas.width, canvas.height);
 
             // Drone
-            ctx.fillStyle = '#00ffff'; ctx.fillRect(dx-5, dy-5, 10, 10);
+            ctx.fillStyle = '#8ecae6'; ctx.beginPath(); ctx.arc(dx, dy, 8, 0, 7); ctx.fill();
 
-            // Player
+            // Player (Cute character)
             ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
-            ctx.fillStyle = '#fff'; ctx.fillRect(-15, -15, 30, 30);
-            ctx.fillStyle = '#444'; ctx.fillRect(10, -5, 15, 10);
+            ctx.fillStyle = '#ffb3c6'; ctx.beginPath(); ctx.roundRect(-20, -20, 40, 40, 10); ctx.fill();
+            ctx.fillStyle = '#333'; ctx.fillRect(10, -10, 5, 5); ctx.fillRect(10, 5, 5, 5); // Eyes
             ctx.restore();
 
-            // Zombies
-            ctx.fillStyle = '#ff4d4d';
-            entities.zombies.forEach(z => { ctx.beginPath(); ctx.arc(z.x, z.y, 15, 0, 7); ctx.fill(); });
+            // Zombies (Cute ghosts)
+            entities.zombies.forEach(z => {
+                ctx.fillStyle = '#bde0fe'; ctx.beginPath(); ctx.arc(z.x, z.y, 20, 0, 7); ctx.fill();
+                ctx.fillStyle = '#333'; ctx.fillRect(z.x-8, z.y-5, 3, 3); ctx.fillRect(z.x+5, z.y-5, 3, 3);
+            });
 
             // Boss
-            if(entities.boss) { ctx.fillStyle = '#a020f0'; ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 50, 0, 7); ctx.fill(); }
+            if(entities.boss) {
+                ctx.fillStyle = '#cdb4db'; ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 60, 0, 7); ctx.fill();
+            }
 
             // Bullets
-            ctx.fillStyle = '#ffff00';
-            entities.bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 3, 0, 7); ctx.fill(); });
+            entities.bullets.forEach(b => {
+                ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, 7); ctx.fill();
+            });
 
-            // HUD
-            document.getElementById('hp-f').style.width = me.hp + '%';
-            document.getElementById('ult-f').style.width = me.ult + '%';
+            document.getElementById('hp-fill').style.width = me.hp + '%';
+            document.getElementById('ult-fill').style.width = me.ult + '%';
             document.getElementById('gold-txt').innerText = me.gold;
-            document.getElementById('stage-txt').innerText = me.stage;
             document.getElementById('btn-ult').style.display = me.ult >= 100 ? 'flex' : 'none';
         }
 
         function openShop() {
             document.getElementById('shop-screen').style.display = 'flex';
-            document.getElementById('shop-gold').innerText = `Vàng: ${me.gold}$`;
+            document.getElementById('shop-gold').innerText = `Kẹo: ${me.gold} 🍭`;
             const list = document.getElementById('shop-list');
             list.innerHTML = '';
-            const items = [{n: "Hồi máu", c: 50, f: ()=>me.hp=100}, {n: "Thêm Lính", c: 200, f: ()=>entities.mercs.push({})}];
+            const items = [{n: "Hồi máu", c: 50, f: ()=>me.hp=100}, {n: "Giáp ảo", c: 150, f: ()=>me.hp+=50}];
             items.forEach(it => {
-                let d = document.createElement('div'); d.className = 'shop-item';
-                d.innerHTML = `<div>${it.n}</div><div class="text-yellow-500">${it.c}$</div>`;
-                d.onclick = () => { if(me.gold >= it.c) { me.gold -= it.c; it.f(); closeShop(); } };
+                let d = document.createElement('div'); d.className = 'shop-card';
+                d.innerHTML = `<div class="font-bold">${it.n}</div><div class="text-pink-500">${it.c}🍭</div>`;
+                d.onclick = () => { if(me.gold >= it.c) { me.gold -= it.c; it.f(); playSound(1000, 'sine', 0.2); closeShop(); } };
                 list.appendChild(d);
             });
         }
 
         function closeShop() {
             document.getElementById('shop-screen').style.display = 'none';
-            entities.boss = { x: canvas.width/2, y: -100, hp: 1000 * me.stage };
+            entities.boss = { x: canvas.width/2, y: -100, hp: 1200 * me.stage };
         }
     </script>
 </body>
