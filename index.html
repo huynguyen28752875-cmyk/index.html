@@ -3,55 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zombie Evolution: Infinite Stages</title>
+    <title>Zom-Evo: Dark Survival</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Segoe UI', sans-serif; }
-        canvas { display: block; background: radial-gradient(circle, #1e1b4b, #020617); }
-        .ui-setup { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; border: 4px solid #4f46e5; }
-        .btn-ctrl { position: absolute; border-radius: 50%; color: white; font-weight: bold; display: none; z-index: 60; border: 4px solid rgba(255,255,255,0.1); text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        #btn-shoot { bottom: 40px; right: 40px; width: 85px; height: 85px; background: linear-gradient(135deg, #ef4444, #991b1b); }
-        #btn-dash { bottom: 135px; right: 45px; width: 65px; height: 65px; background: linear-gradient(135deg, #3b82f6, #1e40af); font-size: 12px; }
-        #joystick { position: absolute; bottom: 50px; left: 50px; width: 110px; height: 110px; background: rgba(255,255,255,0.05); border-radius: 50%; display: none; border: 2px solid #312e81; }
-        #stick { position: absolute; top: 30px; left: 30px; width: 50px; height: 50px; background: #fff; border-radius: 50%; box-shadow: 0 0 20px rgba(255,255,255,0.5); }
-        .stage-banner { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; transition: all 1s; z-index: 40; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial Black', sans-serif; }
+        canvas { display: block; }
+        
+        /* Rotate Hint */
+        #rotate-hint { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        @media screen and (orientation: portrait) { #rotate-hint { display: flex; } }
+
+        .ui-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .skill-btn { background: #312e81; border: 2px solid #6366f1; padding: 15px; border-radius: 12px; width: 220px; transition: 0.2s; cursor: pointer; }
+        .skill-btn:active { transform: scale(0.95); background: #6366f1; }
+        
+        #hud { position: absolute; top: 0; width: 100%; padding: 20px; pointer-events: none; z-index: 50; display: flex; justify-content: space-between; color: white; }
+        #combo-txt { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: 40px; color: #fbbf24; font-weight: 900; opacity: 0; transition: 0.3s; }
+        
+        /* Mobile Controls */
+        #joystick { position: absolute; bottom: 40px; left: 60px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%; border: 2px solid rgba(99,102,241,0.3); }
+        #stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #6366f1; border-radius: 50%; box-shadow: 0 0 20px #6366f1; }
+        #btn-shoot { position: absolute; bottom: 50px; right: 60px; width: 100px; height: 100px; background: #ef4444; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 0 20px #ef4444; color: white; font-weight: 900; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div id="setup-screen" class="ui-setup">
-        <h1 class="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-red-500 to-purple-800 mb-2 italic">ZOMBIE STAGES</h1>
-        <p class="text-blue-400 mb-8 font-bold tracking-[0.3em] text-xs">TIÊU DIỆT - TIẾN HÓA - SINH TỒN</p>
-        <input type="text" id="name-in" class="p-4 rounded-xl w-72 text-black font-bold mb-4 outline-none border-4 border-indigo-500" placeholder="Tên chiến binh">
-        <input type="text" id="room-in" class="p-4 rounded-xl w-72 text-black font-bold mb-6 outline-none border-4 border-indigo-500" placeholder="Mã phòng">
-        <button onclick="initGame()" class="bg-indigo-600 text-white px-16 py-4 rounded-full font-black text-2xl hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/50">BẮT ĐẦU</button>
-        <p id="status" class="mt-4 text-gray-500 text-sm"></p>
-    </div>
+    <div id="rotate-hint">🔄 Xoay ngang điện thoại để chơi</div>
 
-    <div id="stage-announcer" class="stage-banner">
-        <h2 id="stage-text" class="text-7xl font-black text-yellow-500 italic drop-shadow-[0_0_30px_rgba(234,179,8,0.8)]">STAGE 1</h2>
-    </div>
-
-    <div id="game-ui" class="hidden absolute top-0 w-full p-6 flex justify-between pointer-events-none text-white z-50">
-        <div class="space-y-2">
-            <div class="bg-black/80 p-3 rounded-lg border-l-4 border-indigo-500 min-w-[150px]">
-                <p id="my-name-ui" class="font-black text-indigo-400 text-xs"></p>
-                <div class="w-full h-2 bg-gray-800 mt-2 rounded-full overflow-hidden"><div id="my-hp" class="h-full bg-gradient-to-r from-red-500 to-pink-500 transition-all"></div></div>
-                <div class="w-full h-1.5 bg-gray-800 mt-1 rounded-full overflow-hidden"><div id="my-stamina" class="h-full bg-yellow-400"></div></div>
-            </div>
-            <p class="text-[10px] font-bold text-white uppercase bg-indigo-900/50 px-2 py-1 rounded inline-block">Cửa ải: <span id="current-stage" class="text-yellow-400">1</span></p>
+    <div id="setup" class="ui-screen">
+        <h1 class="text-6xl font-black text-red-600 mb-2 italic shadow-lg">DARK SURVIVAL</h1>
+        <p class="text-indigo-400 mb-8 tracking-widest text-sm">HỢP TÁC SINH TỒN 360°</p>
+        <div class="flex flex-col gap-4">
+            <input type="text" id="name-in" class="p-4 rounded-xl text-black font-bold w-80" placeholder="Tên của bạn">
+            <input type="text" id="room-in" class="p-4 rounded-xl text-black font-bold w-80" placeholder="Mã phòng (Ví dụ: 999)">
+            <button onclick="initPeer()" class="bg-red-600 py-4 rounded-xl font-black text-2xl active:scale-95 shadow-xl">VÀO TRẬN CHIẾN</button>
         </div>
-        <div class="bg-black/80 p-4 rounded-lg border-r-4 border-red-600 text-right">
-            <p class="text-[10px] text-gray-400 font-bold uppercase">Tổng điểm đội</p>
-            <p id="total-score" class="text-3xl font-black text-white tabular-nums drop-shadow-md">0</p>
-            <p class="text-[9px] text-indigo-300 font-bold">Mục tiêu: <span id="next-goal">1000</span></p>
+        <p id="status" class="mt-4 text-gray-500 italic text-sm"></p>
+    </div>
+
+    <div id="upgrade-menu" class="ui-screen hidden">
+        <h2 class="text-3xl font-black text-yellow-400 mb-8">KỸ NĂNG TIẾN HÓA</h2>
+        <div id="skill-options" class="flex flex-wrap justify-center gap-4"></div>
+    </div>
+
+    <div id="hud" class="hidden">
+        <div class="flex flex-col gap-1">
+            <p id="ui-name" class="font-bold text-indigo-400"></p>
+            <div class="w-32 h-3 bg-gray-900 rounded-full border border-gray-700 overflow-hidden"><div id="hp-bar" class="h-full bg-red-600 transition-all"></div></div>
+            <p class="text-[10px] text-gray-500 uppercase">Drone: <span id="ui-drone" class="text-green-500">SẴN SÀNG</span></p>
+        </div>
+        <div class="text-right">
+            <p id="ui-score" class="text-4xl font-black text-white">0</p>
+            <p class="text-xs text-indigo-400">STAGE <span id="ui-stage">1</span></p>
         </div>
     </div>
 
+    <div id="combo-txt">UNSTOPPABLE!</div>
     <div id="joystick"><div id="stick"></div></div>
-    <button id="btn-shoot" class="btn-ctrl shadow-red-500/50">BẮN</button>
-    <button id="btn-dash" class="btn-ctrl shadow-blue-500/50">LƯỚT</button>
+    <button id="btn-shoot">BẮN</button>
 
     <canvas id="game"></canvas>
 
@@ -59,257 +69,232 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         let peer, conn, isHost = false;
-        
-        // --- Âm thanh (Sound System) ---
-        const AudioSys = {
-            ctx: new (window.AudioContext || window.webkitAudioContext)(),
-            play(f, t, d, v=0.1) {
-                const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
-                o.type = t; o.frequency.setValueAtTime(f, this.ctx.currentTime);
-                g.gain.setValueAtTime(v, this.ctx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d);
-                o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + d);
-            },
-            bgm() { setInterval(() => { if(!document.hidden) this.play(150 + (me.stage*20), 'triangle', 0.8, 0.03); }, 1200); }
+
+        // --- GAME OBJECTS ---
+        let me = { 
+            x: 400, y: 300, hp: 100, score: 0, stage: 1, angle: 0, speed: 5, fireRate: 350,
+            droneAngle: 0, hasDrone: true, lastShoot: 0, combo: 0, comboTimer: 0
         };
+        let enemy = { x: -1000, y: -1000, hp: 100, angle: 0, bullets: [] };
+        let zombies = [], particles = [], bullets = [], boss = null;
+        let joyX = 0, joyY = 0;
 
-        // --- Biến Game ---
-        let me = { x: 300, y: 300, hp: 100, stamina: 100, score: 0, stage: 1, gun: 'pistol', bullets: [], isDead: false, dash: 0 };
-        let enemy = { x: -1000, y: -1000, hp: 100, score: 0, isDead: false, bullets: [] };
-        let zombies = [], items = [], particles = [], boss = null;
-        let keys = {}, joyX = 0, joyY = 0;
-
-        if ('ontouchstart' in window) { document.querySelectorAll('.btn-ctrl, #joystick').forEach(el => el.style.display = 'block'); }
-
-        function initGame() {
-            AudioSys.ctx.resume(); AudioSys.bgm();
-            const name = document.getElementById('name-in').value || "Chưa đặt tên";
-            const room = document.getElementById('room-in').value || "123";
-            const roomID = 'zom-stage-sys-' + room.toLowerCase();
-            document.getElementById('my-name-ui').innerText = name.toUpperCase();
+        function initPeer() {
+            const name = document.getElementById('name-in').value || "Soldier";
+            const room = 'dark-zom-' + (document.getElementById('room-in').value || "test");
+            document.getElementById('ui-name').innerText = name.toUpperCase();
             
-            peer = new Peer(roomID);
-            peer.on('open', () => { isHost = true; document.getElementById('status').innerText = "Đã tạo phòng: " + room; });
+            peer = new Peer(room);
+            peer.on('open', (id) => { 
+                isHost = true; 
+                document.getElementById('status').innerText = "Đã mở phòng. Chờ đồng đội..."; 
+            });
             peer.on('connection', c => { conn = c; start(); });
             peer.on('error', () => {
                 peer = new Peer();
-                setTimeout(() => { conn = peer.connect(roomID); start(); }, 500);
+                setTimeout(() => { conn = peer.connect(room); start(); }, 500);
             });
         }
 
         function start() {
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('game-ui').classList.remove('hidden');
-            announceStage(1);
-            conn.on('data', data => {
-                if(data.type === 'sync') {
-                    enemy = data.player;
-                    if(!isHost) { zombies = data.zombies; items = data.items; boss = data.boss; me.stage = data.stage; }
-                }
-                if(data.type === 'hit' && isHost) {
-                    let target = (data.id === 'boss') ? boss : zombies.find(z => z.id === data.id);
-                    if(target) {
-                        target.hp -= (data.gun === 'cannon' ? 60 : 25);
-                        fx(target.x, target.y, '#4ade80', 10);
-                        if(target.hp <= 0) {
-                            if(data.id === 'boss') boss = null;
-                            else { zombies = zombies.filter(z => z.id !== data.id); dropItem(target.x, target.y); }
-                            me.score += 100; checkStage();
-                        }
-                    }
-                }
-            });
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('hud').classList.remove('hidden');
             loop();
         }
 
-        function checkStage() {
-            let total = me.score + enemy.score;
-            let nextStage = Math.floor(total / 1000) + 1;
-            if(nextStage > me.stage) {
-                me.stage = nextStage;
-                announceStage(me.stage);
-                AudioSys.play(500, 'square', 0.5, 0.2);
+        function createBullet(x, y, angle, isDrone = false) {
+            bullets.push({
+                x: x, y: y,
+                vx: Math.cos(angle) * 15,
+                vy: Math.sin(angle) * 15,
+                power: isDrone ? 15 : 25,
+                color: isDrone ? '#4ade80' : '#fbbf24'
+            });
+        }
+
+        function spawnZombie() {
+            if(!isHost) return;
+            if(zombies.length < 5 + me.stage * 2) {
+                const side = Math.random() > 0.5;
+                zombies.push({
+                    id: Date.now() + Math.random(),
+                    x: side ? Math.random() * canvas.width : (Math.random() > 0.5 ? -50 : canvas.width + 50),
+                    y: !side ? Math.random() * canvas.height : (Math.random() > 0.5 ? -50 : canvas.height + 50),
+                    hp: 50 + (me.stage * 15),
+                    type: Math.random() > 0.85 ? 'fast' : 'normal'
+                });
             }
         }
 
-        function announceStage(s) {
-            const el = document.getElementById('stage-announcer');
-            document.getElementById('stage-text').innerText = "STAGE " + s;
-            el.style.opacity = "1";
-            setTimeout(() => el.style.opacity = "0", 2000);
-        }
-
-        function fx(x, y, color, count) {
-            for(let i=0; i<count; i++) particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 25, color });
-            AudioSys.play(200, 'sine', 0.1);
-        }
-
-        function dropItem(x, y) {
-            if(Math.random() < 0.35) items.push({ id: Date.now(), x, y, type: Math.random() < 0.5 ? 'triple' : 'cannon' });
-        }
-
-        function shoot() {
-            if(me.isDead) return;
-            AudioSys.play(700, 'sine', 0.05, 0.04);
-            const b = { x: me.x + 20, y: me.y + 20, vx: 16, size: me.gun === 'cannon' ? 14 : 5 };
-            if(me.gun === 'triple') me.bullets.push({...b, vy: -3}, {...b, vy: 0}, {...b, vy: 3});
-            else me.bullets.push({...b, vy: 0});
+        function handleUpgrades() {
+            me.stage++;
+            const upgrades = [
+                { t: "⚡ TỐC ĐỘ", d: "Chạy nhanh hơn", fn: () => me.speed += 1.5 },
+                { t: "🔥 LIÊN THANH", d: "Bắn nhanh hơn 40%", fn: () => me.fireRate *= 0.6 },
+                { t: "🛡 GIÁP", d: "Hồi máu tối đa", fn: () => me.hp = 100 }
+            ];
+            const container = document.getElementById('skill-options');
+            container.innerHTML = '';
+            upgrades.forEach(u => {
+                const btn = document.createElement('div');
+                btn.className = 'skill-btn';
+                btn.innerHTML = `<p class="font-black text-yellow-400">${u.t}</p><p class="text-[10px]">${u.d}</p>`;
+                btn.onclick = () => { u.fn(); document.getElementById('upgrade-menu').classList.add('hidden'); };
+                container.appendChild(btn);
+            });
+            document.getElementById('upgrade-menu').classList.remove('hidden');
         }
 
         function loop() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            let speed = (me.dash > 0 ? 18 : 6); if(me.dash > 0) me.dash--;
-            
-            if(!me.isDead) {
-                if(keys['KeyW']) me.y -= speed; if(keys['KeyS']) me.y += speed;
-                if(keys['KeyA']) me.x -= speed; if(keys['KeyD']) me.x += speed;
-                me.x += joyX*speed; me.y += joyY*speed;
-            }
-            if(me.stamina < 100) me.stamina += 0.5;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
 
-            if(isHost) {
-                // Boss Logic
-                let total = me.score + enemy.score;
-                if(!boss && total % 1000 >= 900 && total > 0) {
-                    boss = { id: 'boss', x: canvas.width+100, y: canvas.height/2, hp: 1000 + (me.stage*1000), max: 1000 + (me.stage*1000), size: 110 };
+            const isPaused = !document.getElementById('upgrade-menu').classList.contains('hidden');
+
+            if(!me.isDead && !isPaused) {
+                // Di chuyển
+                if(Math.abs(joyX) > 0.1 || Math.abs(joyY) > 0.1) {
+                    me.x += joyX * me.speed;
+                    me.y += joyY * me.speed;
+                    me.angle = Math.atan2(joyY, joyX);
                 }
-                if(boss) {
-                    let t = me.isDead ? enemy : me;
-                    let d = Math.sqrt((t.x-boss.x)**2+(t.y-boss.y)**2);
-                    boss.x += (t.x-boss.x)/d * (2 + me.stage*0.3); boss.y += (t.y-boss.y)/d * (2 + me.stage*0.3);
+
+                // Drone Logic
+                me.droneAngle += 0.05;
+                const dx = me.x + 20 + Math.cos(me.droneAngle) * 60;
+                const dy = me.y + 20 + Math.sin(me.droneAngle) * 60;
+
+                // Tự động bắn Drone
+                if(zombies.length > 0 && Math.random() < 0.03) {
+                    const target = zombies[0];
+                    const angleToZom = Math.atan2(target.y - dy, target.x - dx);
+                    createBullet(dx, dy, angleToZom, true);
                 }
-                // Zombie Logic
-                if(zombies.length < 5 + me.stage && Math.random() < 0.02) {
-                    zombies.push({ id: Date.now(), x: Math.random()*canvas.width, y: -50, hp: 50 + me.stage*20 });
+
+                // Combo Timer
+                if(me.comboTimer > 0) {
+                    me.comboTimer--;
+                    if(me.comboTimer === 0) me.combo = 0;
                 }
+            }
+
+            if(isHost && !isPaused) {
+                spawnZombie();
                 zombies.forEach(z => {
-                    let t = me.isDead ? enemy : me;
-                    let d = Math.sqrt((t.x-z.x)**2+(t.y-z.y)**2);
-                    z.x += (t.x-z.x)/d * (1.5 + me.stage*0.2); z.y += (t.y-z.y)/d * (1.5 + me.stage*0.2);
+                    const d = Math.sqrt((me.x-z.x)**2 + (me.y-z.y)**2);
+                    const zSpeed = z.type === 'fast' ? 2.5 : 1.5;
+                    z.x += (me.x-z.x)/d * (zSpeed + me.stage*0.1);
+                    z.y += (me.y-z.y)/d * (zSpeed + me.stage*0.1);
                 });
             }
 
-            // Collisions
-            [...zombies, boss].filter(Boolean).forEach(z => {
-                let dist = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                if(dist < (z.size || 35) && !me.isDead) {
-                    me.hp -= 1.5;
-                    if(me.hp <= 0) { me.isDead = true; fx(me.x, me.y, 'red', 20); setTimeout(() => { me.hp=100; me.isDead=false; me.x=100; me.y=100; }, 3000); }
-                }
-            });
-
-            me.bullets.forEach((b, bi) => {
+            // Xử lý đạn
+            bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
-                if(b.x > canvas.width || b.x < 0) me.bullets.splice(bi, 1);
-                [...zombies, boss].filter(Boolean).forEach(z => {
-                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < (z.size || 35)) {
-                        me.bullets.splice(bi, 1);
-                        if(isHost) {
-                            z.hp -= (me.gun==='cannon'?60:25);
-                            fx(z.x, z.y, '#4ade80', 5);
-                            if(z.hp <= 0) { if(z.id==='boss') boss=null; else zombies=zombies.filter(i=>i.id!==z.id); me.score += 100; checkStage(); }
-                        } else conn.send({ type: 'hit', id: z.id, gun: me.gun });
+                if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) bullets.splice(i, 1);
+                
+                zombies.forEach((z, zi) => {
+                    if(Math.sqrt((b.x-z.x)**2 + (b.y-z.y)**2) < 25) {
+                        z.hp -= b.power;
+                        bullets.splice(i, 1);
+                        if(z.hp <= 0) {
+                            zombies.splice(zi, 1);
+                            me.score += 100;
+                            me.combo++;
+                            me.comboTimer = 100;
+                            if(me.combo % 5 === 0) showCombo();
+                            if(me.score % 1000 === 0) handleUpgrades();
+                        }
                     }
                 });
             });
 
-            items.forEach((it, idx) => {
-                if(Math.sqrt((me.x-it.x)**2+(me.y-it.y)**2) < 45) {
-                    me.gun = it.type; AudioSys.play(1000, 'sine', 0.2);
-                    if(isHost) items.splice(idx, 1); else conn.send({ type: 'take', id: it.id });
-                }
-            });
+            if(conn && conn.open) conn.send({ type: 'sync', player: me, bullets, zombies, stage: me.stage });
 
-            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i,1); });
-
-            if(conn && conn.open) conn.send({ type: 'sync', name: document.getElementById('name-in').value, player: { ...me, bullets: me.bullets }, zombies, items, boss, stage: me.stage });
-
-            updateUI(); draw();
+            draw();
             requestAnimationFrame(loop);
         }
 
-        function updateUI() {
-            document.getElementById('my-hp').style.width = me.hp + '%';
-            document.getElementById('my-stamina').style.width = me.stamina + '%';
-            document.getElementById('total-score').innerText = (me.score + enemy.score);
-            document.getElementById('current-stage').innerText = me.stage;
-            document.getElementById('next-goal').innerText = me.stage * 1000;
+        function showCombo() {
+            const el = document.getElementById('combo-txt');
+            el.style.opacity = 1;
+            setTimeout(() => el.style.opacity = 0, 800);
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Phông nền tối
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // --- LỚP ÁNH SÁNG (FLASHLIGHT) ---
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(me.x+20, me.y+20, 350, me.angle - 0.5, me.angle + 0.5);
+            ctx.lineTo(me.x+20, me.y+20);
+            ctx.clip();
             
-            // Draw Items
-            items.forEach(it => {
-                ctx.save();
-                ctx.shadowBlur = 15; ctx.shadowColor = it.type==='triple'?'#0ff':'#f0f';
-                ctx.fillStyle = it.type==='triple'?'#0ff':'#f0f';
-                ctx.beginPath(); ctx.arc(it.x, it.y, 15 + Math.sin(Date.now()/200)*5, 0, 7); ctx.fill();
-                ctx.restore();
-            });
+            // Vẽ mặt đất trong vùng sáng
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0,0, canvas.width, canvas.height);
 
-            // Draw Particles
-            particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life/25; ctx.fillRect(p.x, p.y, 4, 4); ctx.globalAlpha = 1; });
-
-            // Draw Boss (Hung dữ hơn)
-            if(boss) {
-                ctx.save();
-                let shake = Math.sin(Date.now()/50)*5;
-                ctx.translate(boss.x + shake, boss.y + shake);
-                // Aura
-                let grad = ctx.createRadialGradient(0,0,0,0,0,boss.size);
-                grad.addColorStop(0, 'rgba(239, 68, 68, 0.8)'); grad.addColorStop(1, 'transparent');
-                ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, 0, boss.size + 20, 0, 7); ctx.fill();
-                // Thân boss
-                ctx.fillStyle = "#450a0a"; ctx.beginPath(); ctx.arc(0, 0, boss.size, 0, 7); ctx.fill();
-                // Gai nhọn
-                ctx.strokeStyle = "red"; ctx.lineWidth = 5;
-                for(let i=0; i<8; i++) {
-                    ctx.rotate(Math.PI/4); ctx.beginPath(); ctx.moveTo(boss.size-10, 0); ctx.lineTo(boss.size+30, 0); ctx.stroke();
-                }
-                // Mắt rực lửa
-                ctx.fillStyle = "yellow"; ctx.beginPath(); ctx.arc(-20, -20, 15, 0, 7); ctx.arc(20, -20, 15, 0, 7); ctx.fill();
-                ctx.restore();
-            }
-
-            // Draw Zombies (Có hiệu ứng đẹp hơn)
+            // Vẽ Zombies trong vùng sáng
             zombies.forEach(z => {
-                ctx.save();
-                ctx.shadowBlur = 10; ctx.shadowColor = "#4ade80";
-                ctx.fillStyle = "#064e3b"; ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 20, 0, 7); ctx.fill();
-                // Mắt phát sáng
-                ctx.fillStyle = "#4ade80"; ctx.beginPath(); ctx.arc(z.x+12, z.y+15, 4, 0, 7); ctx.arc(z.x+28, z.y+15, 4, 0, 7); ctx.fill();
-                ctx.restore();
+                ctx.fillStyle = z.type === 'fast' ? '#f87171' : '#22c55e';
+                ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 20, 0, 7); ctx.fill();
+                ctx.fillStyle = 'white'; ctx.fillRect(z.x+10, z.y+10, 4, 4); ctx.fillRect(z.x+25, z.y+10, 4, 4);
+            });
+            ctx.restore();
+
+            // Vẽ Drone
+            const dx = me.x + 20 + Math.cos(me.droneAngle) * 60;
+            const dy = me.y + 20 + Math.sin(me.droneAngle) * 60;
+            ctx.fillStyle = '#4ade80';
+            ctx.shadowBlur = 15; ctx.shadowColor = '#4ade80';
+            ctx.fillRect(dx-10, dy-10, 20, 20);
+            ctx.shadowBlur = 0;
+
+            // Vẽ Nhân vật chính
+            ctx.save();
+            ctx.translate(me.x + 20, me.y + 20);
+            ctx.rotate(me.angle);
+            ctx.fillStyle = '#6366f1';
+            ctx.fillRect(-20, -20, 40, 40);
+            ctx.fillStyle = 'white'; ctx.fillRect(10, -4, 15, 8); // Súng
+            ctx.restore();
+
+            // Vẽ Đạn (Luôn thấy trong bóng tối vì nó tự phát sáng)
+            bullets.forEach(b => {
+                ctx.fillStyle = b.color;
+                ctx.shadowBlur = 10; ctx.shadowColor = b.color;
+                ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, 7); ctx.fill();
+                ctx.shadowBlur = 0;
             });
 
-            // Draw Players
-            if(!me.isDead) {
-                ctx.save(); ctx.shadowBlur = 15; ctx.shadowColor = "#6366f1";
-                ctx.fillStyle = "#6366f1"; ctx.fillRect(me.x, me.y, 40, 40);
-                ctx.strokeStyle = "white"; ctx.strokeRect(me.x, me.y, 40, 40); ctx.restore();
-            }
-            if(!enemy.isDead) { ctx.fillStyle = "#ec4899"; ctx.fillRect(enemy.x, enemy.y, 40, 40); }
-
-            // Draw Bullets
-            ctx.fillStyle = "#fbbf24"; me.bullets.concat(enemy.bullets || []).forEach(b => {
-                ctx.save(); ctx.shadowBlur = 10; ctx.shadowColor = "yellow";
-                ctx.beginPath(); ctx.arc(b.x, b.y, b.size||5, 0, 7); ctx.fill(); ctx.restore();
-            });
+            // HUD Update
+            document.getElementById('hp-bar').style.width = me.hp + '%';
+            document.getElementById('ui-score').innerText = me.score;
+            document.getElementById('ui-stage').innerText = me.stage;
         }
 
-        // --- Controls ---
-        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code==='Space') shoot(); if(e.shiftKey) me.dash=10; });
-        window.addEventListener('keyup', e => keys[e.code] = false);
+        // --- CONTROLS ---
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.addEventListener('touchmove', e => {
             const t = e.touches[0]; const r = joy.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 55), dy = t.clientY - (r.top + 55);
-            let d = Math.sqrt(dx*dx + dy*dy); if(d > 40) { dx *= 40/d; dy *= 40/d; }
-            st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/35; joyY = dy/35;
+            let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
+            let d = Math.sqrt(dx*dx + dy*dy); if(d > 45) { dx *= 45/d; dy *= 45/d; }
+            st.style.transform = `translate(${dx}px, ${dy}px)`; 
+            joyX = dx/45; joyY = dy/45;
         });
         joy.addEventListener('touchend', () => { joyX = 0; joyY = 0; st.style.transform = 'none'; });
-        document.getElementById('btn-shoot').onclick = shoot;
-        document.getElementById('btn-dash').onclick = () => { if(me.stamina>=40){me.stamina-=40; me.dash=10;} };
+        
+        document.getElementById('btn-shoot').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const now = Date.now();
+            if(now - me.lastShoot > me.fireRate) {
+                createBullet(me.x+20, me.y+20, me.angle);
+                me.lastShoot = now;
+            }
+        });
     </script>
 </body>
 </html>
