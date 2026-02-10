@@ -3,51 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>Zom-Evo: Fixed & Music</title>
+    <title>Zom-Evo: Mech-Cat Evolution</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: sans-serif; color: white; }
+        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: 'Courier New', Courier, monospace; color: white; }
         canvas { display: block; }
-        .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.9); text-align: center; backdrop-filter: blur(10px); }
-        .btn-cyber { background: linear-gradient(45deg, #06b6d4, #8b5cf6); color: white; padding: 12px 40px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+        .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.95); text-align: center; backdrop-filter: blur(15px); }
+        .btn-cyber { background: linear-gradient(45deg, #22d3ee, #8b5cf6); color: white; padding: 15px 50px; border-radius: 4px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%); transition: 0.3s; }
+        .btn-cyber:hover { letter-spacing: 3px; box-shadow: 0 0 30px #22d3ee; }
         
-        #hud { position: absolute; top: 10px; left: 15px; z-index: 100; pointer-events: none; }
-        .bar-container { width: 160px; height: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 5px; }
-        #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.3s; }
-        #ult-fill { height: 100%; background: #facc15; width: 0%; }
-        
-        #stage-bar { width: 30%; height: 5px; background: rgba(255,255,255,0.1); border-radius: 10px; position: absolute; left: 50%; top: 15px; transform: translateX(-50%); overflow: hidden; }
-        #stage-fill { height: 100%; background: #22d3ee; width: 0%; box-shadow: 0 0 10px #22d3ee; }
+        #hud { position: absolute; top: 15px; left: 20px; z-index: 100; pointer-events: none; }
+        .status-container { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+        .bar-bg { width: 140px; height: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+        #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.2s; box-shadow: 0 0 10px #ef4444; }
+        #ult-fill { height: 100%; background: #eab308; width: 0%; box-shadow: 0 0 10px #eab308; }
 
         #mobile-ctrl { position: absolute; inset: 0; pointer-events: none; display: none; }
-        .joy-base { position: absolute; bottom: 30px; left: 50px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); border-radius: 50%; pointer-events: auto; }
-        .joy-stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 15px #22d3ee; }
-        .btn-group-right { position: absolute; bottom: 30px; right: 50px; display: flex; flex-direction: column; gap: 15px; pointer-events: auto; }
-        .btn-act { width: 75px; height: 75px; background: rgba(34, 211, 238, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid #22d3ee; box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); }
-        #btn-ult { border-color: #fbbf24; color: #fbbf24; display: none; }
+        .joy-base { position: absolute; bottom: 40px; left: 60px; width: 110px; height: 110px; background: rgba(34, 211, 238, 0.05); border: 1px solid #22d3ee; border-radius: 50%; pointer-events: auto; }
+        .joy-stick { position: absolute; top: 30px; left: 30px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; box-shadow: 0 0 20px #22d3ee; }
+        .btn-group-right { position: absolute; bottom: 40px; right: 60px; display: flex; flex-direction: column; gap: 20px; pointer-events: auto; }
+        .btn-act { width: 80px; height: 80px; background: rgba(139, 92, 246, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; border: 2px solid #8b5cf6; box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+        #btn-ult { border-color: #facc15; color: #facc15; display: none; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="ui-panel">
-        <h1 class="text-5xl font-black text-cyan-400 mb-2 italic tracking-tighter">NEON SURVIVAL</h1>
-        <p class="text-gray-400 mb-8 text-xs uppercase tracking-widest">Sửa lỗi Bắn & Thêm Nhạc</p>
-        <button onclick="initGame()" class="btn-cyber">VÀO TRẬN</button>
+        <h1 class="text-6xl font-black text-cyan-400 mb-2 italic">MECH-CAT</h1>
+        <p class="text-purple-400 mb-10 text-xs tracking-[0.5em] uppercase">System Booting...</p>
+        <button onclick="initGame()" class="btn-cyber">Bắt Đầu Nhiệm Vụ</button>
     </div>
 
     <div id="shop-screen" class="ui-panel" style="display: none;">
-        <h2 class="text-2xl font-black text-cyan-400 mb-4 uppercase italic">Tiếp Tế Vũ Khí</h2>
-        <div id="shop-list" class="flex flex-wrap justify-center gap-4"></div>
-        <button onclick="closeShop()" class="mt-6 text-gray-500 underline text-sm">TIẾP TỤC →</button>
+        <h2 class="text-3xl font-black text-cyan-400 mb-4 italic uppercase">Nâng Cấp Hệ Thống</h2>
+        <div id="shop-list" class="flex flex-wrap justify-center gap-6"></div>
+        <button onclick="closeShop()" class="mt-8 text-cyan-400 border border-cyan-400 px-6 py-2 hover:bg-cyan-400 hover:text-black">QUAY LẠI TRẬN ĐẤU</button>
     </div>
 
     <div id="hud">
-        <div class="bar-container"><div id="hp-fill"></div></div>
-        <div class="bar-container"><div id="ult-fill"></div></div>
-        <div class="text-cyan-400 font-bold text-xs">🍭 KẸO: <span id="gold-txt">0</span> | SCORE: <span id="score-txt">0</span></div>
+        <div class="status-container">
+            <span class="text-[10px] w-6">HP</span>
+            <div class="bar-bg"><div id="hp-fill"></div></div>
+        </div>
+        <div class="status-container">
+            <span class="text-[10px] w-6">ULT</span>
+            <div class="bar-bg"><div id="ult-fill"></div></div>
+        </div>
+        <div class="mt-2 text-cyan-400 font-bold text-sm italic">
+            CREDITS: <span id="gold-txt" class="text-white">0</span> | SÓNG: <span id="score-txt" class="text-white">0</span>
+        </div>
     </div>
-
-    <div id="stage-bar"><div id="stage-fill"></div></div>
 
     <div id="mobile-ctrl">
         <div class="joy-base" id="joystick"><div class="joy-stick" id="stick"></div></div>
@@ -63,36 +68,29 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
-        let me = { x: 0, y: 0, hp: 100, gold: 0, score: 0, stage: 1, angle: 0, ult: 0, weapon: 'pistol' };
+        let me = { x: 0, y: 0, hp: 100, gold: 0, score: 0, stage: 1, angle: 0, ult: 0, weapon: 'pistol', vx: 0, vy: 0 };
         let drone = { angle: 0, lastShot: 0 };
-        let entities = { zombies: [], bullets: [], boss: null };
-        let keys = {}, joyX = 0, joyY = 0, isShopOpen = false, isMobile = false;
-        let audioCtx, bgmNode;
+        let entities = { zombies: [], bullets: [], boss: null, trails: [] };
+        let keys = {}, joyX = 0, joyY = 0, isShopOpen = false, audioCtx;
 
         const weaponStats = {
-            pistol: { n: "Pistol", c: 0, r: 350, cnt: 1, clr: '#22d3ee', sz: 6 },
-            smg: { n: "Hyper SMG", c: 400, r: 100, cnt: 1, clr: '#facc15', sz: 5 },
-            shotgun: { n: "Blast Gun", c: 750, r: 800, cnt: 6, clr: '#f472b6', sz: 4 }
+            pistol: { n: "G-Pistol", c: 0, r: 350, cnt: 1, clr: '#22d3ee' },
+            smg: { n: "S-Mech", c: 450, r: 100, cnt: 1, clr: '#facc15' },
+            shotgun: { n: "B-Wave", c: 800, r: 850, cnt: 7, clr: '#f472b6' }
         };
 
-        // ÂM THANH & NHẠC NỀN
         function initAudio() {
             if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Nhạc nền đơn giản (BGM)
             const playBGM = () => {
                 let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(110, audioCtx.currentTime); // Âm trầm Cyber
-                osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 4);
-                gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 4);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                setTimeout(playBGM, 4000);
+                let g = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(40, audioCtx.currentTime);
+                g.gain.setValueAtTime(0.01, audioCtx.currentTime);
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 2);
+                setTimeout(playBGM, 2000);
             };
             playBGM();
         }
@@ -101,7 +99,7 @@
             if(!audioCtx) return;
             let o=audioCtx.createOscillator(), g=audioCtx.createGain();
             o.type=t; o.frequency.value = f;
-            g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.03, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+d);
             o.connect(g); g.connect(audioCtx.destination);
             o.start(); o.stop(audioCtx.currentTime+d);
@@ -110,7 +108,7 @@
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            me.x = canvas.width/2; me.y = canvas.height/2;
+            if(!me.x) { me.x = canvas.width/2; me.y = canvas.height/2; }
         }
         window.onresize = resize;
         resize();
@@ -118,23 +116,20 @@
         function initGame() {
             initAudio();
             document.getElementById('start-screen').style.display = 'none';
-            isMobile = /Android|iPhone/i.test(navigator.userAgent);
-            if(isMobile) document.getElementById('mobile-ctrl').style.display = 'block';
+            if(/Android|iPhone/i.test(navigator.userAgent)) document.getElementById('mobile-ctrl').style.display = 'block';
             loop();
         }
 
-        // ĐIỀU KHIỂN
+        // CONTROL FIX
         window.onkeydown = e => keys[e.code] = true;
         window.onkeyup = e => keys[e.code] = false;
-        window.onmousedown = () => { keys['Fire'] = true; };
-        window.onmouseup = () => { keys['Fire'] = false; };
-        window.onmousemove = e => { if(!isMobile) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
-
+        window.onmousemove = e => { if(window.innerWidth > 1000) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
+        
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         const handleJoy = (e) => {
             e.preventDefault();
             let t = e.touches[0], r = joy.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
+            let dx = t.clientX - (r.left + 55), dy = t.clientY - (r.top + 55);
             let d = Math.min(Math.sqrt(dx*dx+dy*dy), 40);
             let a = Math.atan2(dy, dx);
             joyX = Math.cos(a) * (d/40); joyY = Math.sin(a) * (d/40);
@@ -143,11 +138,11 @@
         };
         joy.ontouchmove = handleJoy;
         joy.ontouchend = () => { joyX = joyY = 0; st.style.transform = 'none'; };
+
         document.getElementById('btn-fire').ontouchstart = e => { e.preventDefault(); keys['Fire'] = true; };
         document.getElementById('btn-fire').ontouchend = () => keys['Fire'] = false;
         document.getElementById('btn-ult').ontouchstart = e => { e.preventDefault(); useUlt(); };
 
-        // BẮN SÚNG
         let lastShoot = 0;
         function shoot(from, ang, type = 'player') {
             const w = weaponStats[me.weapon];
@@ -155,19 +150,16 @@
             
             let count = type === 'player' ? w.cnt : 1;
             for(let i=0; i<count; i++) {
-                let spread = (Math.random()-0.5) * (type === 'player' ? 0.3 : 0);
+                let spread = (Math.random()-0.5) * (type === 'player' ? 0.4 : 0);
                 entities.bullets.push({
                     x: from.x, y: from.y,
-                    vx: Math.cos(ang + spread) * 15,
-                    vy: Math.sin(ang + spread) * 15,
+                    vx: Math.cos(ang + spread) * 16,
+                    vy: Math.sin(ang + spread) * 16,
                     color: type === 'player' ? w.clr : '#fff',
-                    size: type === 'player' ? w.sz : 5
+                    size: type === 'player' ? 6 : 4
                 });
             }
-            if(type === 'player') { 
-                lastShoot = Date.now(); 
-                playSfx(400 + Math.random()*200, 'square', 0.05); 
-            }
+            if(type === 'player') { lastShoot = Date.now(); playSfx(600, 'square', 0.05); }
         }
 
         function useUlt() {
@@ -176,64 +168,86 @@
             entities.zombies.forEach(z => { z.hp = 0; me.score += 20; });
         }
 
-        // VÒNG LẶP CHÍNH
         function loop() {
             if(isShopOpen) { requestAnimationFrame(loop); return; }
 
-            // Di chuyển
-            let mx = (keys['KeyD']?1:0)-(keys['KeyA']?1:0) || joyX;
-            let my = (keys['KeyS']?1:0)-(keys['KeyW']?1:0) || joyY;
-            if(mx || my) {
-                let m = Math.sqrt(mx*mx+my*my);
-                me.x = Math.max(20, Math.min(canvas.width-20, me.x + (mx/m)*6));
-                me.y = Math.max(20, Math.min(canvas.height-20, me.y + (my/m)*6));
+            // MOVEMENT LOGIC (FIXED)
+            let tx = (keys['KeyD']?1:0)-(keys['KeyA']?1:0) || joyX;
+            let ty = (keys['KeyS']?1:0)-(keys['KeyW']?1:0) || joyY;
+            
+            // Normalize & Apply speed
+            if(tx || ty) {
+                let mag = Math.sqrt(tx*tx + ty*ty);
+                me.vx += (tx/mag * 0.8);
+                me.vy += (ty/mag * 0.8);
+                
+                // Add Trail
+                if(Math.random() > 0.5) entities.trails.push({x: me.x, y: me.y, alpha: 0.5});
             }
+            
+            me.vx *= 0.85; // Friction
+            me.vy *= 0.85;
+            me.x += me.vx;
+            me.y += me.vy;
 
-            // Xử lý bắn (Sửa lỗi không bắn được)
+            // Bounds
+            me.x = Math.max(20, Math.min(canvas.width-20, me.x));
+            me.y = Math.max(20, Math.min(canvas.height-20, me.y));
+
             if(keys['Fire'] || keys['Space']) shoot(me, me.angle);
 
             // Drone AI
-            drone.angle += 0.1;
+            drone.angle += 0.12;
             let dx = me.x + Math.cos(drone.angle)*70, dy = me.y + Math.sin(drone.angle)*70;
-            if(Date.now() - drone.lastShot > 1000) {
+            if(Date.now() - drone.lastShot > 900) {
                 let target = entities.zombies[0] || entities.boss;
                 if(target) { shoot({x:dx, y:dy}, Math.atan2(target.y-dy, target.x-dx), 'drone'); drone.lastShot = Date.now(); }
             }
 
-            // Qua ải logic
-            document.getElementById('stage-fill').style.width = ((me.score % 1000) / 10) + '%';
+            // Progression
             if(me.score > 0 && me.score >= me.stage * 1000) openShop();
 
-            // Spawn & Cập nhật Zombies
-            if(!entities.boss && entities.zombies.length < 10) {
-                if(Math.random() < 0.03) entities.zombies.push({ x: Math.random()*canvas.width, y: -20, hp: 100 + me.stage*20 });
+            // Entities Update
+            if(!entities.boss && entities.zombies.length < 10 + me.stage) {
+                if(Math.random() < 0.03) entities.zombies.push({ x: Math.random()*canvas.width, y: -50, hp: 100 + me.stage*20, seed: Math.random()*10 });
             }
 
             entities.zombies.forEach((z, i) => {
                 let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                z.x += (me.x-z.x)/d * 2.5; z.y += (me.y-z.y)/d * 2.5;
-                if(d < 30) me.hp -= 0.5;
+                z.x += (me.x-z.x)/d * (2 + me.stage*0.2); 
+                z.y += (me.y-z.y)/d * (2 + me.stage*0.2);
+                if(d < 30) { me.hp -= 0.6; playSfx(200, 'sine', 0.05); }
+
                 entities.bullets.forEach((bul, bi) => {
                     if(Math.sqrt((bul.x-z.x)**2+(bul.y-z.y)**2) < 30) {
                         z.hp -= 50; entities.bullets.splice(bi, 1);
-                        if(z.hp <= 0) { entities.zombies.splice(i, 1); me.gold += 20; me.score += 50; me.ult = Math.min(100, me.ult+10); playSfx(800); }
+                        if(z.hp <= 0) { 
+                            entities.zombies.splice(i, 1); 
+                            me.gold += 25; me.score += 50; 
+                            me.ult = Math.min(100, me.ult+8);
+                            playSfx(1000, 'sine', 0.05); 
+                        }
                     }
                 });
             });
 
-            // Boss
             if(entities.boss) {
                 let b = entities.boss, d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
-                b.x += (me.x-b.x)/d * 1.5; b.y += (me.y-b.y)/d * 1.5;
+                b.x += (me.x-b.x)/d * 1.8; b.y += (me.y-b.y)/d * 1.8;
                 entities.bullets.forEach((bul, bi) => {
-                    if(Math.sqrt((bul.x-b.x)**2+(bul.y-b.y)**2) < 80) { b.hp -= 20; entities.bullets.splice(bi, 1); }
+                    if(Math.sqrt((bul.x-b.x)**2+(bul.y-b.y)**2) < 85) { b.hp -= 25; entities.bullets.splice(bi, 1); }
                 });
-                if(b.hp <= 0) { entities.boss = null; me.score += 200; }
+                if(b.hp <= 0) { entities.boss = null; me.score += 500; playSfx(150, 'square', 0.5); }
             }
 
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
                 if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) entities.bullets.splice(i, 1);
+            });
+
+            entities.trails.forEach((t, i) => {
+                t.alpha -= 0.02;
+                if(t.alpha <= 0) entities.trails.splice(i, 1);
             });
 
             if(me.hp <= 0) location.reload();
@@ -244,25 +258,58 @@
         function draw(dx, dy) {
             ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
             
-            // Vẽ nhân vật (Cyber Cat)
-            ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
-            ctx.shadowBlur = 15; ctx.shadowColor = '#22d3ee';
-            ctx.fillStyle = '#22d3ee'; ctx.beginPath(); ctx.roundRect(-20, -20, 40, 40, 8); ctx.fill();
-            ctx.fillStyle = '#fff'; ctx.fillRect(10, -10, 6, 6); ctx.restore();
+            // Grid
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.05)';
+            ctx.lineWidth = 1;
+            for(let i=0; i<canvas.width; i+=60) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=60) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
 
-            // Drone
-            ctx.fillStyle = '#60a5fa'; ctx.beginPath(); ctx.arc(dx, dy, 10, 0, 7); ctx.fill();
-
-            // Quái vật & Boss
-            entities.zombies.forEach(z => {
-                ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.ellipse(z.x, z.y, 20, 25, 0, 0, 7); ctx.fill();
+            // Trails
+            entities.trails.forEach(t => {
+                ctx.fillStyle = `rgba(34, 211, 238, ${t.alpha})`;
+                ctx.beginPath(); ctx.arc(t.x, t.y, 15, 0, 7); ctx.fill();
             });
+
+            // Player Aura
+            ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 2;
+            ctx.setLineDash([5, 10]);
+            ctx.beginPath(); ctx.arc(me.x, me.y, 40, Date.now()/200, Date.now()/200 + Math.PI*2); ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Character (Mech-Cat)
+            ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
+            ctx.shadowBlur = 20; ctx.shadowColor = '#22d3ee';
+            ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.roundRect(-22, -22, 44, 44, 6); ctx.fill();
+            ctx.strokeStyle = '#22d3ee'; ctx.stroke();
+            // Mech Ears
+            ctx.fillStyle = '#22d3ee';
+            ctx.beginPath(); ctx.moveTo(-22,-22); ctx.lineTo(-12,-38); ctx.lineTo(0,-22); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(22,-22); ctx.lineTo(12,-38); ctx.lineTo(0,-22); ctx.fill();
+            // Visor
+            ctx.fillStyle = '#fff'; ctx.fillRect(10, -12, 10, 24);
+            ctx.restore();
+
+            // Drone with Laser
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(96, 165, 250, 0.2)';
+            ctx.moveTo(me.x, me.y); ctx.lineTo(dx, dy); ctx.stroke();
+            ctx.shadowBlur = 15; ctx.shadowColor = '#60a5fa';
+            ctx.fillStyle = '#60a5fa'; ctx.beginPath(); ctx.arc(dx, dy, 12, 0, 7); ctx.fill();
+
+            // Zombies (Void Slimes)
+            entities.zombies.forEach(z => {
+                ctx.shadowBlur = 15; ctx.shadowColor = '#4ade80';
+                ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.ellipse(z.x, z.y, 22, 28, Math.sin(Date.now()/200), 0, 7); ctx.fill();
+            });
+
+            // Boss
             if(entities.boss) {
-                ctx.fillStyle = '#a855f7'; ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 70, 0, 7); ctx.fill();
+                ctx.shadowBlur = 30; ctx.shadowColor = '#a855f7';
+                ctx.fillStyle = '#a855f7'; ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 75, 0, 7); ctx.fill();
             }
 
-            // Đạn
+            // Bullets
             entities.bullets.forEach(b => {
+                ctx.shadowBlur = 10; ctx.shadowColor = b.color;
                 ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, 7); ctx.fill();
             });
 
@@ -283,8 +330,8 @@
                 if(me.weapon === k) return;
                 let w = weaponStats[k];
                 let card = document.createElement('div');
-                card.className = "bg-slate-800 p-3 rounded-xl border-b-4 border-slate-900 w-32 cursor-pointer";
-                card.innerHTML = `<div class="text-[10px] text-cyan-400 font-bold uppercase">${w.n}</div><div class="text-white font-black">${w.c}🍭</div>`;
+                card.className = "bg-slate-800 border-l-4 border-cyan-400 p-4 w-40 cursor-pointer hover:bg-slate-700 transition";
+                card.innerHTML = `<div class="text-xs text-cyan-400 font-bold">${w.n}</div><div class="text-2xl font-black">${w.c}🍭</div>`;
                 card.onclick = () => { if(me.gold >= w.c) { me.gold -= w.c; me.weapon = k; closeShop(); } };
                 list.appendChild(card);
             });
@@ -294,10 +341,9 @@
             isShopOpen = false;
             document.getElementById('shop-screen').style.display = 'none';
             me.stage++;
-            entities.boss = { x: canvas.width/2, y: -100, hp: 2000 + me.stage*500 };
+            entities.boss = { x: canvas.width/2, y: -150, hp: 2000 + me.stage*600 };
         }
 
-        // Polyfill roundRect
         if (!CanvasRenderingContext2D.prototype.roundRect) {
             CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
                 this.beginPath(); this.moveTo(x + r, y);
