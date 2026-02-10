@@ -3,46 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zom-Evo: Reborn Edition</title>
+    <title>Zom-Evo: Ultimate Reborn</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: 'Segoe UI', sans-serif; color: white; }
+        body { margin: 0; overflow: hidden; background: #020617; touch-action: none; font-family: sans-serif; color: white; }
         canvas { display: block; }
         .ui-panel { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.95); backdrop-filter: blur(15px); text-align: center; }
-        .btn-cyber { background: linear-gradient(45deg, #22d3ee, #8b5cf6); color: white; padding: 12px 35px; border-radius: 8px; font-weight: 900; border: none; cursor: pointer; transition: 0.3s; }
-        .input-cyber { background: rgba(255,255,255,0.1); border: 2px solid #22d3ee; padding: 10px; border-radius: 8px; color: white; margin-bottom: 20px; text-align: center; outline: none; }
+        .btn-cyber { background: linear-gradient(45deg, #22d3ee, #8b5cf6); color: white; padding: 12px 35px; border-radius: 8px; font-weight: 900; border: none; cursor: pointer; }
+        .input-cyber { background: rgba(255,255,255,0.1); border: 2px solid #22d3ee; padding: 10px; border-radius: 8px; color: white; margin-bottom: 20px; text-align: center; }
         
         #hud { position: absolute; top: 15px; left: 15px; z-index: 100; pointer-events: none; }
         .bar-container { width: 160px; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.2); }
         #hp-fill { height: 100%; background: #ef4444; width: 100%; transition: 0.3s; }
-        #revive-msg { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); color: #fbbf24; font-weight: 900; font-size: 24px; display: none; text-shadow: 0 0 10px #fbbf24; }
+        #revive-msg { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); color: #fbbf24; font-weight: 900; font-size: 24px; display: none; }
         
         #mobile-ctrl { position: absolute; inset: 0; pointer-events: none; display: none; }
         .joy-base { position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 50%; pointer-events: auto; }
         .joy-stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #22d3ee; border-radius: 50%; }
-        .btn-fire { position: absolute; bottom: 60px; right: 60px; width: 90px; height: 90px; border-radius: 50%; background: rgba(34, 211, 238, 0.1); border: 3px solid #22d3ee; pointer-events: auto; display: flex; align-items: center; justify-content: center; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div id="start-screen" class="ui-panel">
-        <h1 class="text-6xl font-black text-cyan-400 italic mb-4">ZOM-REBORN</h1>
-        <input type="text" id="username" class="input-cyber" placeholder="Nhập tên chiến binh..." maxlength="12">
-        <button onclick="initGame()" class="btn-cyber">VÀO TRẬN</button>
+        <h1 class="text-6xl font-black text-cyan-400 italic mb-4">ZOM-EVO</h1>
+        <input type="text" id="username" class="input-cyber" placeholder="Nhập tên..." maxlength="10">
+        <button onclick="initGame()" class="btn-cyber">BẮT ĐẦU</button>
     </div>
 
     <div id="revive-msg">ĐANG HỒI SINH...</div>
 
     <div id="hud">
-        <div class="text-xs text-gray-400 uppercase mb-1">Hệ thống sinh mệnh</div>
         <div class="bar-container"><div id="hp-fill"></div></div>
         <div class="text-cyan-400 font-bold text-sm">ẢI: <span id="stage-txt">1</span> | ĐIỂM: <span id="score-txt">0</span></div>
-        <div class="text-yellow-400 text-[10px] mt-1 font-bold">VŨ KHÍ: <span id="weapon-txt">PISTOL</span></div>
+        <div class="text-yellow-400 text-[10px] font-bold">VŨ KHÍ: <span id="weapon-txt">PISTOL</span></div>
     </div>
 
     <div id="mobile-ctrl">
         <div class="joy-base" id="joystick"><div class="joy-stick" id="stick"></div></div>
-        <div class="btn-fire" id="btn-fire">FIRE</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -51,20 +48,21 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         
-        let me = { name: "Player", x: 0, y: 0, hp: 100, score: 0, stage: 1, angle: 0, vx: 0, vy: 0, weapon: 'pistol', isReviving: false };
+        let me = { name: "Player", x: 0, y: 0, hp: 100, score: 0, stage: 1, angle: 0, weapon: 'pistol', isReviving: false, lastShot: 0 };
         let pet = { x: 0, y: 0, angle: 0, lastShot: 0 };
         let entities = { zombies: [], bullets: [], boss: null, drops: [] };
-        let keys = {}, joyX = 0, joyY = 0;
+        let joyX = 0, joyY = 0, keys = {};
 
         const weaponTypes = {
-            pistol: { name: "Pistol", rate: 350, color: "#22d3ee", spread: 0, count: 1 },
-            smg: { name: "Hyper SMG", rate: 100, color: "#facc15", spread: 0.2, count: 1 },
-            shotgun: { name: "Void Blast", rate: 800, color: "#f472b6", spread: 0.5, count: 6 }
+            pistol: { name: "Pistol", rate: 400, color: "#22d3ee", spread: 0.1, count: 1 },
+            smg: { name: "Hyper SMG", rate: 120, color: "#facc15", spread: 0.2, count: 1 },
+            shotgun: { name: "Void Blast", rate: 900, color: "#f472b6", spread: 0.6, count: 6 }
         };
 
         function resize() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            if(!me.x) { me.x = canvas.width/2; me.y = canvas.height/2; }
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if(me.x === 0) { me.x = canvas.width/2; me.y = canvas.height/2; }
         }
         window.onresize = resize; resize();
 
@@ -73,16 +71,19 @@
             if(nameInput) me.name = nameInput;
             document.getElementById('start-screen').style.display = 'none';
             if(/Android|iPhone/i.test(navigator.userAgent)) document.getElementById('mobile-ctrl').style.display = 'block';
-            loop();
+            requestAnimationFrame(loop);
         }
 
         // Controls
         window.onkeydown = e => keys[e.code] = true;
         window.onkeyup = e => keys[e.code] = false;
-        window.onmousemove = e => { if(!joyX) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
-        
+        window.onmousedown = () => keys['MouseDown'] = true;
+        window.onmouseup = () => keys['MouseDown'] = false;
+        window.onmousemove = e => { if(joyX === 0) me.angle = Math.atan2(e.clientY - me.y, e.clientX - me.x); };
+
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.ontouchmove = (e) => {
+            e.preventDefault();
             let t = e.touches[0], r = joy.getBoundingClientRect();
             let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
             let d = Math.min(Math.sqrt(dx*dx+dy*dy), 45);
@@ -92,44 +93,47 @@
             me.angle = a;
         };
         joy.ontouchend = () => { joyX = joyY = 0; st.style.transform = 'none'; };
-        document.getElementById('btn-fire').ontouchstart = (e) => { e.preventDefault(); keys['Space'] = true; };
-        document.getElementById('btn-fire').ontouchend = () => keys['Space'] = false;
 
-        function shoot(x, y, ang, type) {
+        function spawnBullet(x, y, ang, type) {
             const w = weaponTypes[type];
             for(let i=0; i<w.count; i++) {
                 let finalAng = ang + (Math.random() - 0.5) * w.spread;
-                entities.bullets.push({ x, y, vx: Math.cos(finalAng)*15, vy: Math.sin(finalAng)*15, color: w.color });
+                entities.bullets.push({
+                    x: x, y: y,
+                    vx: Math.cos(finalAng) * 12,
+                    vy: Math.sin(finalAng) * 12,
+                    color: w.color
+                });
             }
         }
 
-        function revivePlayer() {
-            me.isReviving = true;
-            document.getElementById('revive-msg').style.display = 'block';
-            setTimeout(() => {
-                me.hp = 100;
-                me.isReviving = false;
-                document.getElementById('revive-msg').style.display = 'none';
-                me.x = canvas.width/2; me.y = canvas.height/2;
-            }, 2000);
-        }
-
-        let lastShot = 0;
         function loop() {
-            if(!me.isReviving) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!me.isReviving) {
                 // Di chuyển
                 let mx = (keys['KeyD']?1:0)-(keys['KeyA']?1:0) || joyX;
                 let my = (keys['KeyS']?1:0)-(keys['KeyW']?1:0) || joyY;
-                me.x += mx * 6; me.y += my * 6;
+                me.x += mx * 5; me.y += my * 5;
 
-                // Bắn súng
-                const currentW = weaponTypes[me.weapon];
-                if((keys['Space'] || keys['Fire']) && Date.now() - lastShot > currentW.rate) {
-                    shoot(me.x, me.y, me.angle, me.weapon);
-                    lastShot = Date.now();
+                // Tự động bắn khi có quái hoặc nhấn chuột/phím
+                let nearest = null, minDist = 400;
+                entities.zombies.concat(entities.boss ? [entities.boss] : []).forEach(z => {
+                    let d = Math.sqrt((z.x-me.x)**2+(z.y-me.y)**2);
+                    if(d < minDist) { minDist = d; nearest = z; }
+                });
+
+                if(nearest) me.angle = Math.atan2(nearest.y-me.y, nearest.x-me.x);
+
+                const now = Date.now();
+                if ((nearest || keys['Space'] || keys['MouseDown']) && now - me.lastShot > weaponTypes[me.weapon].rate) {
+                    spawnBullet(me.x, me.y, me.angle, me.weapon);
+                    me.lastShot = now;
                 }
 
-                // Nhặt vũ khí
+                // Nhặt đồ
                 entities.drops.forEach((d, i) => {
                     if(Math.sqrt((me.x-d.x)**2+(me.y-d.y)**2) < 40) {
                         me.weapon = d.type;
@@ -140,47 +144,73 @@
 
             // Pet AI
             pet.angle += 0.05;
-            pet.x = me.x + Math.cos(pet.angle)*70;
-            pet.y = me.y + Math.sin(pet.angle)*70;
-            let target = entities.zombies[0] || entities.boss;
-            if(target && Date.now() - pet.lastShot > 1000) {
-                shoot(pet.x, pet.y, Math.atan2(target.y-pet.y, target.x-pet.x), 'pistol');
-                pet.lastShot = Date.now();
+            pet.x = me.x + Math.cos(pet.angle) * 60;
+            pet.y = me.y + Math.sin(pet.angle) * 60;
+            if(Date.now() - pet.lastShot > 1000) {
+                let target = entities.zombies[0] || entities.boss;
+                if(target) {
+                    spawnBullet(pet.x, pet.y, Math.atan2(target.y-pet.y, target.x-pet.x), 'pistol');
+                    pet.lastShot = Date.now();
+                }
             }
 
-            // Zombie Logic
-            if(!entities.boss && entities.zombies.length < 5 + me.stage*2) {
-                if(Math.random() < 0.03) entities.zombies.push({ x: Math.random()*canvas.width, y: -20, hp: 100 + me.stage*20 });
+            // Quái vật
+            if (!entities.boss && entities.zombies.length < 5 + me.stage) {
+                if(Math.random() < 0.02) {
+                    entities.zombies.push({
+                        x: Math.random() > 0.5 ? -20 : canvas.width + 20,
+                        y: Math.random() * canvas.height,
+                        hp: 100 + me.stage * 20
+                    });
+                }
             }
 
             entities.zombies.forEach((z, i) => {
                 let d = Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2);
-                z.x += (me.x-z.x)/d * 2.5; z.y += (me.y-z.y)/d * 2.5;
-                if(d < 30 && !me.isReviving) me.hp -= 0.8;
+                z.x += (me.x-z.x)/d * 2; z.y += (me.y-z.y)/d * 2;
+                if(d < 30 && !me.isReviving) me.hp -= 0.5;
 
                 entities.bullets.forEach((b, bi) => {
                     if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < 30) {
                         z.hp -= 50; entities.bullets.splice(bi, 1);
                         if(z.hp <= 0) {
-                            // Tỷ lệ rơi súng 20%
-                            if(Math.random() < 0.2) {
-                                const types = ['smg', 'shotgun'];
-                                entities.drops.push({ x: z.x, y: z.y, type: types[Math.floor(Math.random()*types.length)] });
-                            }
+                            if(Math.random() < 0.3) entities.drops.push({ x: z.x, y: z.y, type: Math.random() > 0.5 ? 'smg' : 'shotgun' });
                             entities.zombies.splice(i, 1); me.score += 50;
                         }
                     }
                 });
             });
 
+            // Boss
+            if(me.score > 0 && me.score % 1000 === 0 && !entities.boss) {
+                entities.boss = { x: canvas.width/2, y: -100, hp: 2000 * me.stage };
+            }
+            if(entities.boss) {
+                let b = entities.boss, d = Math.sqrt((me.x-b.x)**2+(me.y-b.y)**2);
+                b.x += (me.x-b.x)/d * 1.5; b.y += (me.y-b.y)/d * 1.5;
+                entities.bullets.forEach((bul, bi) => {
+                    if(Math.sqrt((bul.x-b.x)**2+(bul.y-b.y)**2) < 60) {
+                        b.hp -= 20; entities.bullets.splice(bi, 1);
+                        if(b.hp <= 0) { entities.boss = null; me.score += 500; me.stage++; }
+                    }
+                });
+            }
+
+            // Đạn di chuyển
             entities.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
                 if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) entities.bullets.splice(i, 1);
             });
 
-            if(me.hp <= 0 && !me.isReviving) revivePlayer();
-            if(me.score > 0 && me.score % 1000 === 0 && !entities.boss) {
-                entities.boss = { x: canvas.width/2, y: -100, hp: 2000 * me.stage };
+            // Hồi sinh
+            if(me.hp <= 0 && !me.isReviving) {
+                me.isReviving = true;
+                document.getElementById('revive-msg').style.display = 'block';
+                setTimeout(() => {
+                    me.hp = 100; me.isReviving = false;
+                    document.getElementById('revive-msg').style.display = 'none';
+                    me.x = canvas.width/2; me.y = canvas.height/2;
+                }, 2000);
             }
 
             draw();
@@ -188,61 +218,44 @@
         }
 
         function draw() {
-            ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            
-            // Vẽ Drops (Vũ khí rơi)
+            // Drops
             entities.drops.forEach(d => {
                 ctx.fillStyle = weaponTypes[d.type].color;
-                ctx.shadowBlur = 15; ctx.shadowColor = ctx.fillStyle;
-                ctx.beginPath(); ctx.arc(d.x, d.y, 10, 0, 7); ctx.fill();
-                ctx.fillStyle = "#fff"; ctx.font = "10px Arial";
-                ctx.fillText(d.type.toUpperCase(), d.x - 20, d.y + 25);
+                ctx.beginPath(); ctx.arc(d.x, d.y, 12, 0, 7); ctx.fill();
             });
 
-            // Vẽ Player
+            // Player
             if(!me.isReviving) {
                 ctx.save(); ctx.translate(me.x, me.y); ctx.rotate(me.angle);
-                ctx.fillStyle = '#22d3ee'; ctx.shadowBlur = 20;
-                ctx.beginPath(); ctx.roundRect(-22, -22, 44, 44, 10); ctx.fill();
-                ctx.fillStyle = '#fff'; ctx.fillRect(12, -10, 8, 20); // Visor
+                ctx.fillStyle = '#22d3ee'; ctx.fillRect(-20, -20, 40, 40);
+                ctx.fillStyle = 'white'; ctx.fillRect(10, -5, 10, 10);
                 ctx.restore();
-                
-                // Vẽ Tên Nhân Vật
-                ctx.shadowBlur = 0; ctx.fillStyle = "white"; ctx.font = "bold 14px Arial"; ctx.textAlign = "center";
-                ctx.fillText(me.name, me.x, me.y - 35);
+                ctx.fillStyle = "white"; ctx.textAlign = "center";
+                ctx.fillText(me.name, me.x, me.y - 30);
             }
 
-            // Vẽ Pet & Quái & Đạn (Tương tự bản trước nhưng thêm hiệu ứng phát sáng)
+            // Pet
             ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(pet.x, pet.y, 8, 0, 7); ctx.fill();
 
+            // Quái
             entities.zombies.forEach(z => {
-                ctx.fillStyle = '#4ade80'; ctx.shadowBlur = 10;
-                ctx.beginPath(); ctx.ellipse(z.x, z.y, 20, 25, 0, 0, 7); ctx.fill();
+                ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(z.x, z.y, 20, 0, 7); ctx.fill();
             });
 
+            // Boss
             if(entities.boss) {
-                ctx.fillStyle = '#f472b6'; ctx.shadowBlur = 30;
-                ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 80, 0, 7); ctx.fill();
+                ctx.fillStyle = '#f472b6'; ctx.beginPath(); ctx.arc(entities.boss.x, entities.boss.y, 60, 0, 7); ctx.fill();
             }
 
+            // Đạn
             entities.bullets.forEach(b => {
-                ctx.fillStyle = b.color; ctx.shadowBlur = 5;
-                ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, 7); ctx.fill();
+                ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill();
             });
 
             document.getElementById('hp-fill').style.width = me.hp + '%';
             document.getElementById('score-txt').innerText = me.score;
             document.getElementById('stage-txt').innerText = me.stage;
-            document.getElementById('weapon-txt').innerText = weaponTypes[me.weapon].name.toUpperCase();
-        }
-
-        if (!CanvasRenderingContext2D.prototype.roundRect) {
-            CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
-                this.beginPath(); this.moveTo(x + r, y);
-                this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r);
-                this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r);
-                this.closePath(); return this;
-            };
+            document.getElementById('weapon-txt').innerText = weaponTypes[me.weapon].name;
         }
     </script>
 </body>
