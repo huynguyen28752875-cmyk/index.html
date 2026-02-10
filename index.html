@@ -3,204 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quán Phở Anh Ba - RPG Edition</title>
+    <title>Anh Ba Đại Chiến - Đối Kháng P2P</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #222; font-family: 'Arial', sans-serif; touch-action: none; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: 'Arial', sans-serif; touch-action: none; }
+        canvas { display: block; background: #ecd9c6; }
+        .ui { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; padding: 10px; }
         .pointer { pointer-events: auto; }
-        
-        /* Joystick Style */
-        #joystick-container { position: absolute; bottom: 40px; left: 40px; width: 120px; height: 120px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto; }
-        #joystick-stick { width: 50px; height: 50px; background: rgba(255,255,255,0.5); border-radius: 50%; transition: 0.1s; }
-        
-        canvas { display: block; background: #8b4513; } /* Nền gỗ */
+        .health-bar { width: 150px; height: 15px; background: #444; border: 2px solid white; border-radius: 10px; overflow: hidden; }
+        .health-fill { height: 100%; background: #ef4444; transition: 0.3s; }
+        #joystick { position: absolute; bottom: 40px; left: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; }
+        #stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: white; border-radius: 50%; }
+        #attack-btn { position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px; background: #ef4444; border-radius: 50%; color: white; font-weight: bold; pointer-events: auto; border: 4px solid #b91c1c; box-shadow: 0 5px 0 #7f1d1d; }
+        #attack-btn:active { transform: translateY(5px); box-shadow: none; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        <div class="p-4 flex justify-between">
-            <div class="bg-black/50 text-white p-2 rounded border-2 border-yellow-600">
-                💰 Tiền: <span id="money">0</span>đ
-            </div>
-            <button onclick="toggleMusic()" class="pointer bg-white p-2 rounded-full w-10 h-10 flex items-center justify-center shadow-lg">🎵</button>
-        </div>
-
-        <div id="joystick-container">
-            <div id="joystick-stick"></div>
+    <div class="ui flex justify-between items-start text-white">
+        <div class="bg-black/50 p-2 rounded">
+            <p class="text-xs">BẠN (ANH BA 1)</p>
+            <div class="health-bar"><div id="my-hp" class="health-fill" style="width: 100%;"></div></div>
+            <p class="text-[10px]">Mạng: <span id="my-lives">3</span>/3</p>
         </div>
         
-        <div id="msg-box" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 p-4 rounded-xl hidden text-center font-bold">
-            "Cho con một tô không hành!"
+        <div class="pointer bg-white/10 p-2 rounded text-center">
+            <p class="text-[10px]">ID: <span id="my-id" class="font-bold text-yellow-400">Đang tải...</span></p>
+            <input type="text" id="peer-id" placeholder="ID Bạn bè" class="text-black text-[10px] p-1 rounded w-24">
+            <button onclick="connect()" class="bg-blue-600 px-2 py-1 rounded text-[10px]">Kết nối</button>
+        </div>
+
+        <div class="bg-black/50 p-2 rounded text-right">
+            <p class="text-xs">ĐỐI THỦ</p>
+            <div class="health-bar"><div id="peer-hp" class="health-fill" style="width: 100%;"></div></div>
+            <p class="text-[10px]">Mạng: <span id="peer-lives">3</span>/3</p>
         </div>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <div id="joystick"><div id="stick"></div></div>
+    <button id="attack-btn" class="pointer shadow-lg">NÉM BÁT</button>
 
-    <audio id="bgMusic" loop>
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg">
-    </audio>
+    <canvas id="game"></canvas>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        const moneyEl = document.getElementById('money');
-        
-        let width, height;
-        let money = 0;
-        let musicPlaying = false;
+        const peer = new Peer();
+        let conn;
 
-        // Cấu hình nhân vật Anh Ba
-        const player = {
-            x: 100, y: 100, size: 40, speed: 4, color: '#3b82f6',
-            vx: 0, vy: 0, 
-            hasPho: false
-        };
+        let my = { x: 100, y: 300, hp: 100, lives: 3, color: '#3b82f6', bullets: [] };
+        let enemy = { x: 500, y: 300, hp: 100, lives: 3, color: '#ef4444', bullets: [] };
+        let moveX = 0, moveY = 0;
 
-        // Cấu hình vật thể trong quán
-        const objects = [
-            { name: "Quầy Nước Dùng", x: 50, y: 250, w: 100, h: 60, color: '#ef4444', type: 'kitchen' },
-            { name: "Bàn Khách", x: 400, y: 150, w: 80, h: 80, color: '#fde68a', type: 'table', hasGuest: true }
-        ];
+        peer.on('open', id => document.getElementById('my-id').innerText = id);
+        peer.on('connection', c => { conn = c; setupConn(); });
 
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        // Xử lý Joystick
-        const joystick = document.getElementById('joystick-container');
-        const stick = document.getElementById('joystick-stick');
-        let isDragging = false;
-
-        joystick.addEventListener('touchstart', e => { isDragging = true; });
-        window.addEventListener('touchmove', e => {
-            if (!isDragging) return;
-            const touch = e.touches[0];
-            const rect = joystick.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            let dx = touch.clientX - centerX;
-            let dy = touch.clientY - centerY;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            const maxDist = rect.width / 2;
-
-            if (dist > maxDist) {
-                dx *= maxDist / dist;
-                dy *= maxDist / dist;
-            }
-
-            stick.style.transform = `translate(${dx}px, ${dy}px)`;
-            player.vx = (dx / maxDist) * player.speed;
-            player.vy = (dy / maxDist) * player.speed;
-        });
-        window.addEventListener('touchend', () => {
-            isDragging = false;
-            stick.style.transform = `translate(0, 0)`;
-            player.vx = 0; player.vy = 0;
-        });
-
-        // Xử lý phím máy tính
-        window.addEventListener('keydown', e => {
-            if (e.key === 'w' || e.key === 'ArrowUp') player.vy = -player.speed;
-            if (e.key === 's' || e.key === 'ArrowDown') player.vy = player.speed;
-            if (e.key === 'a' || e.key === 'ArrowLeft') player.vx = -player.speed;
-            if (e.key === 'd' || e.key === 'ArrowRight') player.vx = player.speed;
-        });
-        window.addEventListener('keyup', e => {
-            if (['w', 's', 'ArrowUp', 'ArrowDown'].includes(e.key)) player.vy = 0;
-            if (['a', 'd', 'ArrowLeft', 'ArrowRight'].includes(e.key)) player.vx = 0;
-        });
-
-        function toggleMusic() {
-            const m = document.getElementById('bgMusic');
-            if (!musicPlaying) { m.play(); musicPlaying = true; }
-            else { m.pause(); musicPlaying = false; }
+        function connect() {
+            conn = peer.connect(document.getElementById('peer-id').value);
+            setupConn();
         }
 
-        function update() {
-            player.x += player.vx;
-            player.y += player.vy;
-
-            // Chặn tường
-            player.x = Math.max(0, Math.min(width - player.size, player.x));
-            player.y = Math.max(0, Math.min(height - player.size, player.y));
-
-            // Kiểm tra va chạm vật thể
-            objects.forEach(obj => {
-                if (player.x < obj.x + obj.w && player.x + player.size > obj.x &&
-                    player.y < obj.y + obj.h && player.y + player.size > obj.y) {
-                    
-                    if (obj.type === 'kitchen' && !player.hasPho) {
-                        player.hasPho = true;
-                        document.getElementById('msg-box').innerText = "Đã nấu xong! Mang ra cho khách.";
-                        document.getElementById('msg-box').classList.remove('hidden');
-                        setTimeout(() => document.getElementById('msg-box').classList.add('hidden'), 2000);
-                    }
-                    
-                    if (obj.type === 'table' && player.hasPho) {
-                        player.hasPho = false;
-                        money += 50000;
-                        moneyEl.innerText = money.toLocaleString();
-                        document.getElementById('msg-box').innerText = "+50.000đ! Phở không hành chuẩn vị!";
-                        document.getElementById('msg-box').classList.remove('hidden');
-                        setTimeout(() => document.getElementById('msg-box').classList.add('hidden'), 2000);
-                    }
+        function setupConn() {
+            conn.on('data', data => {
+                if(data.type === 'move') {
+                    enemy.x = data.x; enemy.y = data.y;
+                    enemy.bullets = data.bullets;
+                }
+                if(data.type === 'hit') {
+                    my.hp = data.newHp;
+                    if(my.hp <= 0) respawn();
                 }
             });
+        }
+
+        function respawn() {
+            my.lives--;
+            document.getElementById('my-lives').innerText = my.lives;
+            if(my.lives > 0) {
+                my.hp = 100;
+                my.x = Math.random() * 200;
+                my.y = Math.random() * 400;
+                alert("Bạn đã bị hạ gục! Đang hồi sinh...");
+            } else {
+                alert("GAME OVER! BẠN ĐÃ THUA.");
+                location.reload();
+            }
+        }
+
+        // Joystick Logic
+        const joy = document.getElementById('joystick');
+        const stick = document.getElementById('stick');
+        joy.addEventListener('touchmove', e => {
+            const touch = e.touches[0];
+            const r = joy.getBoundingClientRect();
+            let dx = touch.clientX - (r.left + 50), dy = touch.clientY - (r.top + 50);
+            const d = Math.sqrt(dx*dx + dy*dy);
+            if(d > 40) { dx *= 40/d; dy *= 40/d; }
+            stick.style.transform = `translate(${dx}px, ${dy}px)`;
+            moveX = dx/8; moveY = dy/8;
+        });
+        joy.addEventListener('touchend', () => { moveX = 0; moveY = 0; stick.style.transform = 'none'; });
+
+        // Tấn công
+        document.getElementById('attack-btn').addEventListener('click', () => {
+            my.bullets.push({ x: my.x + 20, y: my.y + 20, vx: 10 });
+        });
+
+        function update() {
+            my.x += moveX; my.y += moveY;
+            
+            // Xử lý bát phở của mình
+            my.bullets.forEach((b, i) => {
+                b.x += b.vx;
+                // Kiểm tra bắn trúng địch (chỉ tính trên máy mình)
+                if(b.x > enemy.x && b.x < enemy.x + 40 && b.y > enemy.y && b.y < enemy.y + 40) {
+                    enemy.hp -= 10;
+                    my.bullets.splice(i, 1);
+                    if(conn) conn.send({ type: 'hit', newHp: enemy.hp });
+                }
+                if(b.x > canvas.width) my.bullets.splice(i, 1);
+            });
+
+            if(conn) conn.send({ type: 'move', x: canvas.width - my.x - 40, y: my.y, bullets: my.bullets.map(b => ({...b, x: canvas.width - b.x, vx: -b.vx})) });
+            
+            document.getElementById('my-hp').style.width = my.hp + '%';
+            document.getElementById('peer-hp').style.width = enemy.hp + '%';
+            document.getElementById('peer-lives').innerText = enemy.lives;
         }
 
         function draw() {
-            ctx.clearRect(0, 0, width, height);
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            ctx.clearRect(0,0, canvas.width, canvas.height);
 
-            // Vẽ sàn gạch
-            ctx.strokeStyle = "rgba(0,0,0,0.1)";
-            for(let i=0; i<width; i+=40) {
-                ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,height); ctx.stroke();
-            }
-            for(let i=0; i<height; i+=40) {
-                ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(width,i); ctx.stroke();
-            }
+            // Vẽ Bạn
+            ctx.fillStyle = my.color;
+            ctx.fillRect(my.x, my.y, 40, 40);
+            ctx.fillStyle = "black"; ctx.fillText("BẠN", my.x, my.y - 5);
 
-            // Vẽ vật thể
-            objects.forEach(obj => {
-                ctx.fillStyle = obj.color;
-                ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
-                ctx.fillStyle = "#000";
-                ctx.font = "12px Arial";
-                ctx.fillText(obj.name, obj.x, obj.y - 5);
-                
-                if (obj.type === 'table') {
-                    ctx.fillText("👨‍💼 Khách đang chờ", obj.x, obj.y + obj.h + 15);
-                }
-            });
+            // Vẽ Địch
+            ctx.fillStyle = enemy.color;
+            ctx.fillRect(enemy.x, enemy.y, 40, 40);
+            ctx.fillStyle = "black"; ctx.fillText("ĐỐI THỦ", enemy.x, enemy.y - 5);
 
-            // Vẽ nhân vật Anh Ba
-            ctx.fillStyle = player.color;
-            ctx.beginPath();
-            ctx.arc(player.x + player.size/2, player.y + player.size/2, player.size/2, 0, Math.PI*2);
-            ctx.fill();
-            
-            // Vẽ bát phở nếu đang cầm
-            if (player.hasPho) {
-                ctx.font = "20px Arial";
-                ctx.fillText("🍜", player.x + 10, player.y - 10);
-            }
+            // Vẽ bát phở (đạn)
+            ctx.font = "20px Arial";
+            my.bullets.concat(enemy.bullets).forEach(b => ctx.fillText("🍜", b.x, b.y));
 
-            ctx.fillStyle = "white";
-            ctx.font = "bold 12px Arial";
-            ctx.fillText("ANH BA", player.x, player.y + player.size + 15);
-
-            requestAnimationFrame(() => {
-                update();
-                draw();
-            });
+            update();
+            requestAnimationFrame(draw);
         }
-
         draw();
     </script>
 </body>
