@@ -3,58 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zombie Survival P2P</title>
+    <title>Cute Zombie Shooter P2P</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: sans-serif; color: white; }
-        canvas { display: block; background: #0a0a0a; }
-        .ui-setup { position: absolute; inset: 0; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        body { margin: 0; overflow: hidden; background: #ffe4e6; touch-action: none; font-family: 'Comic Sans MS', cursive, sans-serif; }
+        canvas { display: block; background: #1a1a1a; cursor: crosshair; }
+        .ui-setup { position: absolute; inset: 0; background: #fff1f2; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 8px solid #fb7185; }
         .game-hud { position: absolute; top: 10px; width: 100%; padding: 0 20px; pointer-events: none; z-index: 50; display: flex; justify-content: space-between; }
-        .bar-bg { width: 100px; height: 8px; background: #222; border-radius: 4px; overflow: hidden; margin-top: 4px; }
-        .hp-fill { height: 100%; background: #22c55e; transition: width 0.2s; }
-        .stamina-fill { height: 100%; background: #eab308; transition: width 0.1s; }
-        #joystick { position: absolute; bottom: 40px; left: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; display: none; border: 2px solid #333; }
-        #stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: #fff; border-radius: 50%; }
-        .btn-action { position: absolute; border-radius: 50%; color: white; font-weight: bold; display: none; z-index: 60; border: 4px solid rgba(0,0,0,0.3); text-align: center; }
-        #btn-shoot { bottom: 40px; right: 40px; width: 80px; height: 80px; background: #ef4444; }
-        #btn-dash { bottom: 130px; right: 50px; width: 60px; height: 60px; background: #3b82f6; font-size: 10px; }
-        #boss-ui { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; }
+        .bar { width: 100px; height: 12px; background: #444; border-radius: 6px; border: 2px solid #fff; overflow: hidden; }
+        .hp-fill { height: 100%; background: #ff4d4d; transition: width 0.2s; }
+        .stamina-fill { height: 100%; background: #ffd700; transition: width 0.1s; }
+        #joystick { position: absolute; bottom: 40px; left: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; display: none; border: 3px dashed #fb7185; }
+        #stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: #fb7185; border-radius: 50%; box-shadow: 0 4px 0 #e11d48; }
+        .btn-action { position: absolute; border-radius: 50%; color: white; font-weight: bold; display: none; z-index: 60; border: 4px solid rgba(0,0,0,0.2); text-align: center; box-shadow: 0 6px 0 rgba(0,0,0,0.2); }
+        #btn-shoot { bottom: 40px; right: 40px; width: 85px; height: 85px; background: #fb7185; font-size: 18px; }
+        #btn-dash { bottom: 140px; right: 50px; width: 65px; height: 65px; background: #60a5fa; font-size: 12px; }
     </style>
 </head>
 <body>
 
     <div id="setup-screen" class="ui-setup">
-        <h1 class="text-4xl font-black text-red-600 mb-2 italic">ZOMBIE P2P v4.0</h1>
-        <p class="text-gray-500 mb-6 text-xs font-bold uppercase tracking-widest text-center">Di chuyển WASD/Shift - Mobile có nút riêng</p>
-        <input type="text" id="name-in" class="p-4 rounded-xl w-72 text-black font-bold mb-4 outline-none" placeholder="Tên nhân vật">
-        <input type="text" id="room-in" class="p-4 rounded-xl w-72 text-black font-bold mb-6 outline-none" placeholder="Mã phòng chung">
-        <button onclick="connect()" class="bg-red-600 px-12 py-4 rounded-2xl font-black text-xl active:scale-95 transition-all">VÀO SINH TỒN</button>
-        <p id="status" class="mt-4 text-blue-400 text-sm font-bold text-center px-6"></p>
+        <h1 class="text-5xl font-black text-rose-500 mb-2 drop-shadow-lg">ZOM-CUTE! 🍬</h1>
+        <p class="text-rose-400 mb-8 font-bold animate-bounce">Vừa đi vừa bắn - Cực vui!</p>
+        <input type="text" id="name-in" class="p-4 rounded-2xl w-72 text-rose-600 font-bold mb-4 border-4 border-rose-200 outline-none focus:border-rose-500" placeholder="Tên của bạn...">
+        <input type="text" id="room-in" class="p-4 rounded-2xl w-72 text-rose-600 font-bold mb-6 border-4 border-rose-200 outline-none focus:border-rose-500" placeholder="Mã phòng (VD: 123)">
+        <button onclick="start()" class="bg-rose-500 text-white px-16 py-4 rounded-full font-black text-2xl hover:bg-rose-600 active:translate-y-1 transition-all">CHƠI CHUNG!</button>
+        <p id="status" class="mt-6 text-rose-400 font-bold text-center italic"></p>
     </div>
 
     <div id="game-ui" class="game-hud hidden">
-        <div class="bg-black/80 p-3 rounded-xl border-l-4 border-blue-500">
-            <p id="my-name-ui" class="text-blue-400 font-bold text-[10px] uppercase"></p>
-            <div class="bar-bg"><div id="my-hp" class="hp-fill"></div></div>
-            <div class="bar-bg"><div id="my-stamina" class="stamina-fill"></div></div>
-            <p class="text-[9px] mt-1 text-white">SÚNG: <span id="my-gun-name" class="text-yellow-400 font-bold">LỤC</span></p>
+        <div class="bg-white/90 p-3 rounded-2xl border-4 border-rose-400">
+            <p id="my-name-ui" class="text-rose-500 font-black text-xs uppercase"></p>
+            <div class="bar mt-1"><div id="my-hp" class="hp-fill"></div></div>
+            <div class="bar mt-1"><div id="my-stamina" class="stamina-fill"></div></div>
         </div>
-        <div class="bg-black/80 p-3 rounded-xl border-r-4 border-red-500 text-right">
-            <p id="peer-name-ui" class="text-red-400 font-bold text-[10px] uppercase italic">ĐANG ĐỢI...</p>
-            <div class="bar-bg ml-auto"><div id="peer-hp" class="hp-fill"></div></div>
-            <p class="text-[9px] mt-1 text-white">TỔNG ĐIỂM: <span id="total-score" class="text-yellow-400 font-bold">0</span></p>
+        <div class="bg-white/90 p-3 rounded-2xl border-4 border-blue-400 text-right">
+            <p id="peer-name-ui" class="text-blue-500 font-black text-xs uppercase italic">...</p>
+            <p class="text-xs font-bold text-gray-600">SCORE: <span id="total-score" class="text-rose-500">0</span></p>
         </div>
-    </div>
-
-    <div id="boss-ui">
-        <p class="text-red-600 font-black text-center text-[10px] mb-1 italic">MEGA BOSS TRÌNH DIỆN!</p>
-        <div class="w-full h-3 bg-gray-900 border border-red-600"><div id="boss-hp-fill" class="h-full bg-red-600"></div></div>
     </div>
 
     <div id="joystick"><div id="stick"></div></div>
-    <button id="btn-shoot" class="btn-action">BẮN</button>
-    <button id="btn-dash" class="btn-action">DASH</button>
+    <button id="btn-shoot" class="btn-action">BẮN!</button>
+    <button id="btn-dash" class="btn-action">LƯỚT</button>
 
     <canvas id="game"></canvas>
 
@@ -62,37 +54,61 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         let peer, conn, isHost = false;
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        let me = { x: 200, y: 200, hp: 100, stamina: 100, score: 0, gun: 'pistol', bullets: [], isDead: false, dashCooldown: 0 };
+        // Game State
+        let me = { x: 100, y: 100, hp: 100, stamina: 100, score: 0, gun: 'pistol', bullets: [], isDead: false, dash: 0 };
         let enemy = { x: -1000, y: -1000, hp: 100, score: 0, isDead: false, bullets: [] };
-        let zombies = [], items = [], boss = null;
+        let zombies = [], items = [], particles = [], boss = null;
         let keys = {}, joyX = 0, joyY = 0;
 
         if ('ontouchstart' in window) {
             document.querySelectorAll('.btn-action, #joystick').forEach(el => el.style.display = 'block');
         }
 
-        function connect() {
-            const name = document.getElementById('name-in').value.trim();
-            const room = document.getElementById('room-in').value.trim();
-            if(!name || !room) return alert("Nhập đủ thông tin!");
+        // --- Âm thanh Cute ---
+        function playSound(freq, type, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playBGM() {
+            // Nhạc nền đơn giản lặp lại
+            setInterval(() => {
+                const notes = [261, 329, 392, 523];
+                playSound(notes[Math.floor(Math.random()*notes.length)], 'triangle', 0.5);
+            }, 800);
+        }
+
+        function start() {
+            audioCtx.resume();
+            playBGM();
+            const name = document.getElementById('name-in').value;
+            const room = document.getElementById('room-in').value;
+            if(!name || !room) return;
             
-            const roomID = 'room-final-' + room.toLowerCase();
+            const roomID = 'cute-zom-' + room.toLowerCase();
             document.getElementById('my-name-ui').innerText = name;
-            document.getElementById('status').innerText = "Đang thiết lập cổng kết nối...";
+            document.getElementById('status').innerText = "Đang tìm bạn trên Wifi...";
 
             peer = new Peer(roomID);
-            peer.on('open', () => { isHost = true; document.getElementById('status').innerText = "BẠN LÀ CHỦ PHÒNG. Chờ đồng đội vào..."; });
-            peer.on('connection', c => { conn = c; initGame(); });
-            peer.on('error', (err) => {
-                if(err.type === 'unavailable-id') {
-                    peer = new Peer();
-                    setTimeout(() => { conn = peer.connect(roomID); initGame(); }, 500);
-                }
+            peer.on('open', () => { isHost = true; document.getElementById('status').innerText = "Phòng đã mở! Chờ bạn nhập mã: " + room; });
+            peer.on('connection', c => { conn = c; init(); });
+            peer.on('error', () => {
+                peer = new Peer();
+                setTimeout(() => { conn = peer.connect(roomID); init(); }, 500);
             });
         }
 
-        function initGame() {
+        function init() {
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('game-ui').classList.remove('hidden');
             conn.on('data', data => {
@@ -102,15 +118,25 @@
                     if(!isHost) { zombies = data.zombies; items = data.items; boss = data.boss; }
                 }
                 if(data.type === 'hit' && isHost) {
-                    if(data.id === 'boss' && boss) { boss.hp -= 20; if(boss.hp <= 0) boss = null; }
-                    else {
-                        let z = zombies.find(z => z.id === data.id);
-                        if(z) { z.hp -= 20; if(z.hp <= 0) { dropItem(z.x, z.y); zombies = zombies.filter(item => item.id !== z.id); } }
+                    let z = (data.id === 'boss') ? boss : zombies.find(z => z.id === data.id);
+                    if(z) { 
+                        z.hp -= 25; 
+                        createParticles(z.x+20, z.y+20, '#4ade80');
+                        if(z.hp <= 0) { 
+                            if(data.id === 'boss') boss = null; 
+                            else { zombies = zombies.filter(item => item.id !== z.id); dropItem(z.x, z.y); }
+                        }
                     }
                 }
-                if(data.type === 'take' && isHost) items = items.filter(it => it.id !== data.id);
             });
             loop();
+        }
+
+        function createParticles(x, y, color) {
+            for(let i=0; i<8; i++) {
+                particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 20, color });
+            }
+            playSound(150, 'square', 0.1);
         }
 
         function dropItem(x, y) {
@@ -119,120 +145,120 @@
 
         function shoot() {
             if(me.isDead) return;
-            const b = { x: me.x + 20, y: me.y + 20, vx: 15, size: me.gun === 'cannon' ? 10 : 4 };
-            if(me.gun === 'triple') {
-                me.bullets.push({...b, vy: -2}, {...b, vy: 0}, {...b, vy: 2});
-            } else {
-                me.bullets.push({...b, vy: 0});
-            }
-        }
-
-        function dash() {
-            if(me.stamina >= 40 && !me.isDead) { me.stamina -= 40; me.dashCooldown = 10; }
+            playSound(600, 'sine', 0.05);
+            const b = { x: me.x + 20, y: me.y + 20, vx: 12, size: me.gun === 'cannon' ? 10 : 4 };
+            if(me.gun === 'triple') me.bullets.push({...b, vy: -2}, {...b, vy: 0}, {...b, vy: 2});
+            else me.bullets.push({...b, vy: 0});
         }
 
         function loop() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-            // Di chuyển & Dash
+            // Movement & Auto-Shoot
+            let speed = me.dash > 0 ? 15 : 5;
+            if(me.dash > 0) me.dash--;
             if(!me.isDead) {
-                let speed = me.dashCooldown > 0 ? 15 : 5;
-                if(me.dashCooldown > 0) me.dashCooldown--;
                 if(keys['KeyW']) me.y -= speed; if(keys['KeyS']) me.y += speed;
-                if(keys['KeyA']) me.x -= speed; if(keys['KeyD'] ) me.x += speed;
-                me.x += joyX * (speed/5); me.y += joyY * (speed/5);
+                if(keys['KeyA']) me.x -= speed; if(keys['KeyD']) me.x += speed;
+                me.x += joyX*speed; me.y += joyY*speed;
             }
-            if(me.stamina < 100) me.stamina += 0.5;
+            if(me.stamina < 100) me.stamina += 0.4;
 
+            // Host logic (Zombies & Boss)
             if(isHost) {
-                // Tạo Boss khi tổng điểm > 1000
-                if(!boss && (me.score + enemy.score) >= 1000) boss = { id: 'boss', x: 400, y: 300, hp: 2000, max: 2000, size: 80 };
-                if(boss) {
-                    let t = me.isDead ? enemy : me;
-                    let d = Math.sqrt((t.x - boss.x)**2 + (t.y - boss.y)**2);
-                    boss.x += (t.x - boss.x)/d * 1.2; boss.y += (t.y - boss.y)/d * 1.2;
-                }
-                // Zombie thường
-                if(zombies.length < 5 && Math.random() < 0.02) zombies.push({ id: Date.now(), x: Math.random()*canvas.width, y: -30, hp: 60 });
+                if(!boss && (me.score + enemy.score) >= 1000) boss = { id: 'boss', x: 500, y: 300, hp: 1500, max: 1500, size: 70 };
+                if(zombies.length < 5 && Math.random() < 0.02) zombies.push({ id: Date.now(), x: Math.random()*canvas.width, y: -30, hp: 50 });
                 zombies.forEach(z => {
                     let t = me.isDead ? enemy : me;
-                    let d = Math.sqrt((t.x - z.x)**2 + (t.y - z.y)**2);
-                    z.x += (t.x - z.x)/d * 1.5; z.y += (t.y - z.y)/d * 1.5;
+                    let d = Math.sqrt((t.x-z.x)**2+(t.y-z.y)**2);
+                    z.x += (t.x-z.x)/d * 1.5; z.y += (t.y-z.y)/d * 1.5;
                 });
             }
 
-            // Va chạm đạn & nhặt súng
-            items.forEach((it, idx) => {
-                if(Math.sqrt((me.x-it.x)**2 + (me.y-it.y)**2) < 40) {
-                    me.gun = it.type; document.getElementById('my-gun-name').innerText = it.type.toUpperCase();
-                    if(conn) conn.send({ type: 'take', id: it.id });
-                    if(isHost) items.splice(idx, 1);
-                }
+            // Particles
+            particles.forEach((p, i) => {
+                p.x += p.vx; p.y += p.vy; p.life--;
+                if(p.life <= 0) particles.splice(i, 1);
             });
 
-            zombies.forEach(z => {
-                if(Math.sqrt((me.x-z.x)**2 + (me.y-z.y)**2) < 30 && !me.isDead) {
-                    me.hp -= 0.5;
-                    if(me.hp <= 0) { me.isDead = true; me.gun='pistol'; setTimeout(() => { me.hp=100; me.isDead=false; }, 3000); }
-                }
-            });
-
+            // Bullets
             me.bullets.forEach((b, bi) => {
                 b.x += b.vx; b.y += b.vy;
                 [...zombies, boss].filter(Boolean).forEach(z => {
-                    if(Math.sqrt((b.x - z.x)**2 + (b.y - z.y)**2) < (z.size || 30)) {
+                    if(Math.sqrt((b.x-z.x)**2+(b.y-z.y)**2) < (z.size || 30)) {
                         me.bullets.splice(bi, 1);
-                        if(isHost) {
-                            z.hp -= 20;
-                            if(z.hp <= 0) { 
-                                if(z.id === 'boss') boss = null;
-                                else { dropItem(z.x, z.y); zombies = zombies.filter(item => item.id !== z.id); }
-                                me.score += 100;
-                            }
+                        if(isHost) { 
+                            z.hp -= 25; createParticles(z.x, z.y, '#fb7185');
+                            if(z.hp <= 0) { if(z.id==='boss') boss=null; else zombies=zombies.filter(i=>i.id!==z.id); me.score += 100; }
                         } else conn.send({ type: 'hit', id: z.id });
                     }
                 });
             });
 
-            if(conn && conn.open) conn.send({ type: 'sync', name: document.getElementById('name-in').value, player: { ...me, bullets: me.bullets }, zombies, items, boss });
+            // Nhặt đồ
+            items.forEach((it, idx) => {
+                if(Math.sqrt((me.x-it.x)**2+(me.y-it.y)**2) < 40) {
+                    me.gun = it.type; playSound(800, 'sine', 0.2);
+                    if(isHost) items.splice(idx, 1); else conn.send({ type: 'take', id: it.id });
+                }
+            });
 
-            document.getElementById('my-hp').style.width = me.hp + '%';
-            document.getElementById('my-stamina').style.width = me.stamina + '%';
-            document.getElementById('total-score').innerText = (me.score + enemy.score);
-            document.getElementById('boss-ui').style.display = boss ? 'block' : 'none';
-            if(boss) document.getElementById('boss-hp-fill').style.width = (boss.hp/boss.max*100) + '%';
+            // Zombie cắn & Hồi sinh
+            zombies.forEach(z => {
+                if(Math.sqrt((me.x-z.x)**2+(me.y-z.y)**2) < 30 && !me.isDead) {
+                    me.hp -= 0.8;
+                    if(me.hp <= 0) { 
+                        me.isDead = true; 
+                        playSound(100, 'sawtooth', 0.5);
+                        setTimeout(() => { me.hp=100; me.isDead=false; me.x=100; me.y=100; }, 3000); 
+                    }
+                }
+            });
+
+            if(conn && conn.open) conn.send({ type: 'sync', name: document.getElementById('name-in').value, player: { ...me, bullets: me.bullets }, zombies, items, boss });
 
             draw();
             requestAnimationFrame(loop);
         }
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Items
-            items.forEach(it => { ctx.fillStyle = it.type === 'triple' ? '#0ff' : '#f0f'; ctx.fillRect(it.x, it.y, 25, 25); });
+            ctx.clearRect(0,0, canvas.width, canvas.height);
+            // Items (Kẹo súng)
+            items.forEach(it => {
+                ctx.fillStyle = it.type === 'triple' ? '#0ef' : '#f0f';
+                ctx.font = "20px Arial"; ctx.fillText("🍬", it.x, it.y);
+            });
+            // Hạt nổ
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
             // Players
-            if(!me.isDead) { ctx.fillStyle = "#3b82f6"; ctx.fillRect(me.x, me.y, 40, 40); }
-            if(!enemy.isDead) { ctx.fillStyle = "#ef4444"; ctx.fillRect(enemy.x, enemy.y, 40, 40); }
-            // Zombie/Boss
-            ctx.fillStyle = "#22c55e"; zombies.forEach(z => { ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 18, 0, 7); ctx.fill(); });
-            if(boss) { ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, 7); ctx.fill(); }
-            // Bullets
-            ctx.fillStyle = "yellow"; me.bullets.concat(enemy.bullets || []).forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, b.size||4, 0, 7); ctx.fill(); });
+            if(!me.isDead) { ctx.fillStyle = "#fb7185"; ctx.fillRect(me.x, me.y, 40, 40); ctx.strokeStyle="#fff"; ctx.strokeRect(me.x, me.y, 40, 40); }
+            if(!enemy.isDead) { ctx.fillStyle = "#60a5fa"; ctx.fillRect(enemy.x, enemy.y, 40, 40); }
+            // Zombies (Màu xanh cute)
+            ctx.fillStyle = "#4ade80"; zombies.forEach(z => { ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 18, 0, 7); ctx.fill(); ctx.fillStyle="#fff"; ctx.fillRect(z.x+10, z.y+10, 5, 5); ctx.fillRect(z.x+25, z.y+10, 5, 5); ctx.fillStyle="#4ade80"; });
+            // Boss
+            if(boss) { ctx.fillStyle = "#e11d48"; ctx.beginPath(); ctx.arc(boss.x, boss.y, boss.size, 0, 7); ctx.fill(); }
+            // Đạn
+            ctx.fillStyle = "#fbbf24"; me.bullets.concat(enemy.bullets || []).forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, b.size||4, 0, 7); ctx.fill(); });
+
+            // UI
+            document.getElementById('my-hp').style.width = me.hp + '%';
+            document.getElementById('my-stamina').style.width = me.stamina + '%';
+            document.getElementById('total-score').innerText = (me.score + enemy.score);
         }
 
-        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code === 'Space') shoot(); if(e.shiftKey) dash(); });
+        // Điều khiển
+        window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code==='Space') shoot(); if(e.shiftKey) me.dash=10; });
         window.addEventListener('keyup', e => keys[e.code] = false);
-        
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.addEventListener('touchmove', e => {
             const t = e.touches[0]; const r = joy.getBoundingClientRect();
             let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
             let d = Math.sqrt(dx*dx + dy*dy); if(d > 40) { dx *= 40/d; dy *= 40/d; }
-            st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/8; joyY = dy/8;
+            st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/40; joyY = dy/40;
         });
         joy.addEventListener('touchend', () => { joyX = 0; joyY = 0; st.style.transform = 'none'; });
-        document.getElementById('btn-shoot').onclick = shoot;
-        document.getElementById('btn-dash').onclick = dash;
+        document.getElementById('btn-shoot').addEventListener('touchstart', (e) => { e.preventDefault(); shoot(); });
+        document.getElementById('btn-dash').addEventListener('touchstart', (e) => { e.preventDefault(); me.dash=10; });
     </script>
 </body>
 </html>
