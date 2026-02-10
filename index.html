@@ -3,157 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anh Ba Đại Chiến - Đối Kháng P2P</title>
+    <title>Anh Ba Đại Chiến - Survival P2P</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: 'Arial', sans-serif; touch-action: none; }
-        canvas { display: block; background: #ecd9c6; }
-        .ui { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; padding: 10px; }
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial', sans-serif; }
+        canvas { display: block; background: #2c3e50; } /* Sàn đấu màu tối để dễ nhìn bát phở */
+        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; padding: 15px; z-index: 20; }
         .pointer { pointer-events: auto; }
-        .health-bar { width: 150px; height: 15px; background: #444; border: 2px solid white; border-radius: 10px; overflow: hidden; }
-        .health-fill { height: 100%; background: #ef4444; transition: 0.3s; }
-        #joystick { position: absolute; bottom: 40px; left: 40px; width: 100px; height: 100px; background: rgba(255,255,255,0.2); border-radius: 50%; pointer-events: auto; }
-        #stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: white; border-radius: 50%; }
-        #attack-btn { position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px; background: #ef4444; border-radius: 50%; color: white; font-weight: bold; pointer-events: auto; border: 4px solid #b91c1c; box-shadow: 0 5px 0 #7f1d1d; }
-        #attack-btn:active { transform: translateY(5px); box-shadow: none; }
+        .bar-container { width: 140px; height: 12px; background: #333; border-radius: 6px; border: 2px solid #555; overflow: hidden; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #ff4b2b, #ff416c); transition: width 0.2s; }
+        
+        /* Joystick & Button */
+        #ctrl-move { position: absolute; bottom: 50px; left: 50px; width: 100px; height: 100px; background: rgba(255,255,255,0.15); border-radius: 50%; pointer-events: auto; }
+        #stick { position: absolute; top: 25px; left: 25px; width: 50px; height: 50px; background: #fff; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        #btn-shoot { position: absolute; bottom: 50px; right: 50px; width: 90px; height: 90px; background: #e74c3c; border-radius: 50%; color: #fff; font-weight: 900; pointer-events: auto; border: 5px solid #c0392b; box-shadow: 0 6px 0 #922b21; }
+        #btn-shoot:active { transform: translateY(4px); box-shadow: none; }
     </style>
 </head>
 <body>
 
-    <div class="ui flex justify-between items-start text-white">
-        <div class="bg-black/50 p-2 rounded">
-            <p class="text-xs">BẠN (ANH BA 1)</p>
-            <div class="health-bar"><div id="my-hp" class="health-fill" style="width: 100%;"></div></div>
-            <p class="text-[10px]">Mạng: <span id="my-lives">3</span>/3</p>
-        </div>
-        
-        <div class="pointer bg-white/10 p-2 rounded text-center">
-            <p class="text-[10px]">ID: <span id="my-id" class="font-bold text-yellow-400">Đang tải...</span></p>
-            <input type="text" id="peer-id" placeholder="ID Bạn bè" class="text-black text-[10px] p-1 rounded w-24">
-            <button onclick="connect()" class="bg-blue-600 px-2 py-1 rounded text-[10px]">Kết nối</button>
+    <div class="ui-overlay flex justify-between">
+        <div class="bg-black/60 p-3 rounded-2xl border border-blue-500">
+            <p class="text-blue-400 font-bold text-xs uppercase mb-1">Anh Ba (BẠN)</p>
+            <div class="bar-container"><div id="my-hp" class="hp-fill" style="width: 100%;"></div></div>
+            <p class="text-white text-[10px] mt-1 italic">Mạng còn lại: <span id="my-lives" class="text-yellow-400 font-bold">3</span></p>
         </div>
 
-        <div class="bg-black/50 p-2 rounded text-right">
-            <p class="text-xs">ĐỐI THỦ</p>
-            <div class="health-bar"><div id="peer-hp" class="health-fill" style="width: 100%;"></div></div>
-            <p class="text-[10px]">Mạng: <span id="peer-lives">3</span>/3</p>
+        <div class="pointer text-center">
+            <div id="id-display" class="bg-yellow-500 text-black px-3 py-1 rounded-full text-[10px] font-black mb-2 shadow-lg">ID: Đang tạo...</div>
+            <input type="text" id="peer-id" placeholder="Dán ID bạn bè" class="text-black text-[10px] p-2 rounded-lg w-32 border-none">
+            <button onclick="connectToFriend()" class="bg-green-600 text-white px-3 py-2 rounded-lg text-[10px] font-bold block mx-auto mt-2">KẾT NỐI</button>
+        </div>
+
+        <div class="bg-black/60 p-3 rounded-2xl border border-red-500 text-right">
+            <p class="text-red-400 font-bold text-xs uppercase mb-1">Đối Thủ</p>
+            <div class="bar-container ml-auto"><div id="peer-hp" class="hp-fill" style="width: 100%;"></div></div>
+            <p class="text-white text-[10px] mt-1 italic">Mạng còn lại: <span id="peer-lives" class="text-yellow-400 font-bold">3</span></p>
         </div>
     </div>
 
-    <div id="joystick"><div id="stick"></div></div>
-    <button id="attack-btn" class="pointer shadow-lg">NÉM BÁT</button>
+    <div id="ctrl-move"><div id="stick"></div></div>
+    <button id="btn-shoot">NÉM 🍜</button>
 
-    <canvas id="game"></canvas>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('game');
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const peer = new Peer();
         let conn;
 
-        let my = { x: 100, y: 300, hp: 100, lives: 3, color: '#3b82f6', bullets: [] };
-        let enemy = { x: 500, y: 300, hp: 100, lives: 3, color: '#ef4444', bullets: [] };
+        // Trạng thái nhân vật
+        let me = { x: 100, y: 100, hp: 100, lives: 3, size: 45, bullets: [] };
+        let enemy = { x: -500, y: -500, hp: 100, lives: 3, bullets: [] };
         let moveX = 0, moveY = 0;
 
-        peer.on('open', id => document.getElementById('my-id').innerText = id);
-        peer.on('connection', c => { conn = c; setupConn(); });
+        peer.on('open', id => document.getElementById('id-display').innerText = "ID: " + id);
+        peer.on('connection', c => { conn = c; initConnection(); });
 
-        function connect() {
+        function connectToFriend() {
             conn = peer.connect(document.getElementById('peer-id').value);
-            setupConn();
+            initConnection();
         }
 
-        function setupConn() {
+        function initConnection() {
             conn.on('data', data => {
-                if(data.type === 'move') {
+                if(data.type === 'sync') {
                     enemy.x = data.x; enemy.y = data.y;
                     enemy.bullets = data.bullets;
+                    enemy.hp = data.hp;
+                    enemy.lives = data.lives;
                 }
-                if(data.type === 'hit') {
-                    my.hp = data.newHp;
-                    if(my.hp <= 0) respawn();
+                if(data.type === 'damage') {
+                    me.hp -= 10;
+                    if(me.hp <= 0) doRespawn();
                 }
             });
         }
 
-        function respawn() {
-            my.lives--;
-            document.getElementById('my-lives').innerText = my.lives;
-            if(my.lives > 0) {
-                my.hp = 100;
-                my.x = Math.random() * 200;
-                my.y = Math.random() * 400;
-                alert("Bạn đã bị hạ gục! Đang hồi sinh...");
+        function doRespawn() {
+            me.lives--;
+            if(me.lives > 0) {
+                me.hp = 100;
+                me.x = Math.random() * (canvas.width - 50);
+                me.y = Math.random() * (canvas.height - 50);
             } else {
-                alert("GAME OVER! BẠN ĐÃ THUA.");
+                alert("BẠN ĐÃ HẾT MẠNG! THUA CUỘC.");
                 location.reload();
             }
         }
 
-        // Joystick Logic
-        const joy = document.getElementById('joystick');
+        // Joystick xử lý di chuyển né đòn
+        const joystick = document.getElementById('ctrl-move');
         const stick = document.getElementById('stick');
-        joy.addEventListener('touchmove', e => {
-            const touch = e.touches[0];
-            const r = joy.getBoundingClientRect();
-            let dx = touch.clientX - (r.left + 50), dy = touch.clientY - (r.top + 50);
-            const d = Math.sqrt(dx*dx + dy*dy);
-            if(d > 40) { dx *= 40/d; dy *= 40/d; }
+        joystick.addEventListener('touchmove', e => {
+            const t = e.touches[0];
+            const r = joystick.getBoundingClientRect();
+            let dx = t.clientX - (r.left + 50), dy = t.clientY - (r.top + 50);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if(dist > 40) { dx *= 40/dist; dy *= 40/dist; }
             stick.style.transform = `translate(${dx}px, ${dy}px)`;
-            moveX = dx/8; moveY = dy/8;
+            moveX = dx/6; moveY = dy/6; // Tốc độ di chuyển
         });
-        joy.addEventListener('touchend', () => { moveX = 0; moveY = 0; stick.style.transform = 'none'; });
+        joystick.addEventListener('touchend', () => { moveX = 0; moveY = 0; stick.style.transform = 'none'; });
 
         // Tấn công
-        document.getElementById('attack-btn').addEventListener('click', () => {
-            my.bullets.push({ x: my.x + 20, y: my.y + 20, vx: 10 });
+        document.getElementById('btn-shoot').addEventListener('click', () => {
+            me.bullets.push({ x: me.x + 20, y: me.y + 20, vx: 12 });
         });
 
-        function update() {
-            my.x += moveX; my.y += moveY;
+        function gameLoop() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             
-            // Xử lý bát phở của mình
-            my.bullets.forEach((b, i) => {
+            // Di chuyển & giới hạn màn hình
+            me.x = Math.max(0, Math.min(canvas.width - me.size, me.x + moveX));
+            me.y = Math.max(0, Math.min(canvas.height - me.size, me.y + moveY));
+
+            // Xử lý đạn của mình
+            me.bullets.forEach((b, i) => {
                 b.x += b.vx;
-                // Kiểm tra bắn trúng địch (chỉ tính trên máy mình)
-                if(b.x > enemy.x && b.x < enemy.x + 40 && b.y > enemy.y && b.y < enemy.y + 40) {
-                    enemy.hp -= 10;
-                    my.bullets.splice(i, 1);
-                    if(conn) conn.send({ type: 'hit', newHp: enemy.hp });
+                // Va chạm với Địch (tính toán local)
+                if(b.x > enemy.x && b.x < enemy.x + me.size && b.y > enemy.y && b.y < enemy.y + me.size) {
+                    me.bullets.splice(i, 1);
+                    if(conn) conn.send({ type: 'damage' });
                 }
-                if(b.x > canvas.width) my.bullets.splice(i, 1);
+                if(b.x > canvas.width || b.x < 0) me.bullets.splice(i, 1);
             });
 
-            if(conn) conn.send({ type: 'move', x: canvas.width - my.x - 40, y: my.y, bullets: my.bullets.map(b => ({...b, x: canvas.width - b.x, vx: -b.vx})) });
-            
-            document.getElementById('my-hp').style.width = my.hp + '%';
-            document.getElementById('peer-hp').style.width = enemy.hp + '%';
-            document.getElementById('peer-lives').innerText = enemy.lives;
+            // Đồng bộ dữ liệu
+            if(conn && conn.open) {
+                conn.send({
+                    type: 'sync',
+                    x: canvas.width - me.x - me.size, // Đảo tọa độ để đối thủ thấy mình ở hướng ngược lại
+                    y: me.y,
+                    bullets: me.bullets.map(b => ({...b, x: canvas.width - b.x, vx: -b.vx})),
+                    hp: me.hp,
+                    lives: me.lives
+                });
+            }
+
+            draw();
+            requestAnimationFrame(gameLoop);
         }
 
         function draw() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             ctx.clearRect(0,0, canvas.width, canvas.height);
+            
+            // Vẽ Bạn (Anh Ba Xanh)
+            ctx.fillStyle = "#3498db";
+            ctx.shadowBlur = 15; ctx.shadowColor = "#3498db";
+            ctx.fillRect(me.x, me.y, me.size, me.size);
+            
+            // Vẽ Địch (Anh Ba Đỏ)
+            ctx.fillStyle = "#e74c3c";
+            ctx.shadowColor = "#e74c3c";
+            ctx.fillRect(enemy.x, enemy.y, me.size, me.size);
 
-            // Vẽ Bạn
-            ctx.fillStyle = my.color;
-            ctx.fillRect(my.x, my.y, 40, 40);
-            ctx.fillStyle = "black"; ctx.fillText("BẠN", my.x, my.y - 5);
+            // Vẽ bát phở
+            ctx.shadowBlur = 0; ctx.font = "25px Arial";
+            me.bullets.concat(enemy.bullets).forEach(b => ctx.fillText("🍜", b.x, b.y));
 
-            // Vẽ Địch
-            ctx.fillStyle = enemy.color;
-            ctx.fillRect(enemy.x, enemy.y, 40, 40);
-            ctx.fillStyle = "black"; ctx.fillText("ĐỐI THỦ", enemy.x, enemy.y - 5);
-
-            // Vẽ bát phở (đạn)
-            ctx.font = "20px Arial";
-            my.bullets.concat(enemy.bullets).forEach(b => ctx.fillText("🍜", b.x, b.y));
-
-            update();
-            requestAnimationFrame(draw);
+            // Cập nhật UI
+            document.getElementById('my-hp').style.width = me.hp + '%';
+            document.getElementById('peer-hp').style.width = enemy.hp + '%';
+            document.getElementById('my-lives').innerText = me.lives;
+            document.getElementById('peer-lives').innerText = enemy.lives;
         }
-        draw();
+
+        gameLoop();
     </script>
 </body>
 </html>
