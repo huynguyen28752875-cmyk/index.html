@@ -3,63 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Zom-Evo: Dark Survival</title>
+    <title>Zom-Evo: Gold Rush</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Arial Black', sans-serif; }
         canvas { display: block; }
+        .ui-overlay { position: absolute; inset: 0; z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.95); color: white; }
+        .shop-item { background: #1e1b4b; border: 2px solid #4338ca; padding: 15px; border-radius: 12px; width: 180px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .shop-item:hover { background: #4338ca; transform: translateY(-5px); }
+        .shop-item.locked { opacity: 0.5; cursor: not-allowed; grayscale: 1; }
         
-        /* Rotate Hint */
-        #rotate-hint { position: fixed; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        @media screen and (orientation: portrait) { #rotate-hint { display: flex; } }
-
-        .ui-screen { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .skill-btn { background: #312e81; border: 2px solid #6366f1; padding: 15px; border-radius: 12px; width: 220px; transition: 0.2s; cursor: pointer; }
-        .skill-btn:active { transform: scale(0.95); background: #6366f1; }
+        #joystick { position: absolute; bottom: 40px; left: 50px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%; border: 2px solid #4338ca; display: none; }
+        #stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #6366f1; border-radius: 50%; }
+        #btn-shoot { position: absolute; bottom: 50px; right: 50px; width: 90px; height: 90px; background: #ef4444; border-radius: 50%; display: none; border: 4px solid rgba(255,255,255,0.2); font-weight: bold; }
         
-        #hud { position: absolute; top: 0; width: 100%; padding: 20px; pointer-events: none; z-index: 50; display: flex; justify-content: space-between; color: white; }
-        #combo-txt { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); font-size: 40px; color: #fbbf24; font-weight: 900; opacity: 0; transition: 0.3s; }
-        
-        /* Mobile Controls */
-        #joystick { position: absolute; bottom: 40px; left: 60px; width: 120px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 50%; border: 2px solid rgba(99,102,241,0.3); }
-        #stick { position: absolute; top: 35px; left: 35px; width: 50px; height: 50px; background: #6366f1; border-radius: 50%; box-shadow: 0 0 20px #6366f1; }
-        #btn-shoot { position: absolute; bottom: 50px; right: 60px; width: 100px; height: 100px; background: #ef4444; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 0 20px #ef4444; color: white; font-weight: 900; z-index: 100; }
+        #hud { position: absolute; top: 20px; width: 100%; padding: 0 30px; display: flex; justify-content: space-between; color: white; pointer-events: none; z-index: 100; }
+        .coin-anim { color: #fde047; font-weight: bold; position: absolute; pointer-events: none; animation: floatUp 1s forwards; }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-50px); } }
     </style>
 </head>
 <body>
 
-    <div id="rotate-hint">🔄 Xoay ngang điện thoại để chơi</div>
-
-    <div id="setup" class="ui-screen">
-        <h1 class="text-6xl font-black text-red-600 mb-2 italic shadow-lg">DARK SURVIVAL</h1>
-        <p class="text-indigo-400 mb-8 tracking-widest text-sm">HỢP TÁC SINH TỒN 360°</p>
-        <div class="flex flex-col gap-4">
-            <input type="text" id="name-in" class="p-4 rounded-xl text-black font-bold w-80" placeholder="Tên của bạn">
-            <input type="text" id="room-in" class="p-4 rounded-xl text-black font-bold w-80" placeholder="Mã phòng (Ví dụ: 999)">
-            <button onclick="initPeer()" class="bg-red-600 py-4 rounded-xl font-black text-2xl active:scale-95 shadow-xl">VÀO TRẬN CHIẾN</button>
+    <div id="start-screen" class="ui-overlay">
+        <h1 class="text-6xl font-black text-yellow-500 mb-2 italic">GOLD RUSH</h1>
+        <p class="text-indigo-400 mb-8 tracking-widest text-sm uppercase">Tiêu diệt - Nhặt vàng - Nâng cấp</p>
+        <div class="flex flex-col gap-3">
+            <input type="text" id="name-in" class="p-3 rounded-lg text-black font-bold w-72" placeholder="Tên chiến binh">
+            <input type="text" id="room-in" class="p-3 rounded-lg text-black font-bold w-72" placeholder="Mã phòng">
+            <button onclick="init()" class="bg-yellow-600 py-4 rounded-lg font-black text-xl shadow-xl">BẮT ĐẦU</button>
         </div>
-        <p id="status" class="mt-4 text-gray-500 italic text-sm"></p>
     </div>
 
-    <div id="upgrade-menu" class="ui-screen hidden">
-        <h2 class="text-3xl font-black text-yellow-400 mb-8">KỸ NĂNG TIẾN HÓA</h2>
-        <div id="skill-options" class="flex flex-wrap justify-center gap-4"></div>
+    <div id="shop-screen" class="ui-overlay hidden">
+        <h2 class="text-4xl font-black text-yellow-400 mb-2 italic">ARSENAL SHOP</h2>
+        <p class="mb-8 text-gray-400">Số vàng hiện có: <span id="shop-gold" class="text-yellow-500 font-bold">0</span></p>
+        <div id="shop-items" class="flex flex-wrap justify-center gap-6"></div>
+        <button onclick="closeShop()" class="mt-10 bg-gray-700 px-10 py-2 rounded-full font-bold">TIẾP TỤC TRẬN ĐẤU</button>
     </div>
 
     <div id="hud" class="hidden">
-        <div class="flex flex-col gap-1">
-            <p id="ui-name" class="font-bold text-indigo-400"></p>
-            <div class="w-32 h-3 bg-gray-900 rounded-full border border-gray-700 overflow-hidden"><div id="hp-bar" class="h-full bg-red-600 transition-all"></div></div>
-            <p class="text-[10px] text-gray-500 uppercase">Drone: <span id="ui-drone" class="text-green-500">SẴN SÀNG</span></p>
+        <div>
+            <p id="ui-name" class="font-bold text-indigo-400 text-sm"></p>
+            <div class="w-40 h-3 bg-gray-900 rounded-full border border-gray-700 overflow-hidden mt-1">
+                <div id="hp-fill" class="h-full bg-red-600 transition-all w-full"></div>
+            </div>
+            <p class="text-yellow-400 font-bold mt-2">💰 <span id="ui-gold">0</span></p>
         </div>
         <div class="text-right">
-            <p id="ui-score" class="text-4xl font-black text-white">0</p>
-            <p class="text-xs text-indigo-400">STAGE <span id="ui-stage">1</span></p>
+            <p id="ui-score" class="text-4xl font-black tabular-nums">0</p>
+            <p class="text-xs text-gray-500 font-bold">STAGE: <span id="ui-stage" class="text-white">1</span></p>
         </div>
     </div>
 
-    <div id="combo-txt">UNSTOPPABLE!</div>
     <div id="joystick"><div id="stick"></div></div>
     <button id="btn-shoot">BẮN</button>
 
@@ -70,231 +66,189 @@
         const ctx = canvas.getContext('2d');
         let peer, conn, isHost = false;
 
-        // --- GAME OBJECTS ---
+        // --- GAME STATE ---
         let me = { 
-            x: 400, y: 300, hp: 100, score: 0, stage: 1, angle: 0, speed: 5, fireRate: 350,
-            droneAngle: 0, hasDrone: true, lastShoot: 0, combo: 0, comboTimer: 0
+            x: 500, y: 300, hp: 100, score: 0, gold: 0, stage: 1, angle: 0, speed: 5, 
+            weapon: 'pistol', fireRate: 400, lastShot: 0, bullets: [] 
         };
-        let enemy = { x: -1000, y: -1000, hp: 100, angle: 0, bullets: [] };
-        let zombies = [], particles = [], bullets = [], boss = null;
-        let joyX = 0, joyY = 0;
+        let enemy = { x: -1000, y: -1000, hp: 100, bullets: [], angle: 0 };
+        let zombies = [], coins = [], rain = [], lightning = 0;
+        let keys = {}, joyX = 0, joyY = 0;
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-        function initPeer() {
-            const name = document.getElementById('name-in').value || "Soldier";
-            const room = 'dark-zom-' + (document.getElementById('room-in').value || "test");
-            document.getElementById('ui-name').innerText = name.toUpperCase();
-            
+        const WEAPONS = {
+            pistol: { name: 'Pistol', rate: 400, price: 0, count: 1, spread: 0 },
+            shotgun: { name: 'Shotgun', rate: 800, price: 500, count: 5, spread: 0.4 },
+            minigun: { name: 'Minigun', rate: 100, price: 1200, count: 1, spread: 0.1 }
+        };
+
+        if(isMobile) { document.getElementById('joystick').style.display = 'block'; document.getElementById('btn-shoot').style.display = 'block'; }
+        for(let i=0; i<80; i++) rain.push({ x: Math.random()*2000, y: Math.random()*2000, l: Math.random()*15, v: 12 + Math.random()*8 });
+
+        function init() {
+            const room = 'gold-zom-' + (document.getElementById('room-in').value || '888');
+            document.getElementById('ui-name').innerText = (document.getElementById('name-in').value || 'Slayer').toUpperCase();
             peer = new Peer(room);
-            peer.on('open', (id) => { 
-                isHost = true; 
-                document.getElementById('status').innerText = "Đã mở phòng. Chờ đồng đội..."; 
-            });
-            peer.on('connection', c => { conn = c; start(); });
-            peer.on('error', () => {
-                peer = new Peer();
-                setTimeout(() => { conn = peer.connect(room); start(); }, 500);
-            });
+            peer.on('open', () => { isHost = true; startGame(); });
+            peer.on('connection', c => { conn = c; startGame(); });
+            peer.on('error', () => { peer = new Peer(); setTimeout(() => { conn = peer.connect(room); startGame(); }, 500); });
         }
 
-        function start() {
-            document.getElementById('setup').style.display = 'none';
-            document.getElementById('hud').classList.remove('hidden');
-            loop();
-        }
+        function startGame() { document.getElementById('start-screen').style.display = 'none'; document.getElementById('hud').classList.remove('hidden'); loop(); }
 
-        function createBullet(x, y, angle, isDrone = false) {
-            bullets.push({
-                x: x, y: y,
-                vx: Math.cos(angle) * 15,
-                vy: Math.sin(angle) * 15,
-                power: isDrone ? 15 : 25,
-                color: isDrone ? '#4ade80' : '#fbbf24'
-            });
-        }
-
-        function spawnZombie() {
-            if(!isHost) return;
-            if(zombies.length < 5 + me.stage * 2) {
-                const side = Math.random() > 0.5;
-                zombies.push({
-                    id: Date.now() + Math.random(),
-                    x: side ? Math.random() * canvas.width : (Math.random() > 0.5 ? -50 : canvas.width + 50),
-                    y: !side ? Math.random() * canvas.height : (Math.random() > 0.5 ? -50 : canvas.height + 50),
-                    hp: 50 + (me.stage * 15),
-                    type: Math.random() > 0.85 ? 'fast' : 'normal'
-                });
+        function shoot() {
+            const now = Date.now();
+            const wp = WEAPONS[me.weapon];
+            if(now - me.lastShot > wp.rate) {
+                for(let i=0; i<wp.count; i++) {
+                    const angleOffset = (Math.random() - 0.5) * wp.spread;
+                    me.bullets.push({ 
+                        x: me.x+20, y: me.y+20, 
+                        vx: Math.cos(me.angle + angleOffset)*14, 
+                        vy: Math.sin(me.angle + angleOffset)*14 
+                    });
+                }
+                me.lastShot = now;
             }
         }
 
-        function handleUpgrades() {
+        function showShop() {
             me.stage++;
-            const upgrades = [
-                { t: "⚡ TỐC ĐỘ", d: "Chạy nhanh hơn", fn: () => me.speed += 1.5 },
-                { t: "🔥 LIÊN THANH", d: "Bắn nhanh hơn 40%", fn: () => me.fireRate *= 0.6 },
-                { t: "🛡 GIÁP", d: "Hồi máu tối đa", fn: () => me.hp = 100 }
-            ];
-            const container = document.getElementById('skill-options');
-            container.innerHTML = '';
-            upgrades.forEach(u => {
-                const btn = document.createElement('div');
-                btn.className = 'skill-btn';
-                btn.innerHTML = `<p class="font-black text-yellow-400">${u.t}</p><p class="text-[10px]">${u.d}</p>`;
-                btn.onclick = () => { u.fn(); document.getElementById('upgrade-menu').classList.add('hidden'); };
-                container.appendChild(btn);
+            const screen = document.getElementById('shop-screen');
+            const list = document.getElementById('shop-items');
+            document.getElementById('shop-gold').innerText = me.gold;
+            list.innerHTML = '';
+
+            Object.keys(WEAPONS).forEach(id => {
+                const w = WEAPONS[id];
+                const card = document.createElement('div');
+                const canAfford = me.gold >= w.price;
+                card.className = `shop-item ${canAfford ? '' : 'locked'}`;
+                card.innerHTML = `<h3 class="font-bold text-xl">${w.name}</h3><p class="text-yellow-400 mt-2">💰 ${w.price}</p>`;
+                if(canAfford) card.onclick = () => {
+                    me.gold -= w.price; me.weapon = id; closeShop();
+                };
+                list.appendChild(card);
             });
-            document.getElementById('upgrade-menu').classList.remove('hidden');
+            screen.classList.remove('hidden');
         }
+
+        function closeShop() { document.getElementById('shop-screen').classList.add('hidden'); }
 
         function loop() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            if(!document.getElementById('shop-screen').classList.contains('hidden')) { requestAnimationFrame(loop); return; }
 
-            const isPaused = !document.getElementById('upgrade-menu').classList.contains('hidden');
-
-            if(!me.isDead && !isPaused) {
-                // Di chuyển
-                if(Math.abs(joyX) > 0.1 || Math.abs(joyY) > 0.1) {
-                    me.x += joyX * me.speed;
-                    me.y += joyY * me.speed;
-                    me.angle = Math.atan2(joyY, joyX);
-                }
-
-                // Drone Logic
-                me.droneAngle += 0.05;
-                const dx = me.x + 20 + Math.cos(me.droneAngle) * 60;
-                const dy = me.y + 20 + Math.sin(me.droneAngle) * 60;
-
-                // Tự động bắn Drone
-                if(zombies.length > 0 && Math.random() < 0.03) {
-                    const target = zombies[0];
-                    const angleToZom = Math.atan2(target.y - dy, target.x - dx);
-                    createBullet(dx, dy, angleToZom, true);
-                }
-
-                // Combo Timer
-                if(me.comboTimer > 0) {
-                    me.comboTimer--;
-                    if(me.comboTimer === 0) me.combo = 0;
-                }
+            // Movement
+            if(isMobile) {
+                me.x += joyX * me.speed; me.y += joyY * me.speed;
+                if(Math.abs(joyX) > 0.1) me.angle = Math.atan2(joyY, joyX);
+            } else {
+                if(keys['KeyW']) me.y -= me.speed; if(keys['KeyS']) me.y += me.speed;
+                if(keys['KeyA']) me.x -= me.speed; if(keys['KeyD']) me.x += me.speed;
             }
 
-            if(isHost && !isPaused) {
-                spawnZombie();
+            if(isHost) {
+                if(zombies.length < 10 + me.stage && Math.random() < 0.04) {
+                    zombies.push({ id: Date.now(), x: Math.random()*canvas.width, y: -50, hp: 60 + me.stage*20 });
+                }
                 zombies.forEach(z => {
-                    const d = Math.sqrt((me.x-z.x)**2 + (me.y-z.y)**2);
-                    const zSpeed = z.type === 'fast' ? 2.5 : 1.5;
-                    z.x += (me.x-z.x)/d * (zSpeed + me.stage*0.1);
-                    z.y += (me.y-z.y)/d * (zSpeed + me.stage*0.1);
+                    let d = Math.sqrt((me.x-z.x)**2 + (me.y-z.y)**2);
+                    z.x += (me.x-z.x)/d * (1.5 + me.stage*0.1);
+                    z.y += (me.y-z.y)/d * (1.5 + me.stage*0.1);
+                    if(d < 30) me.hp -= 0.5;
                 });
             }
 
-            // Xử lý đạn
-            bullets.forEach((b, i) => {
+            // Coin Logic
+            coins.forEach((c, i) => {
+                if(Math.sqrt((me.x-c.x)**2 + (me.y-c.y)**2) < 50) {
+                    me.gold += 50; coins.splice(i, 1);
+                }
+            });
+
+            if(Math.random() < 0.003) lightning = 8;
+            if(lightning > 0) lightning--;
+
+            me.bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
-                if(b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) bullets.splice(i, 1);
-                
                 zombies.forEach((z, zi) => {
                     if(Math.sqrt((b.x-z.x)**2 + (b.y-z.y)**2) < 25) {
-                        z.hp -= b.power;
-                        bullets.splice(i, 1);
-                        if(z.hp <= 0) {
-                            zombies.splice(zi, 1);
-                            me.score += 100;
-                            me.combo++;
-                            me.comboTimer = 100;
-                            if(me.combo % 5 === 0) showCombo();
-                            if(me.score % 1000 === 0) handleUpgrades();
+                        z.hp -= 30; me.bullets.splice(i, 1);
+                        if(z.hp <= 0) { 
+                            coins.push({x: z.x, y: z.y});
+                            zombies.splice(zi, 1); me.score += 100; 
+                            if(me.score % 1000 === 0) showShop();
                         }
                     }
                 });
             });
 
-            if(conn && conn.open) conn.send({ type: 'sync', player: me, bullets, zombies, stage: me.stage });
-
             draw();
             requestAnimationFrame(loop);
         }
 
-        function showCombo() {
-            const el = document.getElementById('combo-txt');
-            el.style.opacity = 1;
-            setTimeout(() => el.style.opacity = 0, 800);
-        }
-
         function draw() {
-            // Phông nền tối
-            ctx.fillStyle = '#020617';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = lightning > 0 ? '#1e1b4b' : '#020205'; ctx.fillRect(0,0, canvas.width, canvas.height);
 
-            // --- LỚP ÁNH SÁNG (FLASHLIGHT) ---
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(me.x+20, me.y+20, 350, me.angle - 0.5, me.angle + 0.5);
-            ctx.lineTo(me.x+20, me.y+20);
-            ctx.clip();
-            
-            // Vẽ mặt đất trong vùng sáng
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(0,0, canvas.width, canvas.height);
-
-            // Vẽ Zombies trong vùng sáng
-            zombies.forEach(z => {
-                ctx.fillStyle = z.type === 'fast' ? '#f87171' : '#22c55e';
-                ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 20, 0, 7); ctx.fill();
-                ctx.fillStyle = 'white'; ctx.fillRect(z.x+10, z.y+10, 4, 4); ctx.fillRect(z.x+25, z.y+10, 4, 4);
-            });
-            ctx.restore();
-
-            // Vẽ Drone
-            const dx = me.x + 20 + Math.cos(me.droneAngle) * 60;
-            const dy = me.y + 20 + Math.sin(me.droneAngle) * 60;
-            ctx.fillStyle = '#4ade80';
-            ctx.shadowBlur = 15; ctx.shadowColor = '#4ade80';
-            ctx.fillRect(dx-10, dy-10, 20, 20);
-            ctx.shadowBlur = 0;
-
-            // Vẽ Nhân vật chính
-            ctx.save();
-            ctx.translate(me.x + 20, me.y + 20);
-            ctx.rotate(me.angle);
-            ctx.fillStyle = '#6366f1';
-            ctx.fillRect(-20, -20, 40, 40);
-            ctx.fillStyle = 'white'; ctx.fillRect(10, -4, 15, 8); // Súng
-            ctx.restore();
-
-            // Vẽ Đạn (Luôn thấy trong bóng tối vì nó tự phát sáng)
-            bullets.forEach(b => {
-                ctx.fillStyle = b.color;
-                ctx.shadowBlur = 10; ctx.shadowColor = b.color;
-                ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, 7); ctx.fill();
-                ctx.shadowBlur = 0;
+            // Mưa
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            rain.forEach(r => {
+                ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x-1, r.y+r.l); ctx.stroke();
+                r.y += r.v; if(r.y > canvas.height) r.y = -20;
             });
 
-            // HUD Update
-            document.getElementById('hp-bar').style.width = me.hp + '%';
+            // Tiền vàng
+            coins.forEach(c => {
+                ctx.fillStyle = '#fbbf24'; ctx.beginPath(); 
+                ctx.arc(c.x+20, c.y+20, 8 + Math.sin(Date.now()/200)*2, 0, 7); ctx.fill();
+            });
+
+            // Flashlight
+            if(lightning <= 0) {
+                ctx.save();
+                ctx.beginPath(); ctx.moveTo(me.x+20, me.y+20);
+                ctx.arc(me.x+20, me.y+20, 400, me.angle - 0.4, me.angle + 0.4);
+                ctx.lineTo(me.x+20, me.y+20); ctx.clip();
+                ctx.fillStyle = '#0a0a20'; ctx.fillRect(0,0, canvas.width, canvas.height);
+                zombies.forEach(z => {
+                    ctx.fillStyle = '#064e3b'; ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 20, 0, 7); ctx.fill();
+                    ctx.fillStyle = '#4ade80'; ctx.beginPath(); ctx.arc(z.x+14, z.y+15, 3, 0, 7); ctx.arc(z.x+26, z.y+15, 3, 0, 7); ctx.fill();
+                });
+                ctx.restore();
+            } else {
+                zombies.forEach(z => { ctx.fillStyle = '#991b1b'; ctx.beginPath(); ctx.arc(z.x+20, z.y+20, 22, 0, 7); ctx.fill(); });
+            }
+
+            // Player
+            ctx.save(); ctx.translate(me.x+20, me.y+20); ctx.rotate(me.angle);
+            ctx.fillStyle = '#4338ca'; ctx.fillRect(-20, -20, 40, 40);
+            ctx.fillStyle = '#fff'; ctx.fillRect(10, -4, 20, 8);
+            ctx.restore();
+
+            // Bullets
+            ctx.fillStyle = '#fde047'; me.bullets.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill(); });
+
+            document.getElementById('hp-fill').style.width = me.hp + '%';
             document.getElementById('ui-score').innerText = me.score;
+            document.getElementById('ui-gold').innerText = me.gold;
             document.getElementById('ui-stage').innerText = me.stage;
         }
 
-        // --- CONTROLS ---
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+        window.addEventListener('mousemove', e => { if(!isMobile) me.angle = Math.atan2(e.clientY - (me.y+20), e.clientX - (me.x+20)); });
+        window.addEventListener('mousedown', () => { if(!isMobile) shoot(); });
+
         const joy = document.getElementById('joystick'), st = document.getElementById('stick');
         joy.addEventListener('touchmove', e => {
             const t = e.touches[0]; const r = joy.getBoundingClientRect();
             let dx = t.clientX - (r.left + 60), dy = t.clientY - (r.top + 60);
             let d = Math.sqrt(dx*dx + dy*dy); if(d > 45) { dx *= 45/d; dy *= 45/d; }
-            st.style.transform = `translate(${dx}px, ${dy}px)`; 
-            joyX = dx/45; joyY = dy/45;
+            st.style.transform = `translate(${dx}px, ${dy}px)`; joyX = dx/45; joyY = dy/45;
         });
         joy.addEventListener('touchend', () => { joyX = 0; joyY = 0; st.style.transform = 'none'; });
-        
-        document.getElementById('btn-shoot').addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const now = Date.now();
-            if(now - me.lastShoot > me.fireRate) {
-                createBullet(me.x+20, me.y+20, me.angle);
-                me.lastShoot = now;
-            }
-        });
+        document.getElementById('btn-shoot').ontouchstart = (e) => { e.preventDefault(); shoot(); };
     </script>
 </body>
 </html>
