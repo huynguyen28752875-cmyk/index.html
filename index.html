@@ -2,191 +2,159 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Street Fighters VN: Cinematic Arena</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Street Fighters VN: 5 Legends</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
-        canvas { display: block; filter: contrast(1.2) saturate(1.1); }
-        #lobby { position: absolute; inset: 0; background: linear-gradient(45deg, #0f172a, #1e1b4b); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .char-card { border: 2px solid #334155; padding: 20px; background: rgba(255,255,255,0.05); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); width: 220px; text-align: center; border-radius: 15px; }
-        .char-card:hover { border-color: #fbbf24; transform: scale(1.1); box-shadow: 0 0 30px rgba(251, 191, 36, 0.3); cursor: pointer; }
-        .locked { filter: grayscale(1) opacity(0.4); pointer-events: none; border-color: #ef4444 !important; }
-        .p1-selected { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.2); box-shadow: 0 0 20px #3b82f6; }
-        .p2-selected { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.2); box-shadow: 0 0 20px #ef4444; }
-        #game-ui { position: absolute; top: 40px; width: 100%; display: none; justify-content: space-around; z-index: 10; padding: 0 50px; }
-        .bar-container { width: 450px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
-        .hp-outer { height: 35px; background: #1e293b; border: 3px solid #f8fafc; border-radius: 5px; overflow: hidden; }
-        .hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #991b1b); width: 100%; transition: 0.2s; }
-        .mana-outer { height: 12px; background: #0f172a; border: 2px solid #0ea5e9; margin-top: 8px; border-radius: 3px; }
-        .mana-fill { height: 100%; background: #38bdf8; width: 0%; transition: 0.3s; }
-        .combo-tag { font-weight: 900; font-size: 50px; font-style: italic; color: #fbbf24; text-shadow: 4px 4px 0px #000; display: none; animation: pop 0.3s; }
-        @keyframes pop { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
-        #fatality { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 200; font-size: 120px; color: #ff0000; font-weight: 900; text-shadow: 0 0 50px #ff0000; letter-spacing: 10px; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; touch-action: none; }
+        canvas { display: block; }
+        #lobby { position: absolute; inset: 0; background: radial-gradient(circle, #1e293b, #020617); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; padding: 20px; }
+        .char-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 600px; }
+        .char-btn { border: 3px solid #444; padding: 10px; background: rgba(255,255,255,0.05); text-align: center; border-radius: 10px; transition: 0.2s; cursor: pointer; }
+        .active:hover { border-color: #facc15; transform: scale(1.05); }
+        .p1-selected { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.2); }
+        .p2-selected { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.2); }
+        .locked { opacity: 0.3; pointer-events: none; }
+        
+        #controls { position: absolute; bottom: 20px; width: 100%; display: none; justify-content: space-between; padding: 0 20px; z-index: 50; pointer-events: none; }
+        .btn-group { display: flex; gap: 10px; pointer-events: auto; }
+        .joy-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; user-select: none; }
+        
+        #game-ui { position: absolute; top: 20px; width: 100%; display: none; justify-content: space-around; z-index: 10; }
+        .bar-wrap { width: 35%; }
+        .hp-out { height: 20px; background: #222; border: 2px solid #fff; border-radius: 10px; overflow: hidden; }
+        .hp-in { height: 100%; background: #ff0000; width: 100%; transition: 0.1s; }
+        .mana-out { height: 8px; background: #111; border: 1px solid #0cf; margin-top: 4px; border-radius: 5px; }
+        .mana-in { height: 100%; background: #00f2ff; width: 0%; transition: 0.2s; }
     </style>
 </head>
 <body>
 
     <div id="lobby">
-        <h1 id="turn-text" class="text-6xl mb-12 font-black italic tracking-tighter text-white">READY TO FIGHT?</h1>
-        <div class="flex gap-10">
-            <div id="btn-DanChoi" class="char-card" onclick="pick('DanChoi')">
-                <div class="text-3xl font-black text-blue-400">DÂN CHƠI</div>
-                <p class="text-gray-400 mt-2 text-sm uppercase font-bold">Speed & Air Mastery</p>
-            </div>
-            <div id="btn-HiepSi" class="char-card" onclick="pick('HiepSi')">
-                <div class="text-3xl font-black text-red-500">HIỆP SĨ</div>
-                <p class="text-gray-400 mt-2 text-sm uppercase font-bold">Brutal Power & Stun</p>
-            </div>
-        </div>
-        <p class="mt-12 text-slate-500 font-mono">PLAYER 1 PICKS FIRST</p>
+        <h1 id="turn-text" class="text-3xl text-yellow-400 mb-6 italic text-center">P1 CHỌN NHÂN VẬT</h1>
+        <div class="char-grid" id="grid"></div>
     </div>
 
     <div id="game-ui">
-        <div class="bar-container">
-            <div class="hp-outer"><div id="p1-hp" class="hp-fill"></div></div>
-            <div class="mana-outer"><div id="p1-mana" class="mana-fill"></div></div>
-            <div id="combo-p1" class="combo-tag">0 HITS</div>
+        <div class="bar-wrap">
+            <div class="hp-out"><div id="p1-hp" class="hp-in"></div></div>
+            <div class="mana-out"><div id="p1-mana" class="mana-in"></div></div>
+            <div id="p1-name" class="text-xs mt-1">P1</div>
         </div>
-        <div class="bar-container text-right">
-            <div class="hp-outer"><div id="p2-hp" class="hp-fill" style="float:right"></div></div>
-            <div class="mana-outer"><div id="p2-mana" class="mana-fill" style="float:right"></div></div>
-            <div id="combo-p2" class="combo-tag">0 HITS</div>
+        <div class="bar-wrap">
+            <div class="hp-out"><div id="p2-hp" class="hp-in" style="float:right"></div></div>
+            <div class="mana-out"><div id="p2-mana" class="mana-in" style="float:right"></div></div>
+            <div id="p2-name" class="text-xs mt-1 text-right">P2</div>
         </div>
     </div>
 
-    <div id="fatality">FATALITY</div>
+    <div id="controls">
+        <div class="btn-group">
+            <div class="joy-btn" onpointerdown="keys.KeyA=true" onpointerup="keys.KeyA=false">←</div>
+            <div class="joy-btn" onpointerdown="keys.KeyW=true" onpointerup="keys.KeyW=false">↑</div>
+            <div class="joy-btn" onpointerdown="keys.KeyD=true" onpointerup="keys.KeyD=false">→</div>
+        </div>
+        <div class="btn-group">
+            <div class="joy-btn bg-blue-600" onpointerdown="p1.attack('Punch')">P</div>
+            <div class="joy-btn bg-red-600" onpointerdown="p1.attack('Kick')">K</div>
+            <div class="joy-btn bg-yellow-600" onpointerdown="p1.attack('Ulti')">U</div>
+        </div>
+    </div>
+
     <canvas id="game"></canvas>
 
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const chars = [
+            { id: 'DanChoi', name: 'DÂN CHƠI', color: '#3b82f6', skill: 'Mưa Lửa' },
+            { id: 'HiepSi', name: 'HIỆP SĨ', color: '#ef4444', skill: 'Mưa Tên' },
+            { id: 'BO', name: 'CỤ BO', color: '#a855f7', skill: 'Đệ Tử' },
+            { id: 'Bin', name: 'BIN', color: '#10b981', skill: 'Ném Gạch' },
+            { id: 'Son', name: 'SƠN', color: '#f97316', skill: 'Tốc Biến' }
+        ];
 
-        // --- HỆ THỐNG ÂM THANH ---
-        function playSfx(f, t, d, v=0.1) {
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-            g.gain.setValueAtTime(v, audioCtx.currentTime);
-            o.connect(g); g.connect(audioCtx.destination);
-            o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d); o.stop(audioCtx.currentTime + d);
-        }
+        let p1Char, p2Char, p1, p2, isRunning = false, keys = {}, projectiles = [], minions = [];
 
-        function playCheer() { playSfx(100 + Math.random()*200, 'sine', 1, 0.05); }
+        // Tạo sảnh chọn tướng
+        const grid = document.getElementById('grid');
+        chars.forEach(c => {
+            const btn = document.createElement('div');
+            btn.className = 'char-btn active';
+            btn.id = 'btn-' + c.id;
+            btn.innerHTML = `<div style="color:${c.color}">${c.name}</div><div class="text-[10px] text-gray-400">${c.skill}</div>`;
+            btn.onclick = () => pick(c.id);
+            grid.appendChild(btn);
+        });
 
-        function startBGM() {
-            const loop = () => {
-                if(!isRunning) return;
-                const now = audioCtx.currentTime;
-                [110, 110, 164, 110].forEach((f, i) => {
-                    playSfx(f, 'sawtooth', 0.2, 0.02);
-                });
-                setTimeout(loop, 500);
-            };
-            loop();
-        }
-
-        // --- KHỞI TẠO BIẾN ---
-        let p1Char, p2Char, p1, p2, isRunning = false, slowMo = 1, shake = 0, flash = 0, finishHim = false, keys = {};
-        let particles = [], props = [], rain = [], crowd = [], projectiles = [], weapon = null;
-
-        function pick(t) {
+        function pick(id) {
             if(!p1Char) {
-                p1Char = t; document.getElementById('btn-'+t).classList.add('p1-selected', 'locked');
-                document.getElementById('turn-text').innerText = "PLAYER 2 SELECT"; playSfx(400, 'square', 0.1);
-            } else if(!p2Char && t !== p1Char) {
-                p2Char = t; document.getElementById('btn-'+t).classList.add('p2-selected', 'locked');
-                playSfx(600, 'square', 0.1); setTimeout(initGame, 600);
+                p1Char = id; document.getElementById('btn-'+id).classList.add('p1-selected', 'locked');
+                document.getElementById('turn-text').innerText = "P2 CHỌN NHÂN VẬT";
+            } else if(!p2Char) {
+                p2Char = id; document.getElementById('btn-'+id).classList.add('p2-selected', 'locked');
+                setTimeout(start, 500);
             }
         }
 
-        function initGame() {
+        function start() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-ui').style.display = 'flex';
-            p1 = new Fighter(canvas.width*0.2, 1, p1Char);
-            p2 = new Fighter(canvas.width*0.8, 2, p2Char);
-            props = [{x: canvas.width*0.4, y: canvas.height-140, w: 70, h: 70, alive: true}, {x: canvas.width*0.6, y: canvas.height-140, w: 70, h: 70, alive: true}];
-            for(let i=0; i<100; i++) rain.push({x: Math.random()*2500, y: Math.random()*1200, s: Math.random()*15+15});
-            for(let i=0; i<25; i++) crowd.push({x: i*(canvas.width/24), y: canvas.height-130, off: Math.random()*10});
-            isRunning = true; startBGM(); spawnWeapon();
+            if('ontouchstart' in window) document.getElementById('controls').style.display = 'flex';
+            p1 = new Fighter(200, 1, p1Char);
+            p2 = new Fighter(window.innerWidth - 200, 2, p2Char);
+            isRunning = true;
         }
-
-        function spawnWeapon() { if(!isRunning) return; weapon = { x: Math.random()*(canvas.width-200)+100, y: -50, active: true }; setTimeout(spawnWeapon, 15000); }
 
         class Fighter {
             constructor(x, id, type) {
                 this.x = x; this.id = id; this.type = type;
-                this.hp = type === 'DanChoi' ? 100 : 140; this.maxHp = this.hp;
-                this.mana = 0; this.spd = type === 'DanChoi' ? 10 : 6;
-                this.jump = type === 'DanChoi' ? 26 : 19;
-                this.color = type === 'DanChoi' ? '#3b82f6' : '#ef4444';
-                this.w = 80; this.h = 170; this.vy = 0; this.vx = 0;
-                this.isJumping = false; this.isAtk = 0; this.dir = id === 1 ? 1 : -1;
-                this.stun = 0; this.weapon = false; this.combo = 0; this.ctimer = 0;
+                this.hp = 100; this.maxHp = 100; this.mana = 0;
+                this.w = 60; this.h = 130; this.vy = 0; this.vx = 0;
+                this.dir = id === 1 ? 1 : -1; this.isAtk = 0; this.stun = 0;
+                this.color = chars.find(c => c.id === type).color;
             }
-
             draw() {
-                ctx.save();
-                if(shake > 0) ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2);
-                
-                // Shadow
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                ctx.beginPath(); ctx.ellipse(this.x+this.w/2, canvas.height-80, 40, 10, 0, 0, Math.PI*2); ctx.fill();
-
-                ctx.translate(this.x + this.w/2, this.y + this.h/2);
-                if(this.dir === -1) ctx.scale(-1, 1);
-                
-                // Glow
-                ctx.shadowBlur = 15; ctx.shadowColor = this.color;
-                ctx.fillStyle = this.stun > 0 ? '#475569' : this.color;
-                ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
-                
-                if(this.weapon) { ctx.fillStyle='#fbbf24'; ctx.fillRect(20, -10, 90, 12); }
-                if(this.isAtk > 0) { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.fillRect(40, -30, 90, 50); this.isAtk--; }
-                ctx.restore();
+                ctx.fillStyle = this.stun > 0 ? '#555' : this.color;
+                ctx.fillRect(this.x, this.y, this.w, this.h);
+                if(this.isAtk > 0) { ctx.fillStyle = "#fff"; ctx.fillRect(this.x + (this.dir > 0 ? this.w : -40), this.y + 40, 40, 20); this.isAtk--; }
             }
-
             update() {
-                if(this.stun > 0) { this.stun -= 16 * slowMo; this.vx = 0; }
-                this.x += this.vx * slowMo; this.y += this.vy * slowMo;
-                if(this.y + this.h < canvas.height - 80) this.vy += 1.2;
-                else { this.y = canvas.height - 80 - this.h; this.vy = 0; this.isJumping = false; }
-                
+                if(this.stun > 0) { this.stun -= 16; return; }
+                this.x += this.vx; this.y += this.vy;
+                if(this.y + this.h < canvas.height - 50) this.vy += 1;
+                else { this.y = canvas.height - 50 - this.h; this.vy = 0; }
                 this.mana = Math.min(100, this.mana + 0.1);
-                if(this.ctimer > 0) this.ctimer--; else { this.combo = 0; document.getElementById('combo-p'+this.id).style.display = 'none'; }
-                
-                if(weapon && weapon.active && Math.hypot(this.x-weapon.x, this.y-weapon.y) < 100) { this.weapon = true; weapon.active = false; playSfx(800, 'sine', 0.2); }
-                
-                props.forEach(p => { if(p.alive && this.x < p.x + p.w && this.x + this.w > p.x && this.y < p.y + p.h && this.y + this.h > p.y) { if(Math.abs(this.vx) > 5 || this.isAtk > 0) { p.alive = false; shake=15; playSfx(60,'square',0.3); } } });
             }
-
             attack(t) {
                 if(this.isAtk > 0 || this.stun > 0) return;
                 if(t === 'Ulti' && this.mana < 100) return;
-
+                
                 if(t === 'Ulti') {
-                    this.mana = 0; flash = 20; shake = 30; playSfx(40, 'sawtooth', 2, 0.4);
-                    for(let i=0; i<10; i++) projectiles.push({ x: Math.random()*canvas.width, y: -100, vy: 12, type: this.type==='DanChoi'?'fire':'arrow', owner: this.id });
+                    this.mana = 0;
+                    if(this.type === 'BO') {
+                        for(let i=0; i<5; i++) minions.push({ x: this.x, y: this.y, hp: 50, owner: this.id, life: 600 });
+                    } else if(this.type === 'Bin') {
+                        projectiles.push({ x: this.x, y: this.y, vx: this.dir * 15, vy: -5, type: 'brick', owner: this.id });
+                    } else if(this.type === 'DanChoi' || this.type === 'HiepSi') {
+                        for(let i=0; i<8; i++) projectiles.push({ x: Math.random()*canvas.width, y: -50, vx: 0, vy: 10, type: this.type==='DanChoi'?'fire':'arrow', owner: this.id });
+                    } else if(this.type === 'Son') {
+                        let enemy = this.id === 1 ? p2 : p1;
+                        this.x = enemy.x - (enemy.dir * 80); this.attack('Kick');
+                    }
                     return;
                 }
-
-                this.isAtk = 15; let enemy = this.id === 1 ? p2 : p1;
-                let d = t === 'Kick' ? 14 : 8; if(this.weapon) d *= 2.2;
-
-                if(Math.abs(this.x - enemy.x) < 150 && Math.abs(this.y - enemy.y) < 160) {
-                    enemy.hp -= d; this.mana = Math.min(100, this.mana + 15);
-                    this.combo++; this.ctimer = 70; shake = 10;
-                    const cEl = document.getElementById('combo-p'+this.id);
-                    cEl.innerText = this.combo + " HITS"; cEl.style.display = 'block';
-                    playCheer(); playSfx(120, 'square', 0.1);
-                    for(let i=0; i<15; i++) particles.push({x: enemy.x+40, y: enemy.y+60, vx: Math.random()*15*this.dir, vy: Math.random()*-12, life: 1, c: '#f00'});
-                    
-                    if(enemy.hp <= 0 && !finishHim) finishHim = true;
-                    else if(finishHim && enemy.hp <= 0) { slowMo=0.05; document.getElementById('fatality').style.display='flex'; setTimeout(()=>location.reload(), 3000); }
+                
+                this.isAtk = 10;
+                let enemy = this.id === 1 ? p2 : p1;
+                if(Math.abs(this.x - enemy.x) < 100 && Math.abs(this.y - enemy.y) < 100) {
+                    enemy.hp -= 10; this.mana = Math.min(100, this.mana + 15);
                 }
             }
         }
 
-        window.onkeydown = e => { keys[e.code] = true; if(!isRunning) return;
+        window.onkeydown = e => { 
+            keys[e.code] = true; 
             if(e.code === 'KeyF') p1.attack('Punch'); if(e.code === 'KeyG') p1.attack('Kick'); if(e.code === 'KeyH') p1.attack('Ulti');
             if(e.code === 'KeyK') p2.attack('Punch'); if(e.code === 'KeyL') p2.attack('Kick'); if(e.code === 'KeyJ') p2.attack('Ulti');
         };
@@ -195,47 +163,50 @@
         function loop() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             if(!isRunning) return requestAnimationFrame(loop);
-            
-            // BG Layer
-            ctx.fillStyle = flash > 0 ? '#fff' : '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height); if(flash > 0) flash--;
-            
-            // Crowd & Rain
-            ctx.fillStyle = '#1e1b4b'; crowd.forEach(c => { let j = Math.sin(Date.now()*0.01 + c.off)*10; ctx.beginPath(); ctx.arc(c.x, c.y + j, 25, 0, 7); ctx.fill(); ctx.fillRect(c.x-20, c.y + j, 40, 50); });
-            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; rain.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x-2, r.y+r.s); ctx.stroke(); r.y += r.s; if(r.y > canvas.height) r.y = -20; });
+            ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, canvas.height-50, canvas.width, 50);
 
-            // Ground
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, canvas.height-80, canvas.width, 80);
-            props.forEach(p => { if(p.alive) { ctx.fillStyle = '#422006'; ctx.fillRect(p.x, p.y, p.w, p.h); ctx.strokeStyle='#78350f'; ctx.strokeRect(p.x, p.y, p.w, p.h); } });
-            if(weapon && weapon.active) { weapon.y = Math.min(weapon.y+7, canvas.height-120); ctx.fillStyle='#fbbf24'; ctx.shadowBlur=15; ctx.shadowColor='#fbbf24'; ctx.fillRect(weapon.x, weapon.y, 12, 45); ctx.shadowBlur=0; }
-
-            // Projectiles (Ulti)
-            projectiles.forEach((proj, i) => {
-                proj.y += proj.vy; ctx.fillStyle = proj.type==='fire'?'#f97316':'#0ea5e9';
-                ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle;
-                ctx.fillRect(proj.x, proj.y, 15, 40); ctx.shadowBlur = 0;
-                let enemy = proj.owner === 1 ? p2 : p1;
-                if(proj.y > enemy.y && proj.y < enemy.y+enemy.h && proj.x > enemy.x && proj.x < enemy.x+enemy.w) {
-                    enemy.hp -= 35; enemy.stun = 3000; shake = 20; projectiles.splice(i, 1); playSfx(60, 'sawtooth', 0.4);
-                } else if(proj.y > canvas.height) projectiles.splice(i, 1);
-            });
-
-            [p1, p2].forEach(p => { 
+            [p1, p2].forEach(p => {
                 if(p.stun <= 0) {
                     p.vx = 0;
-                    if(p.id===1) { if(keys.KeyA){ p.vx=-p.spd; p.dir=-1; } if(keys.KeyD){ p.vx=p.spd; p.dir=1; } if(keys.KeyW && !p.isJumping){ p.vy=-p.jump; p.isJumping=true; }}
-                    else { if(keys.ArrowLeft){ p.vx=-p.spd; p.dir=-1; } if(keys.ArrowRight){ p.vx=p.spd; p.dir=1; } if(keys.ArrowUp && !p.isJumping){ p.vy=-p.jump; p.isJumping=true; }}
+                    if(p.id === 1) {
+                        if(keys.KeyA) { p.vx = -7; p.dir = -1; } if(keys.KeyD) { p.vx = 7; p.dir = 1; }
+                        if(keys.KeyW && p.vy === 0) p.vy = -20;
+                    } else {
+                        if(keys.ArrowLeft) { p.vx = -7; p.dir = -1; } if(keys.ArrowRight) { p.vx = 7; p.dir = 1; }
+                        if(keys.ArrowUp && p.vy === 0) p.vy = -20;
+                    }
                 }
                 p.update(); p.draw();
             });
 
-            if(shake > 0) shake *= 0.9;
-            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.02; ctx.fillStyle = p.c; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 5, 5); if(p.life <= 0) particles.splice(i, 1); });
-            ctx.globalAlpha = 1;
+            // Đệ tử của BO
+            minions.forEach((m, i) => {
+                m.life--; let enemy = m.owner === 1 ? p2 : p1;
+                m.x += (enemy.x - m.x) * 0.05; m.y += (enemy.y - m.y) * 0.05;
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.6)'; ctx.fillRect(m.x, m.y, 30, 60);
+                if(Math.abs(m.x - enemy.x) < 40) { enemy.hp -= 0.1; }
+                if(m.life <= 0 || m.hp <= 0) minions.splice(i, 1);
+            });
 
-            document.getElementById('p1-hp').style.width = Math.max(0, p1.hp/p1.maxHp*100)+'%';
-            document.getElementById('p2-hp').style.width = Math.max(0, p2.hp/p2.maxHp*100)+'%';
+            // Vật phẩm/Chiêu thức bay
+            projectiles.forEach((proj, i) => {
+                proj.x += proj.vx; proj.y += proj.vy;
+                ctx.fillStyle = proj.type === 'fire' ? '#f50' : (proj.type === 'brick' ? '#744' : '#0cf');
+                ctx.fillRect(proj.x, proj.y, 20, 20);
+                let enemy = proj.owner === 1 ? p2 : p1;
+                if(proj.x < enemy.x + enemy.w && proj.x + 20 > enemy.x && proj.y < enemy.y + enemy.h && proj.y + 20 > enemy.y) {
+                    enemy.hp -= 15; if(proj.type === 'brick') enemy.stun = 5000; else enemy.stun = 2000;
+                    projectiles.splice(i, 1);
+                } else if(proj.y > canvas.height || proj.x < 0 || proj.x > canvas.width) projectiles.splice(i, 1);
+            });
+
+            document.getElementById('p1-hp').style.width = p1.hp + '%';
+            document.getElementById('p2-hp').style.width = p2.hp + '%';
             document.getElementById('p1-mana').style.width = p1.mana + '%';
             document.getElementById('p2-mana').style.width = p2.mana + '%';
+
+            if(p1.hp <= 0 || p2.hp <= 0) { isRunning = false; alert("KẾT THÚC!"); location.reload(); }
             requestAnimationFrame(loop);
         }
         loop();
