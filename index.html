@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Street Fighters VN: Tournament</title>
+    <title>Street Fighters VN: Mana Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; }
@@ -13,32 +13,33 @@
         .locked { opacity: 0.3; cursor: not-allowed; border-color: #ef4444 !important; }
         .p1-selected { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.2); }
         .p2-selected { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.2); }
-        #game-ui { position: absolute; top: 30px; width: 100%; display: none; justify-content: space-around; }
-        .hp-outer { width: 40%; height: 35px; background: #222; border: 3px solid #fff; }
-        .hp-inner { height: 100%; background: linear-gradient(90deg, #ff0000, #ff6b6b); width: 100%; transition: 0.2s; }
-        #fatality { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); z-index: 200; font-size: 120px; color: #ff0000; font-style: italic; text-shadow: 0 0 20px #000; }
+        #game-ui { position: absolute; top: 30px; width: 100%; display: none; justify-content: space-around; z-index: 10; }
+        .bar-outer { width: 400px; height: 25px; background: #222; border: 2px solid #fff; }
+        .hp-inner { height: 100%; background: #ff0000; width: 100%; transition: 0.1s; }
+        .mana-outer { width: 300px; height: 10px; background: #111; border: 1px solid #0cf; margin-top: 5px; }
+        .mana-inner { height: 100%; background: #00f2ff; width: 0%; transition: 0.2s; }
+        #fatality { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 200; font-size: 100px; color: red; font-style: italic; }
     </style>
 </head>
 <body>
 
     <div id="lobby">
-        <h1 id="turn-text" class="text-5xl mb-8 italic text-yellow-400">PLAYER 1: CHỌN VÕ SĨ</h1>
+        <h1 id="turn-text" class="text-4xl mb-8 text-yellow-400 italic">P1: CHỌN VÕ SĨ</h1>
         <div class="flex gap-6">
-            <div id="btn-DanChoi" class="char-btn active" onclick="pick('DanChoi')">
-                <h2 class="text-2xl font-bold">DÂN CHƠI</h2>
-                <p class="text-blue-400 text-xs mt-2">Tốc độ & Nhảy cao</p>
-            </div>
-            <div id="btn-HiepSi" class="char-btn active" onclick="pick('HiepSi')">
-                <h2 class="text-2xl font-bold">HIỆP SĨ</h2>
-                <p class="text-red-400 text-xs mt-2">Sức mạnh & Đòn nặng</p>
-            </div>
+            <div id="btn-DanChoi" class="char-btn active" onclick="pick('DanChoi')">DÂN CHƠI</div>
+            <div id="btn-HiepSi" class="char-btn active" onclick="pick('HiepSi')">HIỆP SĨ</div>
         </div>
-        <p class="mt-10 text-gray-400">P1 chọn trước -> Khóa -> P2 chọn</p>
     </div>
 
     <div id="game-ui">
-        <div class="hp-outer"><div id="p1-hp" class="hp-inner"></div></div>
-        <div class="hp-outer"><div id="p2-hp" class="hp-inner" style="float:right"></div></div>
+        <div>
+            <div class="bar-outer"><div id="p1-hp" class="hp-inner"></div></div>
+            <div class="mana-outer"><div id="p1-mana" class="mana-inner"></div></div>
+        </div>
+        <div class="text-right flex flex-col items-end">
+            <div class="bar-outer"><div id="p2-hp" class="hp-inner" style="float:right"></div></div>
+            <div class="mana-outer"><div id="p2-mana" class="mana-inner" style="float:right"></div></div>
+        </div>
     </div>
 
     <div id="fatality">FATALITY</div>
@@ -59,26 +60,12 @@
             o.stop(audioCtx.currentTime + d);
         }
 
-        let p1Char = null, p2Char = null;
-        let p1, p2, keys = {}, isRunning = false, slowMo = 1, finishHim = false;
+        let p1Char, p2Char, p1, p2, weapon = null, isRunning = false, slowMo = 1, flash = 0, finishHim = false, keys = {};
+        let particles = [], props = [], rain = [], crowd = [];
 
-        const Config = {
-            'DanChoi': { color: '#3b82f6', spd: 9, jump: 23, dmg: 1, hp: 100 },
-            'HiepSi': { color: '#ef4444', spd: 5, jump: 17, dmg: 1.8, hp: 120 }
-        };
-
-        function pick(type) {
-            if (!p1Char) {
-                p1Char = type;
-                document.getElementById('btn-' + type).classList.add('p1-selected', 'locked');
-                document.getElementById('turn-text').innerText = "PLAYER 2: CHỌN VÕ SĨ";
-                snd(440, 'sine', 0.2);
-            } else if (!p2Char && type !== p1Char) {
-                p2Char = type;
-                document.getElementById('btn-' + type).classList.add('p2-selected', 'locked');
-                snd(660, 'sine', 0.2);
-                setTimeout(initMatch, 800);
-            }
+        function pick(t) {
+            if(!p1Char) { p1Char = t; document.getElementById('btn-'+t).classList.add('p1-selected', 'locked'); document.getElementById('turn-text').innerText = "P2: CHỌN VÕ SĨ"; snd(400,'sine',0.1); }
+            else if(!p2Char && t !== p1Char) { p2Char = t; document.getElementById('btn-'+t).classList.add('p2-selected', 'locked'); snd(600,'sine',0.1); setTimeout(initMatch, 500); }
         }
 
         function initMatch() {
@@ -86,114 +73,115 @@
             document.getElementById('game-ui').style.display = 'flex';
             p1 = new Fighter(300, 1, p1Char);
             p2 = new Fighter(canvas.width - 300, 2, p2Char);
+            props = [{x: 450, y: canvas.height-140, w: 60, h: 60, alive: true}, {x: canvas.width-510, y: canvas.height-140, w: 60, h: 60, alive: true}];
+            for(let i=0; i<80; i++) rain.push({x: Math.random()*2000, y: Math.random()*1000, s: Math.random()*20+10});
+            for(let i=0; i<15; i++) crowd.push({x: 50 + i*(canvas.width/15), y: canvas.height-120, offset: Math.random()*10});
             isRunning = true;
+            spawnWeapon();
         }
+
+        function spawnWeapon() { if(!isRunning) return; weapon = { x: Math.random()*(canvas.width-100)+50, y: -50, active: true }; setTimeout(spawnWeapon, 15000); }
+        function createBlood(x, y, dir) { for(let i=0; i<12; i++) particles.push({x, y, vx: (Math.random()*12)*dir, vy: Math.random()*-8, life: 1, color: '#f00'}); }
 
         class Fighter {
             constructor(x, id, type) {
-                const c = Config[type];
                 this.x = x; this.id = id; this.type = type;
-                this.hp = c.hp; this.maxHp = c.hp;
-                this.spd = c.spd; this.jump = c.jump; this.dmg = c.dmg;
-                this.color = c.color; this.w = 70; this.h = 160;
-                this.vy = 0; this.vx = 0; this.isJumping = false;
-                this.isAtk = 0; this.atkType = ''; this.dir = id === 1 ? 1 : -1;
+                this.hp = type === 'DanChoi' ? 100 : 130; this.maxHp = this.hp;
+                this.mana = 0; this.spd = type === 'DanChoi' ? 9 : 5;
+                this.jump = type === 'DanChoi' ? 24 : 17;
+                this.color = type === 'DanChoi' ? '#3b82f6' : '#ef4444';
+                this.w = 70; this.h = 160; this.vy = 0; this.vx = 0;
+                this.isJumping = false; this.isAtk = 0; this.atkType = ''; this.dir = id === 1 ? 1 : -1;
+                this.stunTime = 0; this.hasWeapon = false;
             }
 
             draw() {
                 ctx.save();
                 ctx.translate(this.x + this.w/2, this.y + this.h/2);
                 if(this.dir === -1) ctx.scale(-1, 1);
-                ctx.fillStyle = this.color;
-                ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+                ctx.fillStyle = this.stunTime > 0 ? '#555' : this.color;
                 ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+                if(this.hasWeapon) { ctx.fillStyle='#facc15'; ctx.fillRect(20, -10, 80, 10); }
                 if(this.isAtk > 0) {
-                    ctx.fillStyle = "#fff";
-                    ctx.fillRect(30, this.atkType === 'H' || this.atkType === 'J' ? -50 : -10, 100, 40);
+                    ctx.fillStyle = this.atkType === 'Ulti' ? '#fbbf24' : '#fff';
+                    ctx.fillRect(40, -20, this.atkType === 'Ulti' ? 160 : 80, 40);
                     this.isAtk--;
                 }
                 ctx.restore();
             }
 
             update() {
-                this.x += this.vx * slowMo;
-                this.y += this.vy * slowMo;
+                if(this.stunTime > 0) { this.stunTime -= 16 * slowMo; this.vx = 0; }
+                this.x += this.vx * slowMo; this.y += this.vy * slowMo;
                 if(this.y + this.h < canvas.height - 80) this.vy += 1;
                 else { this.y = canvas.height - 80 - this.h; this.vy = 0; this.isJumping = false; }
+                this.mana = Math.min(100, this.mana + 0.1); // Hồi mana tự nhiên
+                
+                props.forEach(p => { if(p.alive && this.x < p.x + p.w && this.x + this.w > p.x && this.y < p.y + p.h && this.y + this.h > p.y) { if(Math.abs(this.vx) > 10 || this.isAtk > 0) { p.alive = false; snd(100, 'square', 0.2); } } });
+                if(weapon && weapon.active && Math.hypot(this.x-weapon.x, this.y-weapon.y) < 80) { this.hasWeapon = true; weapon.active = false; snd(800,'sine',0.2); }
             }
 
-            attack(type, key) {
-                if(this.isAtk > 0) return;
+            attack(type) {
+                if(this.isAtk > 0 || this.stunTime > 0) return;
+                if(type === 'Ulti' && this.mana < 100) return; // Kiểm tra mana
+
                 this.atkType = type; this.isAtk = 15;
                 let enemy = this.id === 1 ? p2 : p1;
-                let range = (type === 'H' || type === 'J') ? 180 : 110;
-                let d = (type === 'F' || type === 'K') ? 6 : (type === 'G' || type === 'L' ? 12 : 25);
-                
+                let range = (type === 'Ulti') ? 220 : 120;
+                let dmg = (type === 'Ulti') ? 35 : (this.hasWeapon ? 16 : 8);
+
+                if(type === 'Ulti') { this.mana = 0; flash = 10; snd(60, 'sawtooth', 0.8); }
+
                 if(Math.abs(this.x - enemy.x) < range && Math.abs(this.y - enemy.y) < 100) {
-                    enemy.hp -= d * this.dmg;
-                    snd(100, 'square', 0.1);
-                    if(enemy.hp <= 0 && !finishHim) {
-                        finishHim = true; 
-                        snd(50, 'square', 0.5, 0.5);
-                    } else if (finishHim && enemy.hp <= 0) {
-                        doFatality();
-                    }
-                } else {
-                    snd(300, 'triangle', 0.1);
+                    enemy.hp -= dmg; this.mana = Math.min(100, this.mana + 15); // Cộng mana khi đánh trúng
+                    createBlood(enemy.x + enemy.w/2, enemy.y + 50, this.dir);
+                    if(this.type === 'DanChoi' && type === 'Ulti') enemy.vx = this.dir * 45;
+                    if(this.type === 'HiepSi' && type === 'Ulti') enemy.stunTime = 5000;
+                    if(enemy.hp <= 0 && !finishHim) { finishHim = true; }
+                    else if(finishHim && enemy.hp <= 0) { slowMo=0.1; document.getElementById('fatality').style.display='flex'; setTimeout(()=>location.reload(), 3000); }
+                    snd(120,'square',0.1);
                 }
             }
         }
 
-        function doFatality() {
-            slowMo = 0.1;
-            document.getElementById('fatality').style.display = 'flex';
-            snd(60, 'sawtooth', 2, 0.4);
-            setTimeout(() => {
-                location.reload(); // Reset Tournament
-            }, 3000);
-        }
-
-        window.onkeydown = e => {
-            keys[e.code] = true;
-            if(!isRunning) return;
-            // P1: F (Punch), G (Kick), H (Ulti)
-            if(e.code === 'KeyF') p1.attack('F');
-            if(e.code === 'KeyG') p1.attack('G');
-            if(e.code === 'KeyH') p1.attack('H');
-            // P2: K (Punch), L (Kick), J (Ulti)
-            if(e.code === 'KeyK') p2.attack('K');
-            if(e.code === 'KeyL') p2.attack('L');
-            if(e.code === 'KeyJ') p2.attack('J');
+        window.onkeydown = e => { keys[e.code] = true; if(!isRunning) return;
+            if(e.code === 'KeyF') p1.attack('Punch'); if(e.code === 'KeyG') p1.attack('Kick'); if(e.code === 'KeyH') p1.attack('Ulti');
+            if(e.code === 'KeyK') p2.attack('Punch'); if(e.code === 'KeyL') p2.attack('Kick'); if(e.code === 'KeyJ') p2.attack('Ulti');
         };
         window.onkeyup = e => keys[e.code] = false;
 
         function loop() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             if(!isRunning) return requestAnimationFrame(loop);
+            
+            ctx.fillStyle = flash > 0 ? '#fff' : '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            if(flash > 0) flash--;
 
-            // P1 Input
-            p1.vx = 0;
-            if(keys.KeyA) { p1.vx = -p1.spd; p1.dir = -1; }
-            if(keys.KeyD) { p1.vx = p1.spd; p1.dir = 1; }
-            if(keys.KeyW && !p1.isJumping) { p1.vy = -p1.jump; p1.isJumping = true; }
+            // Khán giả & Mưa
+            ctx.fillStyle = '#111b27'; crowd.forEach(c => { let j = Math.sin(Date.now()*0.01 + c.offset)*8; ctx.beginPath(); ctx.arc(c.x, c.y + j, 20, 0, 7); ctx.fill(); ctx.fillRect(c.x-15, c.y + j, 30, 40); });
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; rain.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x-2, r.y+r.s); ctx.stroke(); r.y += r.s; if(r.y > canvas.height) r.y = -20; });
 
-            // P2 Input
-            p2.vx = 0;
-            if(keys.ArrowLeft) { p2.vx = -p2.spd; p2.dir = -1; }
-            if(keys.ArrowRight) { p2.vx = p2.spd; p2.dir = 1; }
-            if(keys.ArrowUp && !p2.isJumping) { p2.vy = -p2.jump; p2.isJumping = true; }
+            // Sàn & Fighter
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, canvas.height-80, canvas.width, 80);
+            props.forEach(p => { if(p.alive) { ctx.fillStyle = '#5d2e0c'; ctx.fillRect(p.x, p.y, p.w, p.h); } });
+            if(weapon && weapon.active) { weapon.y = Math.min(weapon.y+6, canvas.height-120); ctx.fillStyle='#facc15'; ctx.fillRect(weapon.x, weapon.y, 10, 40); }
 
-            p1.update(); p2.update();
+            [p1, p2].forEach(p => { 
+                if(p.stunTime <= 0) {
+                    p.vx = 0;
+                    if(p.id===1) { if(keys.KeyA) p.vx=-p.spd; if(keys.KeyD) p.vx=p.spd; if(keys.KeyW && !p.isJumping) { p.vy=-p.jump; p.isJumping=true; }}
+                    else { if(keys.ArrowLeft) p.vx=-p.spd; if(keys.ArrowRight) p.vx=p.spd; if(keys.ArrowUp && !p.isJumping) { p.vy=-p.jump; p.isJumping=true; }}
+                }
+                p.update(); p.draw();
+            });
 
-            // Background
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, canvas.height-80, canvas.width, 80);
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.02; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 4, 4); if(p.life <= 0) particles.splice(i, 1); });
+            ctx.globalAlpha = 1;
 
-            p1.draw(); p2.draw();
-
-            document.getElementById('p1-hp').style.width = Math.max(0, (p1.hp/p1.maxHp)*100) + '%';
-            document.getElementById('p2-hp').style.width = Math.max(0, (p2.hp/p2.maxHp)*100) + '%';
-
+            document.getElementById('p1-hp').style.width = Math.max(0, p1.hp/p1.maxHp*100)+'%';
+            document.getElementById('p2-hp').style.width = Math.max(0, p2.hp/p2.maxHp*100)+'%';
+            document.getElementById('p1-mana').style.width = p1.mana + '%';
+            document.getElementById('p2-mana').style.width = p2.mana + '%';
             requestAnimationFrame(loop);
         }
         loop();
