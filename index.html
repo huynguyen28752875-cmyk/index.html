@@ -2,39 +2,57 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Street Fighters VN: Fatality</title>
+    <title>Street Fighters VN: Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; }
         canvas { display: block; }
-        #ui { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-around; z-index: 10; }
-        .bar-container { width: 40%; }
-        .hp-outer { height: 30px; background: #222; border: 3px solid #fff; border-radius: 4px; overflow: hidden; }
-        .hp-inner { height: 100%; background: linear-gradient(90deg, #f87171, #ef4444); width: 100%; transition: 0.1s; }
-        .mana-outer { height: 10px; background: #111; margin-top: 5px; border-radius: 2px; }
-        .mana-inner { height: 100%; background: #22d3ee; width: 0%; transition: 0.3s; }
-        #fatality-screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); z-index: 50; }
-        #fatality-text { font-size: 120px; font-weight: 900; color: #ff0000; font-style: italic; text-shadow: 0 0 30px #f00; animation: stomp 0.5s ease-out; }
-        @keyframes stomp { 0% { transform: scale(5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        #lobby { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000'); background-size: cover; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .char-card { border: 4px solid #444; padding: 20px; transition: 0.3s; cursor: pointer; background: rgba(255,255,255,0.1); }
+        .char-card:hover { border-color: #0cf; transform: scale(1.05); background: rgba(0,204,255,0.2); }
+        .selected { border-color: #ff0000 !important; }
+        #game-ui { position: absolute; top: 20px; width: 100%; display: none; justify-content: space-around; z-index: 10; }
+        .hp-bar { width: 400px; height: 30px; background: #222; border: 2px solid #fff; position: relative; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #ff4444, #990000); width: 100%; transition: 0.1s; }
+        .mana-fill { height: 10px; background: #00f2ff; width: 0%; margin-top: 5px; transition: 0.3s; }
+        #fatality { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 200; font-size: 100px; color: red; font-style: italic; }
     </style>
 </head>
 <body>
 
-    <div id="ui">
-        <div class="bar-container">
-            <div class="text-white font-bold italic mb-1">DÂN CHƠI</div>
-            <div class="hp-outer"><div id="p1-hp" class="hp-inner"></div></div>
-            <div class="mana-outer"><div id="p1-mana" class="mana-inner"></div></div>
+    <div id="lobby">
+        <h1 class="text-6xl mb-10 italic font-black text-white italic">CHỌN VÕ SĨ</h1>
+        <div class="flex gap-10">
+            <div class="char-card" onclick="selectChar(1, 'Ninja')">
+                <h2 class="text-2xl font-bold">NINJA</h2>
+                <p class="text-blue-400 text-sm">Tốc độ: ★★★<br>Sát thương: ★☆☆</p>
+            </div>
+            <div class="char-card" onclick="selectChar(1, 'Đại Ca')">
+                <h2 class="text-2xl font-bold">ĐẠI CA</h2>
+                <p class="text-red-400 text-sm">Tốc độ: ★☆☆<br>Sát thương: ★★★</p>
+            </div>
+            <div class="char-card" onclick="selectChar(1, 'Vovinam')">
+                <h2 class="text-2xl font-bold">VOVINAM</h2>
+                <p class="text-green-400 text-sm">Tốc độ: ★★☆<br>Mana: ★★★</p>
+            </div>
         </div>
-        <div class="bar-container text-right">
-            <div class="text-white font-bold italic mb-1">HIỆP SĨ</div>
-            <div class="hp-outer"><div id="p2-hp" class="hp-inner" style="float:right"></div></div>
-            <div class="mana-outer" style="float:right; width:80%"><div id="p2-mana" class="mana-inner"></div></div>
+        <button onclick="startGame()" class="mt-20 px-10 py-4 bg-red-600 hover:bg-red-700 text-2xl font-bold rounded">QUYẾT CHIẾN!</button>
+    </div>
+
+    <div id="game-ui">
+        <div>
+            <div id="p1-name" class="font-bold italic mb-1 text-red-500">P1</div>
+            <div class="hp-bar"><div id="p1-hp" class="hp-fill"></div></div>
+            <div id="p1-mana" class="mana-fill"></div>
+        </div>
+        <div class="text-right">
+            <div id="p2-name" class="font-bold italic mb-1 text-blue-500">P2</div>
+            <div class="hp-bar"><div id="p2-hp" class="hp-fill" style="float:right"></div></div>
+            <div id="p2-mana" class="mana-fill" style="float:right"></div>
         </div>
     </div>
 
-    <div id="fatality-screen"><h1 id="fatality-text">FATALITY</h1></div>
+    <div id="fatality">FATALITY</div>
 
     <canvas id="game"></canvas>
 
@@ -42,8 +60,9 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function snd(f, t, d, v=0.1) {
+        
+        // Nhạc nền và SFX
+        function playSfx(f, t, d, v=0.1) {
             const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
             o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
             g.gain.setValueAtTime(v, audioCtx.currentTime);
@@ -52,129 +71,138 @@
             o.stop(audioCtx.currentTime + d);
         }
 
-        let shake = 0, isFatality = false, gameSpeed = 1;
+        function playBGM() {
+            const now = audioCtx.currentTime;
+            const seq = [220, 247, 261, 293, 329, 349, 392, 440];
+            for(let i=0; i<32; i++) {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.frequency.setValueAtTime(seq[i%seq.length], now + i*0.25);
+                g.gain.setValueAtTime(0.02, now + i*0.25);
+                g.gain.exponentialRampToValueAtTime(0.0001, now + i*0.25 + 0.2);
+                o.connect(g); g.connect(audioCtx.destination);
+                o.start(now + i*0.25); o.stop(now + i*0.25 + 0.2);
+            }
+        }
+        setInterval(playBGM, 8000);
 
-        class Player {
-            constructor(x, color, id, stats) {
-                this.id = id; this.x = x; this.y = 0; this.w = 70; this.h = 150;
-                this.color = color; this.vx = 0; this.vy = 0; this.hp = 100; this.mana = 0;
-                this.isJumping = false; this.isAttacking = 0; this.dir = id === 1 ? 1 : -1;
-                this.stats = stats; // {spd, dmg, jump}
+        // Thuộc tính nhân vật
+        const CharData = {
+            'Ninja': { hp: 100, spd: 10, dmg: 1.0, jump: 22, color: '#0cf' },
+            'Đại Ca': { hp: 150, spd: 5, dmg: 1.8, jump: 16, color: '#f00' },
+            'Vovinam': { hp: 120, spd: 7, dmg: 1.2, jump: 19, color: '#0f0' }
+        };
+
+        let p1, p2, keys = {}, isRunning = false;
+
+        class Fighter {
+            constructor(x, id, charType) {
+                const data = CharData[charType];
+                this.id = id; this.x = x; this.y = 0; this.w = 80; this.h = 160;
+                this.type = charType; this.hp = data.hp; this.maxHp = data.hp;
+                this.spd = data.spd; this.dmg = data.dmg; this.jump = data.jump;
+                this.color = data.color; this.vx = 0; this.vy = 0; this.mana = 0;
+                this.isJumping = false; this.isBlocking = false; this.atk = 0;
+                this.dir = id === 1 ? 1 : -1;
             }
 
             draw() {
                 ctx.save();
                 ctx.translate(this.x + this.w/2, this.y + this.h/2);
                 if(this.dir === -1) ctx.scale(-1, 1);
-
-                // Bóng đổ
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                ctx.beginPath(); ctx.ellipse(0, this.h/2 + 20, 40, 10, 0, 0, 7); ctx.fill();
-
-                // Thân
-                ctx.fillStyle = this.color;
+                
+                // Vẽ người
+                ctx.fillStyle = this.isBlocking ? '#777' : this.color;
                 ctx.shadowBlur = 20; ctx.shadowColor = this.color;
                 ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
                 
-                // Hiệu ứng tấn công
-                if(this.isAttacking > 0) {
+                // Hiệu ứng đòn đánh
+                if(this.atk > 0) {
                     ctx.fillStyle = "#fff";
-                    ctx.shadowColor = "#fff";
-                    if(this.atkType === 'P') ctx.fillRect(30, -20, 60, 20);
-                    if(this.atkType === 'K') ctx.fillRect(20, 30, 80, 25);
-                    if(this.atkType === 'U') {
-                        ctx.fillStyle = "#fbbf24"; ctx.shadowColor = "#fbbf24";
-                        ctx.fillRect(30, -50, 250, 100);
-                    }
-                    this.isAttacking -= gameSpeed;
+                    ctx.fillRect(40, -10, 70, 20);
+                    this.atk--;
                 }
                 ctx.restore();
             }
 
             update() {
-                this.x += this.vx * gameSpeed;
-                this.y += this.vy * gameSpeed;
-                if(this.y + this.h < canvas.height - 100) this.vy += 1;
-                else { this.y = canvas.height - 100 - this.h; this.vy = 0; this.isJumping = false; }
-                this.mana = Math.min(100, this.mana + 0.1 * gameSpeed);
+                this.x += this.vx; this.y += this.vy;
+                if(this.y + this.h < canvas.height - 50) this.vy += 1;
+                else { this.y = canvas.height - 50 - this.h; this.vy = 0; this.isJumping = false; }
+                this.mana = Math.min(100, this.mana + 0.2);
+                if(this.x < 0) this.x = 0; if(this.x > canvas.width-this.w) this.x = canvas.width-this.w;
             }
 
-            attack(type) {
-                if(this.isAttacking > 0 || isFatality) return;
-                this.atkType = type;
-                this.isAttacking = 20;
-                let range = type === 'P' ? 100 : (type === 'K' ? 130 : 300);
-                let damage = (type === 'P' ? 5 : (type === 'K' ? 10 : 30)) * this.stats.dmg;
-                
-                if(type === 'U') { this.mana = 0; snd(100, 'sawtooth', 1, 0.3); }
-                else snd(200, 'square', 0.1);
-
-                let enemy = this.id === 1 ? p2 : p1;
-                let dist = Math.abs((this.x + this.w/2) - (enemy.x + enemy.w/2));
-                
-                if(dist < range && enemy.y + enemy.h > this.y && enemy.y < this.y + this.h) {
-                    enemy.hp -= damage;
-                    enemy.vx = this.dir * 20;
-                    shake = 15;
-                    snd(150, 'sine', 0.2, 0.3);
-                    if(enemy.hp <= 0) triggerFatality();
-                }
+            takeDamage(amt) {
+                if(this.isBlocking) amt *= 0.2;
+                this.hp -= amt;
+                playSfx(150, 'sine', 0.2, 0.3);
+                if(this.hp <= 0) finishGame();
             }
         }
 
-        const p1 = new Player(200, "#f87171", 1, {spd: 8, dmg: 1, jump: 22});
-        const p2 = new Player(800, "#60a5fa", 2, {spd: 5, dmg: 1.5, jump: 18});
-        const keys = {};
+        function selectChar(p, type) { playSfx(440, 'square', 0.1); /* Logic đơn giản cho P1, P2 mặc định ngẫu nhiên */ }
 
-        window.onkeydown = e => {
+        function startGame() {
+            isRunning = true;
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'flex';
+            p1 = new Fighter(200, 1, 'Ninja');
+            p2 = new Fighter(800, 2, 'Đại Ca');
+            playBGM();
+        }
+
+        function finishGame() {
+            isRunning = false;
+            document.getElementById('fatality').style.display = 'flex';
+            playSfx(50, 'square', 1.5, 0.5);
+            setTimeout(() => {
+                document.getElementById('fatality').style.display = 'none';
+                document.getElementById('lobby').style.display = 'flex';
+                document.getElementById('game-ui').style.display = 'none';
+            }, 3000);
+        }
+
+        window.onkeydown = e => { 
             keys[e.code] = true;
-            if(e.code === 'KeyF') p1.attack('P');
-            if(e.code === 'KeyG') p1.attack('K');
-            if(e.code === 'KeyH' && p1.mana >= 100) p1.attack('U');
-            if(e.code === 'KeyK') p2.attack('P');
-            if(e.code === 'KeyL') p2.attack('K');
-            if(e.code === 'KeyJ' && p2.mana >= 100) p2.attack('U');
+            if(e.code === 'KeyF' && isRunning) { p1.atk = 10; checkHit(p1, p2); }
+            if(e.code === 'KeyK' && isRunning) { p2.atk = 10; checkHit(p2, p1); }
         };
         window.onkeyup = e => keys[e.code] = false;
 
-        function triggerFatality() {
-            isFatality = true;
-            gameSpeed = 0.1; // Slow motion
-            document.getElementById('fatality-screen').style.display = 'flex';
-            snd(40, 'square', 2, 0.5);
-            setTimeout(() => { gameSpeed = 0; }, 2000);
+        function checkHit(attacker, defender) {
+            let dist = Math.abs(attacker.x - defender.x);
+            if(dist < 150) defender.takeDamage(10 * attacker.dmg);
         }
 
         function loop() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            if(shake > 0) { ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2); shake--; }
+            if(!isRunning) return requestAnimationFrame(loop);
 
-            // BG
-            let g = ctx.createLinearGradient(0,0,0,canvas.height);
-            g.addColorStop(0, isFatality ? '#222' : '#0f172a');
-            g.addColorStop(1, isFatality ? '#000' : '#1e1b4b');
-            ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width, canvas.height);
+            // Xử lý Input
+            p1.vx = 0; p1.isBlocking = false;
+            if(keys.KeyA) p1.vx = -p1.spd;
+            if(keys.KeyD) p1.vx = p1.spd;
+            if(keys.KeyW && !p1.isJumping) { p1.vy = -p1.jump; p1.isJumping = true; }
+            if(keys.KeyS) p1.isBlocking = true;
 
-            // Ground
-            ctx.fillStyle = '#334155'; ctx.fillRect(0, canvas.height-100, canvas.width, 100);
-
-            // P1 Input
-            p1.vx = 0;
-            if(keys.KeyA) { p1.vx = -p1.stats.spd; p1.dir = -1; }
-            if(keys.KeyD) { p1.vx = p1.stats.spd; p1.dir = 1; }
-            if(keys.KeyW && !p1.isJumping) { p1.vy = -p1.stats.jump; p1.isJumping = true; }
-
-            // P2 Input
-            p2.vx = 0;
-            if(keys.ArrowLeft) { p2.vx = -p2.stats.spd; p2.dir = -1; }
-            if(keys.ArrowRight) { p2.vx = p2.stats.spd; p2.dir = 1; }
-            if(keys.ArrowUp && !p2.isJumping) { p2.vy = -p2.stats.jump; p2.isJumping = true; }
+            p2.vx = 0; p2.isBlocking = false;
+            if(keys.ArrowLeft) p2.vx = -p2.spd;
+            if(keys.ArrowRight) p2.vx = p2.spd;
+            if(keys.ArrowUp && !p2.isJumping) { p2.vy = -p2.jump; p2.isJumping = true; }
+            if(keys.ArrowDown) p2.isBlocking = true;
 
             p1.update(); p2.update();
+            
+            // Vẽ cảnh vật
+            ctx.fillStyle = '#111'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = '#333'; ctx.fillRect(0, canvas.height-50, canvas.width, 50);
+
             p1.draw(); p2.draw();
 
-            document.getElementById('p1-hp').style.width = Math.max(0, p1.hp) + '%';
-            document.getElementById('p2-hp').style.width = Math.max(0, p2.hp) + '%';
+            // Cập nhật HUD
+            document.getElementById('p1-hp').style.width = (p1.hp/p1.maxHp*100) + '%';
+            document.getElementById('p2-hp').style.width = (p2.hp/p2.maxHp*100) + '%';
             document.getElementById('p1-mana').style.width = p1.mana + '%';
             document.getElementById('p2-mana').style.width = p2.mana + '%';
 
