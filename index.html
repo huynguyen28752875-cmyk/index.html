@@ -2,48 +2,59 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Street Fighters VN: Mana Control</title>
+    <title>Street Fighters VN: Cinematic Arena</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; }
-        canvas { display: block; }
-        #lobby { position: absolute; inset: 0; background: radial-gradient(circle, #1e293b, #020617); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .char-btn { border: 4px solid #444; padding: 15px; background: rgba(255,255,255,0.05); transition: 0.3s; width: 180px; text-align: center; }
-        .char-btn.active:hover { border-color: #facc15; transform: translateY(-5px); cursor: pointer; }
-        .locked { opacity: 0.3; cursor: not-allowed; border-color: #ef4444 !important; }
-        .p1-selected { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.2); }
-        .p2-selected { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.2); }
-        #game-ui { position: absolute; top: 30px; width: 100%; display: none; justify-content: space-around; z-index: 10; }
-        .bar-outer { width: 400px; height: 25px; background: #222; border: 2px solid #fff; }
-        .hp-inner { height: 100%; background: #ff0000; width: 100%; transition: 0.1s; }
-        .mana-outer { width: 300px; height: 10px; background: #111; border: 1px solid #0cf; margin-top: 5px; }
-        .mana-inner { height: 100%; background: #00f2ff; width: 0%; transition: 0.2s; }
-        #fatality { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); z-index: 200; font-size: 100px; color: red; font-style: italic; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: white; }
+        canvas { display: block; filter: contrast(1.2) saturate(1.1); }
+        #lobby { position: absolute; inset: 0; background: linear-gradient(45deg, #0f172a, #1e1b4b); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .char-card { border: 2px solid #334155; padding: 20px; background: rgba(255,255,255,0.05); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); width: 220px; text-align: center; border-radius: 15px; }
+        .char-card:hover { border-color: #fbbf24; transform: scale(1.1); box-shadow: 0 0 30px rgba(251, 191, 36, 0.3); cursor: pointer; }
+        .locked { filter: grayscale(1) opacity(0.4); pointer-events: none; border-color: #ef4444 !important; }
+        .p1-selected { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.2); box-shadow: 0 0 20px #3b82f6; }
+        .p2-selected { border-color: #ef4444 !important; background: rgba(239, 68, 68, 0.2); box-shadow: 0 0 20px #ef4444; }
+        #game-ui { position: absolute; top: 40px; width: 100%; display: none; justify-content: space-around; z-index: 10; padding: 0 50px; }
+        .bar-container { width: 450px; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
+        .hp-outer { height: 35px; background: #1e293b; border: 3px solid #f8fafc; border-radius: 5px; overflow: hidden; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #ef4444, #991b1b); width: 100%; transition: 0.2s; }
+        .mana-outer { height: 12px; background: #0f172a; border: 2px solid #0ea5e9; margin-top: 8px; border-radius: 3px; }
+        .mana-fill { height: 100%; background: #38bdf8; width: 0%; transition: 0.3s; }
+        .combo-tag { font-weight: 900; font-size: 50px; font-style: italic; color: #fbbf24; text-shadow: 4px 4px 0px #000; display: none; animation: pop 0.3s; }
+        @keyframes pop { 0% { transform: scale(1.5); } 100% { transform: scale(1); } }
+        #fatality { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 200; font-size: 120px; color: #ff0000; font-weight: 900; text-shadow: 0 0 50px #ff0000; letter-spacing: 10px; }
     </style>
 </head>
 <body>
 
     <div id="lobby">
-        <h1 id="turn-text" class="text-4xl mb-8 text-yellow-400 italic">P1: CHỌN VÕ SĨ</h1>
-        <div class="flex gap-6">
-            <div id="btn-DanChoi" class="char-btn active" onclick="pick('DanChoi')">DÂN CHƠI</div>
-            <div id="btn-HiepSi" class="char-btn active" onclick="pick('HiepSi')">HIỆP SĨ</div>
+        <h1 id="turn-text" class="text-6xl mb-12 font-black italic tracking-tighter text-white">READY TO FIGHT?</h1>
+        <div class="flex gap-10">
+            <div id="btn-DanChoi" class="char-card" onclick="pick('DanChoi')">
+                <div class="text-3xl font-black text-blue-400">DÂN CHƠI</div>
+                <p class="text-gray-400 mt-2 text-sm uppercase font-bold">Speed & Air Mastery</p>
+            </div>
+            <div id="btn-HiepSi" class="char-card" onclick="pick('HiepSi')">
+                <div class="text-3xl font-black text-red-500">HIỆP SĨ</div>
+                <p class="text-gray-400 mt-2 text-sm uppercase font-bold">Brutal Power & Stun</p>
+            </div>
         </div>
+        <p class="mt-12 text-slate-500 font-mono">PLAYER 1 PICKS FIRST</p>
     </div>
 
     <div id="game-ui">
-        <div>
-            <div class="bar-outer"><div id="p1-hp" class="hp-inner"></div></div>
-            <div class="mana-outer"><div id="p1-mana" class="mana-inner"></div></div>
+        <div class="bar-container">
+            <div class="hp-outer"><div id="p1-hp" class="hp-fill"></div></div>
+            <div class="mana-outer"><div id="p1-mana" class="mana-fill"></div></div>
+            <div id="combo-p1" class="combo-tag">0 HITS</div>
         </div>
-        <div class="text-right flex flex-col items-end">
-            <div class="bar-outer"><div id="p2-hp" class="hp-inner" style="float:right"></div></div>
-            <div class="mana-outer"><div id="p2-mana" class="mana-inner" style="float:right"></div></div>
+        <div class="bar-container text-right">
+            <div class="hp-outer"><div id="p2-hp" class="hp-fill" style="float:right"></div></div>
+            <div class="mana-outer"><div id="p2-mana" class="mana-fill" style="float:right"></div></div>
+            <div id="combo-p2" class="combo-tag">0 HITS</div>
         </div>
     </div>
 
     <div id="fatality">FATALITY</div>
-
     <canvas id="game"></canvas>
 
     <script>
@@ -51,95 +62,126 @@
         const ctx = canvas.getContext('2d');
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        function snd(f, t, d, v=0.1) {
+        // --- HỆ THỐNG ÂM THANH ---
+        function playSfx(f, t, d, v=0.1) {
             const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
             o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
             g.gain.setValueAtTime(v, audioCtx.currentTime);
             o.connect(g); g.connect(audioCtx.destination);
-            o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-            o.stop(audioCtx.currentTime + d);
+            o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d); o.stop(audioCtx.currentTime + d);
         }
 
-        let p1Char, p2Char, p1, p2, weapon = null, isRunning = false, slowMo = 1, flash = 0, finishHim = false, keys = {};
-        let particles = [], props = [], rain = [], crowd = [];
+        function playCheer() { playSfx(100 + Math.random()*200, 'sine', 1, 0.05); }
+
+        function startBGM() {
+            const loop = () => {
+                if(!isRunning) return;
+                const now = audioCtx.currentTime;
+                [110, 110, 164, 110].forEach((f, i) => {
+                    playSfx(f, 'sawtooth', 0.2, 0.02);
+                });
+                setTimeout(loop, 500);
+            };
+            loop();
+        }
+
+        // --- KHỞI TẠO BIẾN ---
+        let p1Char, p2Char, p1, p2, isRunning = false, slowMo = 1, shake = 0, flash = 0, finishHim = false, keys = {};
+        let particles = [], props = [], rain = [], crowd = [], projectiles = [], weapon = null;
 
         function pick(t) {
-            if(!p1Char) { p1Char = t; document.getElementById('btn-'+t).classList.add('p1-selected', 'locked'); document.getElementById('turn-text').innerText = "P2: CHỌN VÕ SĨ"; snd(400,'sine',0.1); }
-            else if(!p2Char && t !== p1Char) { p2Char = t; document.getElementById('btn-'+t).classList.add('p2-selected', 'locked'); snd(600,'sine',0.1); setTimeout(initMatch, 500); }
+            if(!p1Char) {
+                p1Char = t; document.getElementById('btn-'+t).classList.add('p1-selected', 'locked');
+                document.getElementById('turn-text').innerText = "PLAYER 2 SELECT"; playSfx(400, 'square', 0.1);
+            } else if(!p2Char && t !== p1Char) {
+                p2Char = t; document.getElementById('btn-'+t).classList.add('p2-selected', 'locked');
+                playSfx(600, 'square', 0.1); setTimeout(initGame, 600);
+            }
         }
 
-        function initMatch() {
+        function initGame() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-ui').style.display = 'flex';
-            p1 = new Fighter(300, 1, p1Char);
-            p2 = new Fighter(canvas.width - 300, 2, p2Char);
-            props = [{x: 450, y: canvas.height-140, w: 60, h: 60, alive: true}, {x: canvas.width-510, y: canvas.height-140, w: 60, h: 60, alive: true}];
-            for(let i=0; i<80; i++) rain.push({x: Math.random()*2000, y: Math.random()*1000, s: Math.random()*20+10});
-            for(let i=0; i<15; i++) crowd.push({x: 50 + i*(canvas.width/15), y: canvas.height-120, offset: Math.random()*10});
-            isRunning = true;
-            spawnWeapon();
+            p1 = new Fighter(canvas.width*0.2, 1, p1Char);
+            p2 = new Fighter(canvas.width*0.8, 2, p2Char);
+            props = [{x: canvas.width*0.4, y: canvas.height-140, w: 70, h: 70, alive: true}, {x: canvas.width*0.6, y: canvas.height-140, w: 70, h: 70, alive: true}];
+            for(let i=0; i<100; i++) rain.push({x: Math.random()*2500, y: Math.random()*1200, s: Math.random()*15+15});
+            for(let i=0; i<25; i++) crowd.push({x: i*(canvas.width/24), y: canvas.height-130, off: Math.random()*10});
+            isRunning = true; startBGM(); spawnWeapon();
         }
 
-        function spawnWeapon() { if(!isRunning) return; weapon = { x: Math.random()*(canvas.width-100)+50, y: -50, active: true }; setTimeout(spawnWeapon, 15000); }
-        function createBlood(x, y, dir) { for(let i=0; i<12; i++) particles.push({x, y, vx: (Math.random()*12)*dir, vy: Math.random()*-8, life: 1, color: '#f00'}); }
+        function spawnWeapon() { if(!isRunning) return; weapon = { x: Math.random()*(canvas.width-200)+100, y: -50, active: true }; setTimeout(spawnWeapon, 15000); }
 
         class Fighter {
             constructor(x, id, type) {
                 this.x = x; this.id = id; this.type = type;
-                this.hp = type === 'DanChoi' ? 100 : 130; this.maxHp = this.hp;
-                this.mana = 0; this.spd = type === 'DanChoi' ? 9 : 5;
-                this.jump = type === 'DanChoi' ? 24 : 17;
+                this.hp = type === 'DanChoi' ? 100 : 140; this.maxHp = this.hp;
+                this.mana = 0; this.spd = type === 'DanChoi' ? 10 : 6;
+                this.jump = type === 'DanChoi' ? 26 : 19;
                 this.color = type === 'DanChoi' ? '#3b82f6' : '#ef4444';
-                this.w = 70; this.h = 160; this.vy = 0; this.vx = 0;
-                this.isJumping = false; this.isAtk = 0; this.atkType = ''; this.dir = id === 1 ? 1 : -1;
-                this.stunTime = 0; this.hasWeapon = false;
+                this.w = 80; this.h = 170; this.vy = 0; this.vx = 0;
+                this.isJumping = false; this.isAtk = 0; this.dir = id === 1 ? 1 : -1;
+                this.stun = 0; this.weapon = false; this.combo = 0; this.ctimer = 0;
             }
 
             draw() {
                 ctx.save();
+                if(shake > 0) ctx.translate(Math.random()*shake-shake/2, Math.random()*shake-shake/2);
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.beginPath(); ctx.ellipse(this.x+this.w/2, canvas.height-80, 40, 10, 0, 0, Math.PI*2); ctx.fill();
+
                 ctx.translate(this.x + this.w/2, this.y + this.h/2);
                 if(this.dir === -1) ctx.scale(-1, 1);
-                ctx.fillStyle = this.stunTime > 0 ? '#555' : this.color;
+                
+                // Glow
+                ctx.shadowBlur = 15; ctx.shadowColor = this.color;
+                ctx.fillStyle = this.stun > 0 ? '#475569' : this.color;
                 ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
-                if(this.hasWeapon) { ctx.fillStyle='#facc15'; ctx.fillRect(20, -10, 80, 10); }
-                if(this.isAtk > 0) {
-                    ctx.fillStyle = this.atkType === 'Ulti' ? '#fbbf24' : '#fff';
-                    ctx.fillRect(40, -20, this.atkType === 'Ulti' ? 160 : 80, 40);
-                    this.isAtk--;
-                }
+                
+                if(this.weapon) { ctx.fillStyle='#fbbf24'; ctx.fillRect(20, -10, 90, 12); }
+                if(this.isAtk > 0) { ctx.fillStyle = "rgba(255,255,255,0.8)"; ctx.fillRect(40, -30, 90, 50); this.isAtk--; }
                 ctx.restore();
             }
 
             update() {
-                if(this.stunTime > 0) { this.stunTime -= 16 * slowMo; this.vx = 0; }
+                if(this.stun > 0) { this.stun -= 16 * slowMo; this.vx = 0; }
                 this.x += this.vx * slowMo; this.y += this.vy * slowMo;
-                if(this.y + this.h < canvas.height - 80) this.vy += 1;
+                if(this.y + this.h < canvas.height - 80) this.vy += 1.2;
                 else { this.y = canvas.height - 80 - this.h; this.vy = 0; this.isJumping = false; }
-                this.mana = Math.min(100, this.mana + 0.1); // Hồi mana tự nhiên
                 
-                props.forEach(p => { if(p.alive && this.x < p.x + p.w && this.x + this.w > p.x && this.y < p.y + p.h && this.y + this.h > p.y) { if(Math.abs(this.vx) > 10 || this.isAtk > 0) { p.alive = false; snd(100, 'square', 0.2); } } });
-                if(weapon && weapon.active && Math.hypot(this.x-weapon.x, this.y-weapon.y) < 80) { this.hasWeapon = true; weapon.active = false; snd(800,'sine',0.2); }
+                this.mana = Math.min(100, this.mana + 0.1);
+                if(this.ctimer > 0) this.ctimer--; else { this.combo = 0; document.getElementById('combo-p'+this.id).style.display = 'none'; }
+                
+                if(weapon && weapon.active && Math.hypot(this.x-weapon.x, this.y-weapon.y) < 100) { this.weapon = true; weapon.active = false; playSfx(800, 'sine', 0.2); }
+                
+                props.forEach(p => { if(p.alive && this.x < p.x + p.w && this.x + this.w > p.x && this.y < p.y + p.h && this.y + this.h > p.y) { if(Math.abs(this.vx) > 5 || this.isAtk > 0) { p.alive = false; shake=15; playSfx(60,'square',0.3); } } });
             }
 
-            attack(type) {
-                if(this.isAtk > 0 || this.stunTime > 0) return;
-                if(type === 'Ulti' && this.mana < 100) return; // Kiểm tra mana
+            attack(t) {
+                if(this.isAtk > 0 || this.stun > 0) return;
+                if(t === 'Ulti' && this.mana < 100) return;
 
-                this.atkType = type; this.isAtk = 15;
-                let enemy = this.id === 1 ? p2 : p1;
-                let range = (type === 'Ulti') ? 220 : 120;
-                let dmg = (type === 'Ulti') ? 35 : (this.hasWeapon ? 16 : 8);
+                if(t === 'Ulti') {
+                    this.mana = 0; flash = 20; shake = 30; playSfx(40, 'sawtooth', 2, 0.4);
+                    for(let i=0; i<10; i++) projectiles.push({ x: Math.random()*canvas.width, y: -100, vy: 12, type: this.type==='DanChoi'?'fire':'arrow', owner: this.id });
+                    return;
+                }
 
-                if(type === 'Ulti') { this.mana = 0; flash = 10; snd(60, 'sawtooth', 0.8); }
+                this.isAtk = 15; let enemy = this.id === 1 ? p2 : p1;
+                let d = t === 'Kick' ? 14 : 8; if(this.weapon) d *= 2.2;
 
-                if(Math.abs(this.x - enemy.x) < range && Math.abs(this.y - enemy.y) < 100) {
-                    enemy.hp -= dmg; this.mana = Math.min(100, this.mana + 15); // Cộng mana khi đánh trúng
-                    createBlood(enemy.x + enemy.w/2, enemy.y + 50, this.dir);
-                    if(this.type === 'DanChoi' && type === 'Ulti') enemy.vx = this.dir * 45;
-                    if(this.type === 'HiepSi' && type === 'Ulti') enemy.stunTime = 5000;
-                    if(enemy.hp <= 0 && !finishHim) { finishHim = true; }
-                    else if(finishHim && enemy.hp <= 0) { slowMo=0.1; document.getElementById('fatality').style.display='flex'; setTimeout(()=>location.reload(), 3000); }
-                    snd(120,'square',0.1);
+                if(Math.abs(this.x - enemy.x) < 150 && Math.abs(this.y - enemy.y) < 160) {
+                    enemy.hp -= d; this.mana = Math.min(100, this.mana + 15);
+                    this.combo++; this.ctimer = 70; shake = 10;
+                    const cEl = document.getElementById('combo-p'+this.id);
+                    cEl.innerText = this.combo + " HITS"; cEl.style.display = 'block';
+                    playCheer(); playSfx(120, 'square', 0.1);
+                    for(let i=0; i<15; i++) particles.push({x: enemy.x+40, y: enemy.y+60, vx: Math.random()*15*this.dir, vy: Math.random()*-12, life: 1, c: '#f00'});
+                    
+                    if(enemy.hp <= 0 && !finishHim) finishHim = true;
+                    else if(finishHim && enemy.hp <= 0) { slowMo=0.05; document.getElementById('fatality').style.display='flex'; setTimeout(()=>location.reload(), 3000); }
                 }
             }
         }
@@ -154,28 +196,40 @@
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             if(!isRunning) return requestAnimationFrame(loop);
             
-            ctx.fillStyle = flash > 0 ? '#fff' : '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            if(flash > 0) flash--;
+            // BG Layer
+            ctx.fillStyle = flash > 0 ? '#fff' : '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height); if(flash > 0) flash--;
+            
+            // Crowd & Rain
+            ctx.fillStyle = '#1e1b4b'; crowd.forEach(c => { let j = Math.sin(Date.now()*0.01 + c.off)*10; ctx.beginPath(); ctx.arc(c.x, c.y + j, 25, 0, 7); ctx.fill(); ctx.fillRect(c.x-20, c.y + j, 40, 50); });
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; rain.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x-2, r.y+r.s); ctx.stroke(); r.y += r.s; if(r.y > canvas.height) r.y = -20; });
 
-            // Khán giả & Mưa
-            ctx.fillStyle = '#111b27'; crowd.forEach(c => { let j = Math.sin(Date.now()*0.01 + c.offset)*8; ctx.beginPath(); ctx.arc(c.x, c.y + j, 20, 0, 7); ctx.fill(); ctx.fillRect(c.x-15, c.y + j, 30, 40); });
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; rain.forEach(r => { ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x-2, r.y+r.s); ctx.stroke(); r.y += r.s; if(r.y > canvas.height) r.y = -20; });
-
-            // Sàn & Fighter
+            // Ground
             ctx.fillStyle = '#0f172a'; ctx.fillRect(0, canvas.height-80, canvas.width, 80);
-            props.forEach(p => { if(p.alive) { ctx.fillStyle = '#5d2e0c'; ctx.fillRect(p.x, p.y, p.w, p.h); } });
-            if(weapon && weapon.active) { weapon.y = Math.min(weapon.y+6, canvas.height-120); ctx.fillStyle='#facc15'; ctx.fillRect(weapon.x, weapon.y, 10, 40); }
+            props.forEach(p => { if(p.alive) { ctx.fillStyle = '#422006'; ctx.fillRect(p.x, p.y, p.w, p.h); ctx.strokeStyle='#78350f'; ctx.strokeRect(p.x, p.y, p.w, p.h); } });
+            if(weapon && weapon.active) { weapon.y = Math.min(weapon.y+7, canvas.height-120); ctx.fillStyle='#fbbf24'; ctx.shadowBlur=15; ctx.shadowColor='#fbbf24'; ctx.fillRect(weapon.x, weapon.y, 12, 45); ctx.shadowBlur=0; }
+
+            // Projectiles (Ulti)
+            projectiles.forEach((proj, i) => {
+                proj.y += proj.vy; ctx.fillStyle = proj.type==='fire'?'#f97316':'#0ea5e9';
+                ctx.shadowBlur = 20; ctx.shadowColor = ctx.fillStyle;
+                ctx.fillRect(proj.x, proj.y, 15, 40); ctx.shadowBlur = 0;
+                let enemy = proj.owner === 1 ? p2 : p1;
+                if(proj.y > enemy.y && proj.y < enemy.y+enemy.h && proj.x > enemy.x && proj.x < enemy.x+enemy.w) {
+                    enemy.hp -= 35; enemy.stun = 3000; shake = 20; projectiles.splice(i, 1); playSfx(60, 'sawtooth', 0.4);
+                } else if(proj.y > canvas.height) projectiles.splice(i, 1);
+            });
 
             [p1, p2].forEach(p => { 
-                if(p.stunTime <= 0) {
+                if(p.stun <= 0) {
                     p.vx = 0;
-                    if(p.id===1) { if(keys.KeyA) p.vx=-p.spd; if(keys.KeyD) p.vx=p.spd; if(keys.KeyW && !p.isJumping) { p.vy=-p.jump; p.isJumping=true; }}
-                    else { if(keys.ArrowLeft) p.vx=-p.spd; if(keys.ArrowRight) p.vx=p.spd; if(keys.ArrowUp && !p.isJumping) { p.vy=-p.jump; p.isJumping=true; }}
+                    if(p.id===1) { if(keys.KeyA){ p.vx=-p.spd; p.dir=-1; } if(keys.KeyD){ p.vx=p.spd; p.dir=1; } if(keys.KeyW && !p.isJumping){ p.vy=-p.jump; p.isJumping=true; }}
+                    else { if(keys.ArrowLeft){ p.vx=-p.spd; p.dir=-1; } if(keys.ArrowRight){ p.vx=p.spd; p.dir=1; } if(keys.ArrowUp && !p.isJumping){ p.vy=-p.jump; p.isJumping=true; }}
                 }
                 p.update(); p.draw();
             });
 
-            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.02; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 4, 4); if(p.life <= 0) particles.splice(i, 1); });
+            if(shake > 0) shake *= 0.9;
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.02; ctx.fillStyle = p.c; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, 5, 5); if(p.life <= 0) particles.splice(i, 1); });
             ctx.globalAlpha = 1;
 
             document.getElementById('p1-hp').style.width = Math.max(0, p1.hp/p1.maxHp*100)+'%';
