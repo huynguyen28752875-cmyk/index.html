@@ -3,174 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bình Thuận Bất Ổn: Final Edition</title>
+    <title>Bình Thuận Bất Ổn: Heavy Artillery</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { margin: 0; overflow: hidden; background: #1a1a1a; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #020617; font-family: sans-serif; }
         canvas { display: block; }
-        #ui { position: absolute; top: 20px; right: 20px; text-align: right; pointer-events: none; z-index: 10; }
-        .star { font-size: 35px; color: #333; transition: 0.3s; text-shadow: 0 0 5px #000; }
-        .star-active { color: #facc15; text-shadow: 0 0 15px #facc15; animation: pulse 0.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        #weapon-ui { position: absolute; bottom: 20px; right: 20px; color: #0cf; font-weight: bold; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; border: 1px solid #0cf; }
+        #ui { position: absolute; top: 20px; right: 20px; text-align: right; pointer-events: none; }
+        .star { font-size: 30px; color: #1e293b; }
+        .star-active { color: #fbbf24; text-shadow: 0 0 15px #fbbf24; }
+        #minimap { position: absolute; bottom: 20px; left: 20px; width: 150px; height: 150px; 
+                   background: rgba(0,0,0,0.8); border: 2px solid #334155; border-radius: 10px; overflow: hidden; }
+        #info { position: absolute; top: 20px; left: 20px; color: white; background: rgba(0,0,0,0.6); padding: 10px; border-radius: 8px; font-size: 12px; }
     </style>
 </head>
 <body>
+
+    <div id="info">
+        <b class="text-cyan-400">BÌNH THUẬN BẤT ỔN</b><br>
+        WASD: Di chuyển | F: Lái xe<br>
+        <span class="text-red-500">R: BẮN BAZOOKA (BOOM!)</span>
+    </div>
 
     <div id="ui">
         <div id="stars">
             <span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span>
         </div>
-        <div class="text-4xl font-black text-green-500 mt-2">$ <span id="cash">000000</span></div>
+        <div class="text-4xl font-black text-green-400 mt-2">$ <span id="cash">000000</span></div>
     </div>
 
-    <div id="weapon-ui">VŨ KHÍ: <span id="wp-name">PISTOL</span> (Q đổi súng)</div>
+    <div id="minimap"><canvas id="mmap-canvas"></canvas></div>
 
     <canvas id="game"></canvas>
 
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
+        const mmapCanvas = document.getElementById('mmap-canvas');
+        const mctx = mmapCanvas.getContext('2d');
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // --- Hệ thống âm thanh ---
-        function snd(freq, type, dur, vol=0.1) {
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
+        function snd(freq, type, dur, vol=0.05) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
             o.type = type; o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            if(type === 'square') o.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + dur);
             g.gain.setValueAtTime(vol, audioCtx.currentTime);
             g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
             o.connect(g); g.connect(audioCtx.destination);
             o.start(); o.stop(audioCtx.currentTime + dur);
         }
 
-        function siren() {
-            if (player.stars < 1) return;
-            const now = audioCtx.currentTime;
-            const o = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
-            o.frequency.setValueAtTime(440, now);
-            o.frequency.linearRampToValueAtTime(880, now + 0.5);
-            o.frequency.linearRampToValueAtTime(440, now + 1);
-            g.gain.setValueAtTime(0.02, now);
-            o.connect(g); g.connect(audioCtx.destination);
-            o.start(); o.stop(now + 1);
-        }
-        setInterval(siren, 1200);
+        let world = { w: 5000, h: 5000 };
+        let player = { x: 2500, y: 2500, ang: 0, cash: 0, stars: 0, inCar: null };
+        let mission = { x: 3000, y: 1500, active: true };
+        let buildings = [], npcs = [], cars = [], police = [], rockets = [], explosions = [], keys = {};
 
-        // --- Khởi tạo ---
-        let world = { w: 4000, h: 4000 };
-        let player = { x: 2000, y: 2000, ang: 0, cash: 0, stars: 0, inCar: null, wp: 0 };
-        const wpTypes = [
-            { name: "PISTOL", rate: 400, spd: 15, spread: 0.05, sound: 400 },
-            { name: "SMG", rate: 100, spd: 20, spread: 0.2, sound: 250 }
-        ];
-        
-        let buildings = [];
-        for(let i=0; i<40; i++) {
-            buildings.push({ x: Math.random()*world.w, y: Math.random()*world.h, w: 150+Math.random()*200, h: 150+Math.random()*200 });
-        }
+        for(let i=0; i<60; i++) buildings.push({ x: Math.random()*world.w, y: Math.random()*world.h, w: 180, h: 180 });
+        for(let i=0; i<40; i++) npcs.push({ x: Math.random()*world.w, y: Math.random()*world.h, ang: Math.random()*7, spd: 1.5 });
+        for(let i=0; i<15; i++) cars.push({ x: Math.random()*world.w, y: Math.random()*world.h, ang: Math.random()*7, spd: 0, color: '#0ea5e9' });
 
-        let npcs = [];
-        for(let i=0; i<50; i++) npcs.push({ x: Math.random()*world.w, y: Math.random()*world.h, ang: Math.random()*7, spd: 1+Math.random()*2 });
-
-        let cars = [];
-        for(let i=0; i<15; i++) cars.push({ x: Math.random()*world.w, y: Math.random()*world.h, ang: Math.random()*7, spd: 0, color: `hsl(${Math.random()*360}, 70%, 50%)` });
-
-        let police = [], bullets = [], items = [], particles = [], lastShot = 0, keys = {};
-
-        for(let i=0; i<50; i++) items.push({ x: Math.random()*world.w, y: Math.random()*world.h });
-
-        // --- Controls ---
-        window.onkeydown = e => {
+        window.onkeydown = e => { 
             keys[e.code] = true;
             if(e.code === 'KeyF') toggleCar();
-            if(e.code === 'KeyQ') { 
-                player.wp = (player.wp + 1) % wpTypes.length; 
-                document.getElementById('wp-name').innerText = wpTypes[player.wp].name;
-                snd(600, 'sine', 0.1);
-            }
+            if(e.code === 'KeyR' && !player.inCar) fireRocket();
         };
         window.onkeyup = e => keys[e.code] = false;
-        window.onmousedown = () => keys.shooting = true;
-        window.onmouseup = () => keys.shooting = false;
 
         function toggleCar() {
-            if(player.inCar) { player.x += 70; player.inCar = null; snd(100, 'triangle', 0.3); }
-            else {
-                cars.forEach(c => {
-                    if(Math.hypot(player.x-c.x, player.y-c.y) < 70) { player.inCar = c; snd(150, 'sawtooth', 0.4); }
-                });
-            }
+            if(player.inCar) { player.x += 80; player.inCar = null; }
+            else { cars.forEach(c => { if(Math.hypot(player.x-c.x, player.y-c.y) < 80) player.inCar = c; }); }
+        }
+
+        function fireRocket() {
+            rockets.push({ x: player.x, y: player.y, ang: player.ang, spd: 12 });
+            snd(150, 'square', 0.4, 0.2); // Tiếng phóng
         }
 
         function update() {
-            // Movement
             if(player.inCar) {
                 let v = player.inCar;
-                if(keys.KeyW) v.spd = Math.min(v.spd+0.2, 12); else v.spd *= 0.98;
-                if(keys.KeyS) v.spd = Math.max(v.spd-0.2, -4);
+                if(keys.KeyW) v.spd = Math.min(v.spd+0.15, 10); else v.spd *= 0.98;
+                if(keys.KeyS) v.spd = Math.max(v.spd-0.15, -4);
                 if(keys.KeyA) v.ang -= 0.04; if(keys.KeyD) v.ang += 0.04;
                 v.x += Math.cos(v.ang)*v.spd; v.y += Math.sin(v.ang)*v.spd;
                 player.x = v.x; player.y = v.y; player.ang = v.ang;
             } else {
-                let dx = (keys.KeyD?1:0)-(keys.KeyA?1:0);
-                let dy = (keys.KeyS?1:0)-(keys.KeyW?1:0);
-                if(dx || dy) {
-                    player.ang = Math.atan2(dy, dx);
-                    player.x += dx*5; player.y += dy*5;
-                }
+                let dx = (keys.KeyD?1:0)-(keys.KeyA?1:0), dy = (keys.KeyS?1:0)-(keys.KeyW?1:0);
+                if(dx||dy) { player.x += dx*5; player.y += dy*5; player.ang = Math.atan2(dy, dx); }
             }
 
-            // Shooting
-            const curWp = wpTypes[player.wp];
-            if(keys.shooting && Date.now() - lastShot > curWp.rate && !player.inCar) {
-                bullets.push({ x: player.x, y: player.y, ang: player.ang + (Math.random()-0.5)*curWp.spread, life: 60 });
-                snd(curWp.sound, 'square', 0.1);
-                lastShot = Date.now();
-                if(player.stars === 0) updateStars(1);
-            }
-
-            // NPCs AI
-            npcs.forEach(n => {
-                n.x += Math.cos(n.ang)*n.spd; n.y += Math.sin(n.ang)*n.spd;
-                if(n.x<0||n.x>world.w||n.y<0||n.y>world.h||Math.random()<0.01) n.ang = Math.random()*7;
-            });
-
-            // Police AI
-            if(player.stars > 0 && police.length < player.stars * 1.5) {
-                police.push({ x: player.x + (Math.random()-0.5)*1500, y: player.y + (Math.random()-0.5)*1500, spd: 4 + player.stars });
-            }
-            police.forEach((p, i) => {
-                let ang = Math.atan2(player.y-p.y, player.x-p.x);
-                p.x += Math.cos(ang)*p.spd; p.y += Math.sin(ang)*p.spd;
-                if(Math.hypot(player.x-p.x, player.y-p.y) < 30) { alert("BỊ BẮT!"); location.reload(); }
-            });
-
-            // Collisions
-            bullets.forEach((b, bi) => {
-                b.x += Math.cos(b.ang)*20; b.y += Math.sin(b.ang)*20; b.life--;
-                if(b.life <= 0) bullets.splice(bi, 1);
-                
-                // Bắn trúng công an hoặc NPC
-                police.concat(npcs).forEach((target, ti) => {
-                    if(Math.hypot(b.x-target.x, b.y-target.y) < 25) {
-                        for(let k=0; k<5; k++) particles.push({x:target.x, y:target.y, vx:(Math.random()-0.5)*5, vy:(Math.random()-0.5)*5, l:20});
-                        bullets.splice(bi, 1);
-                        if(ti < police.length) { police.splice(ti,1); updateStars(player.stars+1); }
-                        else { npcs.splice(ti-police.length, 1); updateStars(player.stars+1); }
+            // Rocket & Explosion Logic
+            rockets.forEach((r, ri) => {
+                r.x += Math.cos(r.ang)*r.spd; r.y += Math.sin(r.ang)*r.spd;
+                // Va chạm Rocket
+                let hit = false;
+                police.concat(cars).concat(npcs).forEach((target, ti) => {
+                    if(!hit && Math.hypot(r.x-target.x, r.y-target.y) < 40) {
+                        explosions.push({ x: r.x, y: r.y, r: 0, maxR: 120 });
+                        snd(60, 'square', 0.8, 0.3); // Tiếng nổ
+                        rockets.splice(ri, 1); hit = true;
+                        updateStars(player.stars + 1);
                     }
                 });
             });
 
-            items.forEach((m, i) => {
-                if(Math.hypot(player.x-m.x, player.y-m.y) < 40) {
-                    items.splice(i,1); player.cash += 1000; snd(1000, 'sine', 0.1, 0.05);
-                    document.getElementById('cash').innerText = player.cash.toString().padStart(6, '0');
-                }
+            explosions.forEach((ex, ei) => {
+                ex.r += 10;
+                if(ex.r > ex.maxR) explosions.splice(ei, 1);
+                // Sát thương nổ
+                police.forEach((p, pi) => { if(Math.hypot(ex.x-p.x, ex.y-p.y) < ex.r) police.splice(pi, 1); });
             });
 
-            particles.forEach((p, i) => { p.x+=p.vx; p.y+=p.vy; p.l--; if(p.l<=0) particles.splice(i,1); });
+            if(player.stars > 0 && police.length < player.stars) {
+                police.push({ x: player.x+(Math.random()-0.5)*1500, y: player.y+(Math.random()-0.5)*1500, spd: 3 });
+            }
+            police.forEach(p => {
+                let a = Math.atan2(player.y-p.y, player.x-p.x);
+                p.x += Math.cos(a)*p.spd; p.y += Math.sin(a)*p.spd;
+                if(Math.hypot(player.x-p.x, player.y-p.y) < 35) { player.x=2500; player.y=2500; updateStars(0); police=[]; alert("BỊ TÓM!"); }
+            });
+
+            if(Math.hypot(player.x-mission.x, player.y-mission.y) < 60) {
+                player.cash += 5000; mission.x = Math.random()*world.w; mission.y = Math.random()*world.h;
+                document.getElementById('cash').innerText = player.cash.toString().padStart(6, '0');
+                snd(1000, 'sine', 0.2);
+            }
         }
 
         function updateStars(n) {
@@ -180,42 +136,55 @@
 
         function draw() {
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            ctx.fillStyle = '#222'; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.save();
             ctx.translate(-player.x + canvas.width/2, -player.y + canvas.height/2);
 
-            // Ground & Buildings
-            ctx.fillStyle = '#333'; ctx.fillRect(0,0,world.w, world.h);
-            ctx.fillStyle = '#111'; buildings.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
-
-            // Entities
-            ctx.fillStyle = '#fbbf24'; items.forEach(m => { ctx.beginPath(); ctx.arc(m.x, m.y, 8, 0, 7); ctx.fill(); });
-            ctx.fillStyle = '#fff'; npcs.forEach(n => { ctx.beginPath(); ctx.arc(n.x, n.y, 15, 0, 7); ctx.fill(); });
+            // World
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(0,0,world.w, world.h);
+            ctx.fillStyle = '#020617'; buildings.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
             
+            ctx.fillStyle = '#ec4899'; ctx.beginPath(); ctx.arc(mission.x, mission.y, 40, 0, 7); ctx.fill();
+
             cars.forEach(c => {
                 ctx.save(); ctx.translate(c.x, c.y); ctx.rotate(c.ang);
-                ctx.fillStyle = c.color; ctx.fillRect(-35, -22, 70, 44);
-                ctx.fillStyle = '#000'; ctx.fillRect(15, -18, 10, 36);
+                ctx.fillStyle = c.color; ctx.fillRect(-45, -25, 90, 50);
                 ctx.restore();
             });
 
             police.forEach(p => {
-                ctx.fillStyle = '#1e3a8a'; ctx.beginPath(); ctx.arc(p.x, p.y, 20, 0, 7); ctx.fill();
-                ctx.fillStyle = Date.now()%200<100?'red':'blue'; ctx.fillRect(p.x-10, p.y-30, 20, 8);
+                ctx.fillStyle = '#1d4ed8'; ctx.beginPath(); ctx.arc(p.x, p.y, 22, 0, 7); ctx.fill();
+                ctx.fillStyle = Date.now()%200<100?'red':'blue'; ctx.fillRect(p.x-10, p.y-35, 20, 8);
             });
 
-            ctx.fillStyle = '#ff0'; bullets.forEach(b => ctx.fillRect(b.x, b.y, 8, 3));
-            ctx.fillStyle = '#f00'; particles.forEach(p => ctx.fillRect(p.x, p.y, 3, 3));
+            npcs.forEach(n => { ctx.fillStyle = '#94a3b8'; ctx.beginPath(); ctx.arc(n.x, n.y, 18, 0, 7); ctx.fill(); });
 
-            // Player
+            rockets.forEach(r => {
+                ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(r.ang);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(-15, -5, 30, 10);
+                ctx.restore();
+            });
+
+            explosions.forEach(ex => {
+                ctx.fillStyle = `rgba(255, ${Math.random()*255}, 0, 0.5)`;
+                ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.r, 0, 7); ctx.fill();
+            });
+
             if(!player.inCar) {
                 ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.ang);
-                ctx.fillStyle = '#f87171'; ctx.beginPath(); ctx.arc(0,0,20,0,7); ctx.fill();
-                ctx.fillStyle = '#333'; ctx.fillRect(10, (player.wp===0?-4:-8), (player.wp===0?15:25), (player.wp===0?8:16));
+                ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(0,0,20,0,7); ctx.fill();
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(5, -5, 25, 10); // Bazooka pipe
                 ctx.restore();
             }
-
             ctx.restore();
+
+            // Draw Minimap
+            mmapCanvas.width = 150; mmapCanvas.height = 150;
+            mctx.fillStyle = '#000'; mctx.fillRect(0,0,150,150);
+            let scale = 150 / world.w;
+            mctx.fillStyle = '#334155'; buildings.forEach(b => mctx.fillRect(b.x*scale, b.y*scale, b.w*scale, b.h*scale));
+            mctx.fillStyle = '#ec4899'; mctx.fillRect(mission.x*scale-2, mission.y*scale-2, 4, 4);
+            mctx.fillStyle = '#ef4444'; mctx.fillRect(player.x*scale-3, player.y*scale-3, 6, 6); // Player
         }
 
         function loop() { update(); draw(); requestAnimationFrame(loop); }
