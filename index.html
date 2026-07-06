@@ -1,268 +1,178 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
-    <title>Bình Thuận Bất Ổn</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; touch-action: none; color: white; }
-        canvas { display: block; filter: saturate(1.4) contrast(1.1); }
+[
+  { "q": "Quế Hoa Dẻ Cười dùng bao nhiêu ml foam?", "a": ["20ml","40ml","60ml","80ml"], "correct": 2 },
+  { "q": "Quế Hoa Dẻ Cười dùng bao nhiêu ml trà?", "a": ["100ml","120ml","150ml","200ml"], "correct": 2 },
+  { "q": "Nhài Dẻ Cười dùng bao nhiêu ml foam?", "a": ["20ml","40ml","60ml","80ml"], "correct": 2 },
+  { "q": "Olong Nhãn Nhài dùng bao nhiêu ml trà?", "a": ["100ml","120ml","150ml","200ml"], "correct": 1 },
+  { "q": "Olong Nhãn Nhài có bao nhiêu trái nhãn?", "a": ["1","2","3","4"], "correct": 2 },
+  { "q": "Olong Khế có bao nhiêu ml nước ép khế?", "a": ["20ml","30ml","50ml","70ml"], "correct": 2 },
+  { "q": "Trà Ổi Hồng dùng mứt gì?", "a": ["mứt ổi","mứt đào","mứt nhãn","mứt dừa"], "correct": 0 },
+  { "q": "Trà Ổi Hồng dùng bao nhiêu ml trà?", "a": ["100ml","120ml","150ml","200ml"], "correct": 1 },
+  { "q": "Olong Sen Nhãn có bao nhiêu ml nước sen?", "a": ["20ml","30ml","40ml","50ml"], "correct": 2 },
+  { "q": "Olong Sen Nhãn có bao nhiêu gram hạt sen?", "a": ["10g","20g","30g","40g"], "correct": 2 },
+  { "q": "Sơ Ri Ổi Hồng có syrup gì?", "a": ["muối ớt","đào","vani","chanh"], "correct": 0 },
+  { "q": "Lựu Muối Ớt có bao nhiêu bông atiso?", "a": ["1","2","3","4"], "correct": 1 },
+  { "q": "Trà Đào dùng loại trà nào?", "a": ["trà xanh","hồng trà","oolong","cascara"], "correct": 1 },
+  { "q": "Trà Đào có bao nhiêu miếng đào?", "a": ["1","2","3","4"], "correct": 2 },
+  { "q": "Hồng Trà Tắc dùng bao nhiêu ml mật ong?", "a": ["10","20","30","40"], "correct": 1 },
+  { "q": "Hồng Trà Me dùng mứt gì?", "a": ["me","xoài","dâu","ổi"], "correct": 0 },
+  { "q": "Cascara truyền thống có gì?", "a": ["mật ong","sữa","kem","đường"], "correct": 0 },
+  { "q": "Cà phê cốt dừa dùng bao nhiêu ml cà phê?", "a": ["10","20","30","50"], "correct": 2 },
+  { "q": "Matcha dùng bao nhiêu muỗng?", "a": ["0.5","1","2","3"], "correct": 1 },
+  { "q": "Cookie có bao nhiêu Oreo?", "a": ["1","2","2.5","3"], "correct": 2 }
+]<audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+<audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+let questions = [];
+let current = 0;
+let score = 0;
+let timer;
+let timeLeft = 300;
+
+let flashIndex = 0;
+
+// FLASHCARDS
+let flashcards = [
+  { front: "Quế Hoa Dẻ Cười", back: "Trà 150ml + Foam 60ml + Mứt 20ml + Đường 20ml" },
+  { front: "Trà Đào", back: "Hồng trà 120ml + Syrup 20ml + Mứt 15ml + 3 miếng đào" },
+  { front: "Olong Sen Nhãn", back: "Trà 120ml + Nước sen 40ml + Hạt sen 30g" }
+];
+
+// LOAD DATA
+fetch("questions.json")
+  .then(r => r.json())
+  .then(d => questions = d);
+
+// SCREEN
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function backHome(){
+  clearInterval(timer);
+  showScreen("home");
+}
+
+// QUIZ START (PRO)
+function startQuiz(){
+  score = 0;
+  current = 0;
+  timeLeft = 300;
+
+  questions = shuffle(questions).slice(0, 10);
+
+  showScreen("quiz");
+  startTimer();
+  showQuestion();
+}
+
+// TIMER
+function startTimer(){
+  timer = setInterval(()=>{
+    timeLeft--;
+    if(timeLeft <= 0){
+      endQuiz();
+    }
+    document.getElementById("progress").innerText =
+      `Còn lại: ${timeLeft}s | Câu ${current+1}/${questions.length}`;
+  },1000);
+}
+
+// QUESTION
+function showQuestion(){
+  let q = questions[current];
+  document.getElementById("question").innerText = q.q;
+
+  let box = document.getElementById("answers");
+  box.innerHTML = "";
+
+  q.a.forEach((a,i)=>{
+    let b = document.createElement("button");
+    b.innerText = a;
+    b.onclick = ()=>check(i);
+    box.appendChild(b);
+  });
+}
+
+// CHECK
+function check(i){
+  let q = questions[current];
+  let btns = document.querySelectorAll("#answers button");
+
+  if(i === q.correct){
+    btns[i].classList.add("correct");
+    score++;
+  } else {
+    btns[i].classList.add("wrong");
+    btns[q.correct].classList.add("correct");
+  }
+}
+
+// NEXT
+function nextQuestion(){
+  current++;
+  if(current >= questions.length){
+    endQuiz();
+    return;
+  }
+  showQuestion();
+}
+
+// END
+function endQuiz(){
+  clearInterval(timer);
+
+  localStorage.setItem("lastScore", score);
+  localStorage.setItem("lastTotal", questions.length);
+
+  alert(`Kết thúc!\nĐiểm: ${score}/${questions.length}`);
+  backHome();
+}
+
+// FLASHCARD
+function startFlashcard(){
+  flashIndex = 0;
+  showScreen("flashcard");
+  showCard();
+}
+
+function showCard(){
+  let c = flashcards[flashIndex];
+  document.getElementById("cardFront").innerText = c.front;
+  document.getElementById("cardBack").innerText = c.back;
+  document.getElementById("cardBack").classList.add("hidden");
+}
+
+function flipCard(){
+  document.getElementById("cardBack").classList.toggle("hidden");
+}
+
+function nextCard(){
+  flashIndex = (flashIndex + 1) % flashcards.length;
+  showCard();
+}
+
+// STUDY
+function startStudy(){
+  showScreen("study");
+  let box = document.getElementById("studyList");
+  box.innerHTML = flashcards.map(c=>
+    `<div class="card"><b>${c.front}</b><br>${c.back}</div>`
+  ).join("");
+}
+
+// STATS
+function showStats(){
+  showScreen("stats");
+
+  let s = localStorage.getItem("lastScore") || 0;
+  let t = localStorage.getItem("lastTotal") || 0;
+
+  document.getElementById("score").innerText =
+    `Lần gần nhất: ${s}/${t}`;
+}
+
+// SHUFFLE
+function shuffle(arr){
+  return arr.sort(()=>Math.random()-0.5);
+}
         
-        #rotate-warning { position: absolute; inset: 0; background: #000; z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        @media (orientation: portrait) { #rotate-warning { display: flex; } }
-
-        #lobby { position: absolute; inset: 0; background: linear-gradient(to bottom, #1e293b, #020617); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .char-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .char-card { border: 3px solid #334155; padding: 15px; background: rgba(0,0,0,0.5); border-radius: 15px; transition: 0.3s; width: 120px; text-align: center; cursor: pointer; }
-        .char-card:hover { border-color: #facc15; transform: scale(1.05); }
-        .p1-sel { border-color: #3b82f6 !important; background: rgba(59, 130, 246, 0.3); }
-
-        #game-ui { position: absolute; top: 20px; width: 100%; display: none; justify-content: space-between; padding: 0 5%; z-index: 10; pointer-events: none; }
-        .bar-box { width: 300px; }
-        .hp-out { height: 25px; background: #222; border: 2px solid #fff; border-radius: 5px; overflow: hidden; }
-        .hp-in { height: 100%; background: linear-gradient(90deg, #ff0000, #800000); width: 100%; transition: 0.2s; }
-        .mana-out { height: 10px; background: #111; border: 1px solid #0cf; margin-top: 5px; border-radius: 3px; }
-        .mana-in { height: 100%; background: #00f2ff; width: 0%; transition: 0.3s; }
-
-        #mobile-ctrl { position: absolute; bottom: 20px; width: 100%; display: none; justify-content: space-between; padding: 0 40px; z-index: 50; }
-        .btn-joy { width: 75px; height: 75px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; pointer-events: auto; }
-        #stage-banner { position: absolute; top: 70px; width: 100%; text-align: center; font-size: 30px; color: #facc15; font-style: italic; z-index: 5; text-shadow: 0 0 10px #000; }
-    </style>
-</head>
-<body>
-
-    <div id="rotate-warning">
-        <h2 class="text-2xl font-bold">🔄 XOAY NGANG MÀN HÌNH ĐỂ CHIẾN</h2>
-    </div>
-
-    <div id="lobby">
-        <h1 class="text-5xl font-black text-yellow-500 mb-2 italic tracking-tighter">BÌNH THUẬN BẤT ỔN</h1>
-        <p class="mb-8 text-gray-400 uppercase tracking-widest text-sm">Chọn nhân vật của bạn</p>
-        <div class="char-grid" id="grid"></div>
-        <p id="device-info" class="mt-8 text-blue-400 font-bold"></p>
-    </div>
-
-    <div id="game-ui">
-        <div class="bar-box">
-            <div class="hp-out"><div id="p1-hp" class="hp-in"></div></div>
-            <div class="mana-out"><div id="p1-mana" class="mana-in"></div></div>
-            <div class="text-blue-400 font-bold mt-1" id="p1-name">BẠN</div>
-        </div>
-        <div id="stage-banner">STAGE 1</div>
-        <div class="bar-box text-right">
-            <div class="hp-out"><div id="p2-hp" class="hp-in" style="float:right"></div></div>
-            <div class="mana-out"><div id="p2-mana" class="mana-in" style="float:right"></div></div>
-            <div class="text-red-500 font-bold mt-1" id="p2-name">ĐỐI THỦ</div>
-        </div>
-    </div>
-
-    <div id="mobile-ctrl">
-        <div class="flex gap-4">
-            <div class="btn-joy" onpointerdown="keys.KeyA=true" onpointerup="keys.KeyA=false">←</div>
-            <div class="btn-joy" onpointerdown="keys.KeyW=true" onpointerup="keys.KeyW=false">↑</div>
-            <div class="btn-joy" onpointerdown="keys.KeyD=true" onpointerup="keys.KeyD=false">→</div>
-        </div>
-        <div class="flex gap-4">
-            <div class="btn-joy bg-blue-600/20" onpointerdown="p1.attack('Punch')">P</div>
-            <div class="btn-joy bg-red-600/20" onpointerdown="p1.attack('Kick')">K</div>
-            <div class="btn-joy bg-yellow-600/30" onpointerdown="p1.attack('Ulti')">U</div>
-        </div>
-    </div>
-
-    <canvas id="game"></canvas>
-
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-        function playSnd(f, t, d, v=0.1) {
-            try {
-                const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
-                g.gain.setValueAtTime(v, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination);
-                o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d); o.stop(audioCtx.currentTime + d);
-            } catch(e){}
-        }
-
-        const chars = [
-            { id: 'DanChoi', name: 'DÂN CHƠI', color: '#3b82f6' },
-            { id: 'HiepSi', name: 'HIỆP SĨ', color: '#ef4444' },
-            { id: 'BO', name: 'CỤ BO', color: '#a855f7' },
-            { id: 'Bin', name: 'BIN', color: '#10b981' },
-            { id: 'Son', name: 'SƠN', color: '#f97316' }
-        ];
-
-        let p1Char, p2Char, p1, p2, isRunning = false, keys = {}, projectiles = [], minions = [], stage = 1, flash = 0;
-        const stageList = ['HiepSi', 'Bin', 'Son', 'BO', 'DanChoi'];
-
-        document.getElementById('device-info').innerText = isMobile ? "MOBILE: CHẾ ĐỘ VƯỢT ẢI" : "PC: CHẾ ĐỘ ĐỐI KHÁNG 2 NGƯỜI";
-
-        const grid = document.getElementById('grid');
-        chars.forEach(c => {
-            const card = document.createElement('div');
-            card.className = 'char-card';
-            card.id = 'btn-' + c.id;
-            card.innerHTML = `<div class="font-black text-white">${c.name}</div>`;
-            card.onclick = () => pick(c.id);
-            grid.appendChild(card);
-        });
-
-        function pick(id) {
-            if(!p1Char) {
-                p1Char = id; document.getElementById('btn-'+id).classList.add('p1-sel');
-                playSnd(400, 'sine', 0.1);
-                if(isMobile) {
-                    p2Char = stageList[0];
-                    setTimeout(init, 500);
-                } else {
-                    document.querySelector('#lobby h1').innerText = "NGƯỜI 2 CHỌN";
-                }
-            } else if(!p2Char && !isMobile) {
-                p2Char = id; playSnd(600, 'sine', 0.1); setTimeout(init, 500);
-            }
-        }
-
-        function init() {
-            document.getElementById('lobby').style.display = 'none';
-            document.getElementById('game-ui').style.display = 'flex';
-            if(isMobile) {
-                document.getElementById('mobile-ctrl').style.display = 'flex';
-                document.getElementById('stage-banner').style.display = 'block';
-            }
-            p1 = new Fighter(250, 1, p1Char);
-            p2 = new Fighter(window.innerWidth - 250, 2, p2Char);
-            p2.isAI = isMobile;
-            isRunning = true;
-            setInterval(() => { if(isRunning) playSnd(60, 'sawtooth', 0.4, 0.02); }, 600);
-        }
-
-        class Fighter {
-            constructor(x, id, type) {
-                this.x = x; this.id = id; this.type = type;
-                this.hp = 100; this.maxHp = 100; this.mana = 0;
-                this.w = 80; this.h = 180; this.vy = 0; this.vx = 0;
-                this.dir = id === 1 ? 1 : -1; this.isAtk = 0; this.stun = 0; this.isAI = false;
-                this.color = chars.find(c => c.id === type).color;
-            }
-            draw() {
-                ctx.save();
-                ctx.shadowBlur = 25; ctx.shadowColor = this.color;
-                ctx.fillStyle = this.stun > 0 ? '#555' : this.color;
-                ctx.fillRect(this.x, this.y, this.w, this.h);
-                if(this.isAtk > 0) {
-                    ctx.fillStyle = "rgba(255,255,255,0.7)";
-                    ctx.fillRect(this.x + (this.dir > 0 ? this.w : -60), this.y + 60, 60, 40);
-                    this.isAtk--;
-                }
-                ctx.restore();
-            }
-            update() {
-                if(this.stun > 0) { this.stun -= 16; this.vx = 0; return; }
-                if(this.isAI) this.doAI();
-                this.x += this.vx; this.y += this.vy;
-                if(this.y + this.h < canvas.height - 100) this.vy += 1.5;
-                else { this.y = canvas.height - 100 - this.h; this.vy = 0; }
-                this.mana = Math.min(100, this.mana + 0.12);
-            }
-            doAI() {
-                let d = Math.abs(this.x - p1.x);
-                if(d > 140) {
-                    this.vx = this.x > p1.x ? -3.5 : 3.5;
-                    this.dir = this.x > p1.x ? -1 : 1;
-                } else {
-                    this.vx = 0;
-                    if(Math.random() < 0.02) this.attack('Punch');
-                }
-                if(this.mana >= 100 && Math.random() < 0.01) this.attack('Ulti');
-            }
-            attack(t) {
-                if(this.isAtk > 0 || this.stun > 0) return;
-                if(t === 'Ulti' && this.mana < 100) return;
-                if(t === 'Ulti') {
-                    this.mana = 0; flash = 10; playSnd(45, 'sawtooth', 1.2, 0.3);
-                    if(this.type === 'BO') { for(let i=0; i<5; i++) minions.push({x:this.x, y:this.y, owner:this.id, life:600}); }
-                    else if(this.type === 'Bin') { projectiles.push({x:this.x, y:this.y, vx:this.dir*18, vy:-6, type:'brick', owner:this.id}); }
-                    else if(this.type === 'Son') { this.x = p1.x - (this.dir*120); this.attack('Punch'); }
-                    else { for(let i=0; i<10; i++) projectiles.push({x:Math.random()*canvas.width, y:-100, vy:12, type:this.type==='DanChoi'?'fire':'arrow', owner:this.id}); }
-                    return;
-                }
-                this.isAtk = 15;
-                let enemy = this.id === 1 ? p2 : p1;
-                if(Math.abs(this.x - enemy.x) < 150 && Math.abs(this.y - enemy.y) < 180) {
-                    enemy.hp -= 10; this.mana = Math.min(100, this.mana + 15);
-                    playSnd(120, 'square', 0.1, 0.2); // Crowd hò reo
-                }
-            }
-        }
-
-        window.onkeydown = e => { keys[e.code] = true; if(e.code === 'KeyF') p1.attack('Punch'); if(e.code === 'KeyG') p1.attack('Kick'); if(e.code === 'KeyH') p1.attack('Ulti'); if(!isMobile) { if(e.code === 'KeyK') p2.attack('Punch'); if(e.code === 'KeyL') p2.attack('Kick'); if(e.code === 'KeyJ') p2.attack('Ulti'); } };
-        window.onkeyup = e => keys[e.code] = false;
-
-        function loop() {
-            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-            if(!isRunning) return requestAnimationFrame(loop);
-            
-            ctx.fillStyle = flash > 0 ? '#fff' : '#020617'; ctx.fillRect(0,0,canvas.width, canvas.height);
-            if(flash > 0) flash--;
-
-            // Sàn đấu
-            ctx.fillStyle = '#0f172a'; ctx.fillRect(0, canvas.height-100, canvas.width, 100);
-            ctx.fillStyle = '#1e293b'; // Khán giả giả lập
-            for(let i=0; i<20; i++) { ctx.beginPath(); ctx.arc(i*(canvas.width/19), canvas.height-130 + Math.sin(Date.now()*0.01+i)*5, 25, 0, 7); ctx.fill(); }
-
-            [p1, p2].forEach(p => {
-                if(p.stun <= 0) {
-                    p.vx = 0;
-                    if(p.id === 1) {
-                        if(keys.KeyA) { p.vx = -10; p.dir = -1; } if(keys.KeyD) { p.vx = 10; p.dir = 1; }
-                        if(keys.KeyW && p.vy === 0) p.vy = -28;
-                    } else if(!isMobile) {
-                        if(keys.ArrowLeft) { p.vx = -10; p.dir = -1; } if(keys.ArrowRight) { p.vx = 10; p.dir = 1; }
-                        if(keys.ArrowUp && p.vy === 0) p.vy = -28;
-                    }
-                }
-                p.update(); p.draw();
-            });
-
-            minions.forEach((m, i) => {
-                let e = m.owner === 1 ? p2 : p1; m.life--;
-                m.x += (e.x - m.x) * 0.035; m.y += (e.y - m.y) * 0.035;
-                ctx.fillStyle = 'rgba(168, 85, 247, 0.6)'; ctx.fillRect(m.x, m.y, 45, 80);
-                if(Math.abs(m.x - e.x) < 50) e.hp -= 0.1;
-                if(m.life <= 0) minions.splice(i, 1);
-            });
-
-            projectiles.forEach((proj, i) => {
-                proj.y += proj.vy || 0; proj.x += proj.vx || 0;
-                ctx.fillStyle = proj.type==='fire'?'#f60':(proj.type==='brick'?'#744':'#0cf');
-                ctx.fillRect(proj.x, proj.y, 25, 25);
-                let e = proj.owner === 1 ? p2 : p1;
-                if(proj.x < e.x+e.w && proj.x+25 > e.x && proj.y < e.y+e.h && proj.y+25 > e.y) {
-                    e.hp -= 15; e.stun = 2000; projectiles.splice(i, 1);
-                } else if(proj.y > canvas.height) projectiles.splice(i, 1);
-            });
-
-            document.getElementById('p1-hp').style.width = p1.hp + '%';
-            document.getElementById('p2-hp').style.width = p2.hp + '%';
-            document.getElementById('p1-mana').style.width = p1.mana + '%';
-            document.getElementById('p2-mana').style.width = p2.mana + '%';
-
-            if(p1.hp <= 0) { isRunning = false; alert("BÌNH THUẬN QUÁ BẤT ỔN! BẠN THUA RỒI."); location.reload(); }
-            if(p2.hp <= 0) {
-                if(isMobile && stage < 5) {
-                    stage++; p1.hp = Math.min(100, p1.hp + 45); 
-                    p2 = new Fighter(window.innerWidth - 250, 2, stageList[stage-1]); p2.isAI = true;
-                    document.getElementById('stage-banner').innerText = "STAGE " + stage;
-                } else {
-                    isRunning = false; alert("BẠN ĐÃ TRỞ THÀNH TRÙM BÌNH THUẬN!"); location.reload();
-                }
-            }
-            requestAnimationFrame(loop);
-        }
-        loop();
-    </script>
-</body>
-</html>
